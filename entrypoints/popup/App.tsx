@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { browser } from 'wxt/browser';
 import type { JobInsights } from '../../lib/insights';
 import { isJobInsights } from '../../lib/insights';
 import {

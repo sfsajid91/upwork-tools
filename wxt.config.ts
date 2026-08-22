@@ -9,6 +9,8 @@ export default defineConfig({
   }),
   manifest: {
     name: 'Upwork Tools',
-    description: 'A browser extension for Upwork',
+    description: 'Shows locally captured Upwork job insights for the active tab.',
+    minimum_chrome_version: '111',
+    permissions: ['storage'],
   },
 });

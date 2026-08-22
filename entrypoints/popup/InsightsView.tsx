@@ -12,104 +12,389 @@ import {
 } from '../../lib/format';
 import type { ClientHistoryEntry, JobInsights, JobWarning } from '../../lib/insights';
 
+// --- Vector Icons ---
+
+function ShieldCheckIcon({ className = 'size-3.5' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      <path d="m9 12 2 2 4-4" />
+    </svg>
+  );
+}
+
+function StarIcon({ className = 'size-3.5' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      stroke="none"
+      aria-hidden="true"
+    >
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  );
+}
+
+function ClockIcon({ className = 'size-3.5' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+  );
+}
+
+function MapPinIcon({ className = 'size-3.5' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  );
+}
+
+function AlertTriangleIcon({ className = 'size-4' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+      <line x1="12" y1="9" x2="12" y2="13" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+  );
+}
+
+function ChevronDownIcon({ className = 'size-4' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}
+
+function CheckCircleIcon({ className = 'size-3.5' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  );
+}
+
+function LockIcon({ className = 'size-3' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  );
+}
+
+function BuildingIcon({ className = 'size-3.5' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect width="16" height="20" x="4" y="2" rx="2" ry="2" />
+      <path d="M9 22v-4h6v4" />
+      <path d="M8 6h.01" />
+      <path d="M16 6h.01" />
+      <path d="M8 10h.01" />
+      <path d="M16 10h.01" />
+      <path d="M8 14h.01" />
+      <path d="M16 14h.01" />
+    </svg>
+  );
+}
+
+function TargetIcon({ className = 'size-3.5' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="6" />
+      <circle cx="12" cy="12" r="2" />
+    </svg>
+  );
+}
+
+function RadarIcon({ className = 'size-6' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M19.07 4.93a10 10 0 0 0-14.14 0" />
+      <path d="M16.24 7.76a6 6 0 0 0-8.48 0" />
+      <path d="M13.41 10.59a2 2 0 0 0-2.82 0" />
+      <line x1="12" y1="12" x2="12" y2="21" />
+    </svg>
+  );
+}
+
+// --- Component Helpers ---
+
 const WARNING_COPY: Record<JobWarning, string> = {
   'position-filled': 'Position already filled',
   'already-hired': 'Client already hired for this job',
-  'already-applied': 'Already applied',
-  'client-invited': 'Client invited you',
+  'already-applied': 'Already applied to this job',
+  'client-invited': 'Client invited you to apply',
 };
 
-function Metric({
+function MetricCell({
   label,
   value,
+  subvalue,
   accent = false,
+  icon,
 }: {
   label: string;
   value: ReactNode;
+  subvalue?: ReactNode;
   accent?: boolean;
+  icon?: ReactNode;
 }) {
   return (
-    <div className="grid min-w-0 gap-1">
-      <span className="text-[10px] leading-tight text-[#718096]">{label}</span>
-      <strong
-        className={`break-words text-[13px] font-bold leading-tight tabular-nums ${
-          accent ? 'text-[#087f5b]' : 'text-[#26364d]'
-        }`}
-      >
-        {value}
-      </strong>
+    <div className="flex flex-col gap-0.5">
+      <div className="flex items-center gap-1 text-[11px] font-medium text-slate-500">
+        {icon}
+        <span>{label}</span>
+      </div>
+      <div className="flex items-baseline gap-1.5">
+        <span
+          className={`text-[13px] font-semibold tracking-tight tabular-nums ${
+            accent ? 'text-emerald-700' : 'text-slate-900'
+          }`}
+        >
+          {value}
+        </span>
+        {subvalue && (
+          <span className="text-[10.5px] font-normal text-slate-500 tabular-nums">{subvalue}</span>
+        )}
+      </div>
     </div>
   );
 }
 
 function WarningStrip({ insights }: { insights: JobInsights }) {
-  const messages = [
-    ...insights.warnings.map((warning) => WARNING_COPY[warning]),
-    ...insights.job.restrictions.map((restriction) => `Restriction: ${restriction}`),
-  ];
-  if (messages.length === 0) return null;
+  const warnings = insights.warnings.map((warning) => WARNING_COPY[warning]);
+  const restrictions = insights.job.restrictions;
+  const hasContent = warnings.length > 0 || restrictions.length > 0;
+
+  if (!hasContent) return null;
 
   return (
     <aside
-      className="mb-3 rounded-[13px] border border-[#f1d28b] bg-[#fff6df] px-[13px] py-3 text-[#6e4c08]"
-      aria-label="Important warnings"
+      className="mb-3 rounded-xl border border-amber-300/80 bg-amber-50/90 p-3 text-amber-950 shadow-xs"
+      aria-label="Important job notices"
       role="alert"
     >
-      <strong className="mb-1 block text-[11px] tracking-[0.02em]">Pay attention</strong>
-      <ul className="m-0 grid list-none gap-[3px] p-0">
-        {messages.map((message) => (
-          <li
-            className="text-[11px] leading-[1.35] before:mr-[6px] before:content-['•']"
-            key={message}
-          >
-            {message}
-          </li>
-        ))}
-      </ul>
+      <div className="mb-1.5 flex items-center gap-1.5">
+        <AlertTriangleIcon className="size-4 shrink-0 text-amber-600" />
+        <span className="text-xs font-bold tracking-tight text-amber-900">Important Notice</span>
+      </div>
+
+      {warnings.length > 0 && (
+        <ul className="m-0 mb-1.5 list-none space-y-1 p-0">
+          {warnings.map((message) => (
+            <li
+              key={message}
+              className="flex items-center gap-1.5 text-xs font-medium text-amber-900 leading-snug"
+            >
+              <span className="size-1.5 rounded-full bg-amber-500 shrink-0" />
+              <span>{message}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {restrictions.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-700">
+            Requirements:
+          </span>
+          {restrictions.map((restriction) => (
+            <span
+              key={restriction}
+              className="rounded-md border border-amber-200/90 bg-amber-100/80 px-2 py-0.5 text-[11px] font-medium text-amber-900 leading-none"
+            >
+              {restriction}
+            </span>
+          ))}
+        </div>
+      )}
     </aside>
   );
 }
 
 function HistoryRow({ job }: { job: ClientHistoryEntry }) {
-  const details = [
-    job.type,
-    job.amountPaid === null ? null : formatMoney(job.amountPaid, 'USD'),
-    job.feedbackScore === null ? null : `${formatRating(job.feedbackScore)} review`,
-  ].filter(Boolean);
+  const isHourly = job.type?.toUpperCase() === 'HOURLY';
+  const typeTag = isHourly ? 'Hourly' : 'Fixed';
+  const formattedAmount = job.amountPaid === null ? null : formatMoney(job.amountPaid, 'USD');
+  const formattedRating =
+    job.feedbackScore === null ? null : `${formatRating(job.feedbackScore)} ★`;
 
   return (
-    <li className="grid gap-[3px] py-3 first:pt-0 last:pb-0 [&+li]:border-t [&+li]:border-[#e7edf4]">
-      <strong className="text-[12px] leading-[1.35] text-[#26364d]">
-        {job.title ?? 'Untitled job'}
-      </strong>
-      <span className="text-[10px] leading-[1.35] text-[#718096]">
-        {details.join(' · ') || 'Details not available'}
-      </span>
-      <span className="text-[10px] leading-[1.35] text-[#718096]">
-        {job.status?.toLowerCase() ?? 'Status not available'}
-      </span>
+    <li className="flex flex-col gap-1 py-2.5 first:pt-1 last:pb-1 border-b border-slate-100 last:border-b-0">
+      <div className="flex items-start justify-between gap-2">
+        <span className="text-xs font-medium text-slate-900 leading-tight line-clamp-2">
+          {job.title ?? 'Untitled job'}
+        </span>
+        {formattedAmount && (
+          <span className="shrink-0 text-xs font-semibold tabular-nums text-slate-900 bg-slate-100/90 px-1.5 py-0.5 rounded">
+            {formattedAmount}
+          </span>
+        )}
+      </div>
+      <div className="flex items-center gap-2 text-[11px] text-slate-500">
+        <span className="font-medium text-slate-600">{typeTag}</span>
+        {formattedRating && (
+          <>
+            <span className="text-slate-300">·</span>
+            <span className="flex items-center gap-0.5 text-amber-700 font-medium tabular-nums">
+              <StarIcon className="size-3 text-amber-500 fill-amber-400" />
+              {formattedRating}
+            </span>
+          </>
+        )}
+        {job.status && (
+          <>
+            <span className="text-slate-300">·</span>
+            <span className="capitalize text-slate-400">{job.status.toLowerCase()}</span>
+          </>
+        )}
+      </div>
     </li>
   );
 }
 
-function HistoryDetails({ title, jobs }: { title: string; jobs: ClientHistoryEntry[] }) {
+function HistoryDetails({
+  title,
+  jobs,
+  badgeText,
+  defaultOpen = false,
+}: {
+  title: string;
+  jobs: ClientHistoryEntry[];
+  badgeText?: string;
+  defaultOpen?: boolean;
+}) {
   if (jobs.length === 0) return null;
 
   return (
-    <details className="mb-3 overflow-hidden rounded-[14px] border border-[#dfe7f0] bg-white shadow-[0_7px_18px_rgba(29,41,57,0.05)]">
-      <summary className="flex cursor-pointer list-none items-center justify-between px-[15px] py-3.5 text-[13px] font-bold text-[#172033] marker:hidden focus-visible:outline-2 focus-visible:outline-[#62cda0] focus-visible:outline-offset-2">
-        <span>{title}</span>
-        <span className="ml-auto mr-2.5 rounded-full bg-[#d9f4e8] px-[7px] py-[5px] text-[10px] font-extrabold leading-none text-[#087f5b]">
-          {jobs.length}
-        </span>
+    <details
+      className="group mb-2.5 overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-xs transition-colors"
+      open={defaultOpen}
+    >
+      <summary className="flex cursor-pointer list-none items-center justify-between px-3.5 py-3 text-xs font-semibold text-slate-800 select-none hover:bg-slate-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
+        <div className="flex items-center gap-2">
+          <span>{title}</span>
+          {badgeText && (
+            <span className="rounded bg-indigo-50 border border-indigo-200/70 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700 leading-none">
+              {badgeText}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 tabular-nums">
+            {jobs.length}
+          </span>
+          <ChevronDownIcon className="size-3.5 text-slate-400 transition-transform duration-200 group-open:rotate-180" />
+        </div>
       </summary>
-      <div className="border-t border-[#e7edf4] px-[15px] py-3">
+      <div className="border-t border-slate-100 bg-slate-50/40 px-3.5 py-2">
         <ul className="m-0 list-none p-0" aria-label={title}>
-          {jobs.map((job) => (
+          {jobs.map((job, index) => (
             <HistoryRow
-              key={[job.id, job.title, job.startedOn, job.amountPaid, title]
-                .filter(Boolean)
-                .join('-')}
+              key={
+                job.id ??
+                `${job.title ?? 'untitled'}-${job.startedOn ?? index}-${job.amountPaid ?? 0}`
+              }
               job={job}
             />
           ))}
@@ -118,6 +403,8 @@ function HistoryDetails({ title, jobs }: { title: string; jobs: ClientHistoryEnt
     </details>
   );
 }
+
+// --- Main State Views ---
 
 export function EmptyState({
   title,
@@ -129,19 +416,42 @@ export function EmptyState({
   tone?: 'default' | 'error';
 }) {
   return (
-    <section className="flex min-h-[300px] flex-col items-start rounded-2xl border border-[#dfe7f0] bg-white p-[22px] shadow-[0_9px_22px_rgba(29,41,57,0.06)]">
-      <span
-        className={`mb-6 inline-flex size-[34px] items-center justify-center rounded-[10px] text-[18px] font-extrabold ${
-          tone === 'error' ? 'bg-[#ffebd6] text-[#9b4d16]' : 'bg-[#d9f4e8] text-[#087f5b]'
+    <section className="flex min-h-[460px] flex-col items-center justify-center rounded-2xl border border-slate-200/90 bg-white p-6 text-center shadow-xs">
+      <div
+        className={`mb-4 flex size-12 items-center justify-center rounded-2xl shadow-inner ${
+          tone === 'error'
+            ? 'bg-rose-50 border border-rose-200 text-rose-600'
+            : 'bg-emerald-50 border border-emerald-200 text-emerald-600'
         }`}
         aria-hidden="true"
       >
-        {tone === 'error' ? '!' : '—'}
-      </span>
-      <h1 className="mb-[9px] text-[24px] font-bold leading-[1.1] tracking-[-0.03em] text-[#172033]">
-        {title}
-      </h1>
-      <p className="m-0 max-w-[34ch] text-[13px] leading-[1.55] text-[#66758a]">{copy}</p>
+        {tone === 'error' ? (
+          <AlertTriangleIcon className="size-6" />
+        ) : (
+          <RadarIcon className="size-6" />
+        )}
+      </div>
+
+      <h1 className="mb-2 text-lg font-bold tracking-tight text-slate-900">{title}</h1>
+      <p className="mb-6 max-w-[32ch] text-xs leading-relaxed text-slate-500">{copy}</p>
+
+      {tone === 'default' && (
+        <div className="w-full rounded-xl border border-slate-100 bg-slate-50 p-3.5 text-left">
+          <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            How it works
+          </div>
+          <ol className="m-0 list-decimal space-y-1.5 pl-4 text-xs text-slate-600">
+            <li>Open any job post on Upwork.</li>
+            <li>Let the page finish loading its details.</li>
+            <li>Open this popup for instant authenticated signals.</li>
+          </ol>
+        </div>
+      )}
+
+      <div className="mt-6 flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
+        <ShieldCheckIcon className="size-3.5 text-emerald-600" />
+        <span>100% Local session data · No duplicate requests</span>
+      </div>
     </section>
   );
 }
@@ -149,16 +459,39 @@ export function EmptyState({
 export function LoadingState() {
   return (
     <section
-      className="flex min-h-[300px] flex-col items-start rounded-2xl border border-[#dfe7f0] bg-white p-[22px] shadow-[0_9px_22px_rgba(29,41,57,0.06)]"
+      className="flex min-h-[460px] flex-col rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs"
       aria-busy="true"
       aria-label="Loading job insights"
     >
-      <div className="mb-[17px] h-[10px] w-[88px] animate-pulse rounded-[7px] bg-[#e5ebf3]" />
-      <div className="mb-[10px] h-7 w-[84%] animate-pulse rounded-[7px] bg-[#e5ebf3]" />
-      <div className="mb-7 h-3 w-[62%] animate-pulse rounded-[7px] bg-[#e5ebf3]" />
-      <div className="mt-auto w-full rounded-[14px] bg-[#152d4f] p-[17px]">
-        <div className="h-[10px] w-24 animate-pulse rounded-[7px] bg-[#355273]" />
-        <div className="mt-[18px] h-[42px] w-[100px] animate-pulse rounded-[7px] bg-[#355273]" />
+      <div className="mb-3 flex items-center justify-between">
+        <div className="h-3 w-20 animate-pulse rounded bg-slate-200" />
+        <div className="h-5 w-16 animate-pulse rounded-full bg-slate-200" />
+      </div>
+
+      <div className="mb-1.5 h-6 w-3/4 animate-pulse rounded bg-slate-200" />
+      <div className="mb-4 h-3.5 w-1/2 animate-pulse rounded bg-slate-200" />
+
+      {/* Hero Skeleton */}
+      <div className="mb-3 rounded-2xl bg-slate-900 p-4">
+        <div className="flex items-center justify-between">
+          <div className="h-3 w-24 animate-pulse rounded bg-slate-700" />
+          <div className="h-4 w-28 animate-pulse rounded-full bg-slate-800" />
+        </div>
+        <div className="my-3 h-10 w-20 animate-pulse rounded bg-slate-700" />
+        <div className="border-t border-slate-800 pt-3">
+          <div className="grid grid-cols-4 gap-2">
+            <div className="h-6 animate-pulse rounded bg-slate-800" />
+            <div className="h-6 animate-pulse rounded bg-slate-800" />
+            <div className="h-6 animate-pulse rounded bg-slate-800" />
+            <div className="h-6 animate-pulse rounded bg-slate-800" />
+          </div>
+        </div>
+      </div>
+
+      {/* Grid Skeleton */}
+      <div className="grid grid-cols-2 gap-2.5">
+        <div className="h-24 animate-pulse rounded-xl bg-slate-100" />
+        <div className="h-24 animate-pulse rounded-xl bg-slate-100" />
       </div>
     </section>
   );
@@ -166,166 +499,298 @@ export function LoadingState() {
 
 export function AvailableState({ insights }: { insights: JobInsights }) {
   const { job, activity, client, fit, history } = insights;
+
   const location = [client.city, client.country].filter(Boolean).join(', ') || 'Not available';
-  const qualificationCount =
-    fit.qualificationsMatched === null || fit.qualificationsTotal === null
-      ? 'Not available'
-      : `${fit.qualificationsMatched}/${fit.qualificationsTotal}`;
-  const paymentStatus =
-    client.paymentVerified === null
-      ? 'Not available'
-      : client.paymentVerified
-        ? 'Verified'
-        : 'Not verified';
-  const ratingSummary =
-    client.rating === null && client.feedbackCount === null
-      ? 'Not available'
-      : `${formatRating(client.rating)} · ${formatNumber(client.feedbackCount)}`;
-  const interviewSummary =
-    activity.interviewRate === null
-      ? 'Interview rate not available'
-      : `${formatPercent(activity.interviewRate)} interviewed`;
-  const statusChipClass =
-    job.status?.toUpperCase() === 'FILLED'
-      ? 'bg-[#ffebd6] text-[#9b4d16]'
-      : job.status
-        ? 'bg-[#d9f4e8] text-[#087f5b]'
-        : 'bg-[#e5ebf3] text-[#526173]';
+
+  const qualificationSummary =
+    fit.qualificationsMatched !== null && fit.qualificationsTotal !== null
+      ? `${fit.qualificationsMatched}/${fit.qualificationsTotal}`
+      : null;
+
+  const isStatusFilled = job.status?.toUpperCase() === 'FILLED';
+  const isStatusOpen = job.status?.toUpperCase() === 'OPEN';
+
+  const statusBadge = (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10.5px] font-bold leading-tight ${
+        isStatusFilled
+          ? 'border border-amber-300 bg-amber-100 text-amber-900'
+          : isStatusOpen
+            ? 'border border-emerald-300 bg-emerald-100 text-emerald-900'
+            : 'border border-slate-200 bg-slate-100 text-slate-700'
+      }`}
+    >
+      <span
+        className={`size-1.5 rounded-full ${
+          isStatusFilled ? 'bg-amber-600' : isStatusOpen ? 'bg-emerald-600' : 'bg-slate-500'
+        }`}
+      />
+      {formatJobStatus(job.status)}
+    </span>
+  );
+
+  const subTitleParts = [job.type, job.contractorTier, job.category].filter(Boolean);
 
   return (
-    <>
-      <header className="mb-4 mt-0.5 px-px">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-extrabold tracking-[0.1em] text-[#526173]">
-            UPWORK TOOLS
-          </span>
-          <span
-            className={`inline-flex rounded-full px-[9px] py-[7px] text-[10px] font-extrabold leading-none ${statusChipClass}`}
-          >
-            {formatJobStatus(job.status)}
-          </span>
+    <div className="flex flex-col gap-2.5">
+      {/* Header */}
+      <header className="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-xs">
+        <div className="mb-2 flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <span className="flex size-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] font-bold tracking-widest uppercase text-slate-500">
+              UPWORK TOOLS
+            </span>
+          </div>
+          {statusBadge}
         </div>
-        <h1 className="mb-[7px] mt-[11px] text-[23px] font-bold leading-[1.12] tracking-[-0.025em] text-[#172033]">
-          {job.title ?? 'Untitled job'}
+
+        <h1 className="text-[15px] font-bold leading-snug tracking-tight text-slate-900 line-clamp-2">
+          {job.title ?? 'Untitled Job'}
         </h1>
-        <p className="m-0 text-xs leading-[1.5] text-[#66758a]">
-          {[job.type, job.contractorTier, job.category].filter(Boolean).join(' · ') || 'Upwork job'}
-        </p>
+
+        {subTitleParts.length > 0 && (
+          <p className="mt-1 text-[11px] font-medium text-slate-500">{subTitleParts.join(' · ')}</p>
+        )}
       </header>
 
+      {/* Warnings & Restrictions */}
       <WarningStrip insights={insights} />
 
+      {/* Hero Metric: Exact Proposals */}
       <section
-        className="mb-3 rounded-[15px] bg-[#152d4f] p-[17px] text-white shadow-[0_10px_24px_rgba(21,45,79,0.18)]"
-        aria-labelledby="proposal-heading"
+        className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 p-4 text-white shadow-md ring-1 ring-white/10"
+        aria-labelledby="hero-proposals-heading"
       >
         <div className="flex items-center justify-between">
-          <h2 id="proposal-heading" className="text-sm font-bold leading-tight tracking-[-0.01em]">
-            Exact Proposals
-          </h2>
-          <span className="text-[9px] font-extrabold uppercase tracking-[0.1em] text-[#b6c7dd]">
-            Authenticated response
-          </span>
-        </div>
-        <strong className="my-[18px] block text-[49px] font-bold leading-[0.96] tracking-[-0.06em] tabular-nums">
-          {formatNumber(activity.exactProposals)}
-        </strong>
-        <div className="flex flex-wrap gap-x-3 gap-y-[7px] border-t border-white/25 pt-[11px] text-[11px] text-[#d7e1ee]">
-          <span>{formatNumber(activity.interviewed)} interviewed</span>
-          <span>{formatNumber(activity.totalHired)} hired</span>
-          <span>{formatNumber(activity.positionsToHire)} position</span>
-        </div>
-      </section>
-
-      <section
-        className="mb-3 rounded-[14px] border border-[#dfe7f0] bg-white p-[15px] shadow-[0_7px_18px_rgba(29,41,57,0.05)]"
-        aria-labelledby="competition-heading"
-      >
-        <div className="mb-3.5 flex items-center justify-between">
           <h2
-            id="competition-heading"
-            className="text-sm font-bold leading-tight tracking-[-0.01em] text-[#172033]"
+            id="hero-proposals-heading"
+            className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400"
           >
-            Competition
+            <span>Exact Proposals</span>
           </h2>
-          <span className="text-[10px] text-[#718096]">{interviewSummary}</span>
+          <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-950/60 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+            <LockIcon className="size-2.5" />
+            <span>Authenticated</span>
+          </div>
         </div>
-        <div className="grid grid-cols-2 gap-x-3 gap-y-3.5">
-          <Metric label="Interview rate" value={formatPercent(activity.interviewRate)} accent />
-          <Metric
-            label="Last buyer activity"
-            value={formatRelativeTime(activity.lastBuyerActivity)}
-          />
+
+        <div className="my-2.5 flex items-baseline justify-between">
+          <div className="text-4xl font-extrabold tracking-tight tabular-nums text-white">
+            {formatNumber(activity.exactProposals)}
+          </div>
+          {activity.interviewRate !== null && (
+            <div className="rounded-lg border border-emerald-400/20 bg-emerald-500/10 px-2 py-1 text-right">
+              <span className="block text-[10px] font-medium uppercase tracking-wider text-emerald-400/80">
+                Interview Rate
+              </span>
+              <span className="text-sm font-bold tabular-nums text-emerald-300">
+                {formatPercent(activity.interviewRate)}
+              </span>
+            </div>
+          )}
         </div>
+
+        <div className="grid grid-cols-3 gap-2 border-t border-slate-800/90 pt-3 text-center">
+          <div className="flex flex-col items-center">
+            <span className="text-[10px] font-medium text-slate-400">Interviewed</span>
+            <span className="text-xs font-bold tabular-nums text-white">
+              {formatNumber(activity.interviewed)}
+            </span>
+          </div>
+          <div className="flex flex-col items-center border-x border-slate-800">
+            <span className="text-[10px] font-medium text-slate-400">Hired</span>
+            <span className="text-xs font-bold tabular-nums text-white">
+              {formatNumber(activity.totalHired)}
+            </span>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="text-[10px] font-medium text-slate-400">Positions</span>
+            <span className="text-xs font-bold tabular-nums text-white">
+              {formatNumber(activity.positionsToHire)}
+            </span>
+          </div>
+        </div>
+
+        {activity.lastBuyerActivity && (
+          <div className="mt-2.5 flex items-center justify-center gap-1 text-[10.5px] text-slate-400">
+            <ClockIcon className="size-3" />
+            <span>Client active {formatRelativeTime(activity.lastBuyerActivity)}</span>
+          </div>
+        )}
       </section>
 
+      {/* Client Track Record */}
       <section
-        className="mb-3 rounded-[14px] border border-[#dfe7f0] bg-white p-[15px] shadow-[0_7px_18px_rgba(29,41,57,0.05)]"
+        className="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-xs"
         aria-labelledby="client-heading"
       >
-        <div className="mb-3.5 flex items-center justify-between">
-          <h2
-            id="client-heading"
-            className="text-sm font-bold leading-tight tracking-[-0.01em] text-[#172033]"
-          >
-            Client
-          </h2>
-          <span className="text-[10px] text-[#718096]">
-            {client.topClient === true ? 'Top client' : ''}
-          </span>
+        <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-2">
+          <div className="flex items-center gap-1.5">
+            <BuildingIcon className="size-3.5 text-slate-500" />
+            <h2 id="client-heading" className="text-xs font-bold text-slate-900">
+              Client Track Record
+            </h2>
+          </div>
+          {client.topClient && (
+            <span className="rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700">
+              Top Client
+            </span>
+          )}
         </div>
-        <div className="grid grid-cols-2 gap-x-3 gap-y-3.5">
-          <Metric label="Payment" value={paymentStatus} accent={client.paymentVerified === true} />
-          <Metric label="Rating · reviews" value={ratingSummary} />
-          <Metric label="Total spend" value={formatMoney(client.totalCharges, 'USD')} accent />
-          <Metric label="Historical hire rate" value={formatPercent(client.hireRate)} accent />
-          <Metric label="Jobs posted" value={formatNumber(client.jobsPosted)} />
-          <Metric label="Jobs with hires" value={formatNumber(client.totalJobsWithHires)} />
-          <Metric
-            label="Average hourly rate"
+
+        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+          <MetricCell
+            label="Payment Status"
+            value={
+              client.paymentVerified === true ? (
+                <span className="inline-flex items-center gap-1 text-emerald-700">
+                  <CheckCircleIcon className="size-3.5" />
+                  <span>Verified</span>
+                </span>
+              ) : client.paymentVerified === false ? (
+                <span className="text-slate-600">Unverified</span>
+              ) : (
+                'Not available'
+              )
+            }
+          />
+
+          <MetricCell
+            label="Rating & Reviews"
+            value={
+              client.rating !== null ? (
+                <span className="inline-flex items-center gap-1">
+                  <StarIcon className="size-3 text-amber-500 fill-amber-400" />
+                  <span>{formatRating(client.rating)}</span>
+                </span>
+              ) : (
+                'Not available'
+              )
+            }
+            subvalue={
+              client.feedbackCount !== null
+                ? `(${formatNumber(client.feedbackCount)} reviews)`
+                : undefined
+            }
+          />
+
+          <MetricCell
+            label="Total Spend"
+            value={formatMoney(client.totalCharges, 'USD')}
+            accent={client.totalCharges !== null && client.totalCharges > 0}
+          />
+
+          <MetricCell
+            label="Hire Rate"
+            value={formatPercent(client.hireRate)}
+            accent={client.hireRate !== null && client.hireRate >= 50}
+            subvalue={
+              client.totalJobsWithHires !== null && client.jobsPosted !== null
+                ? `${formatNumber(client.totalJobsWithHires)}/${formatNumber(client.jobsPosted)} jobs`
+                : undefined
+            }
+          />
+
+          <MetricCell
+            label="Avg Hourly Paid"
             value={formatMoney(client.averageHourlyRate, 'USD')}
           />
-          <Metric label="Member since" value={formatDate(client.memberSince)} />
-          <Metric label="Location" value={location} />
+
+          <MetricCell label="Member Since" value={formatDate(client.memberSince)} />
+
+          <div className="col-span-2 flex items-center gap-1.5 pt-1 text-[11px] text-slate-500">
+            <MapPinIcon className="size-3 text-slate-400" />
+            <span>{location}</span>
+          </div>
         </div>
       </section>
 
+      {/* Your Fit & Rate Dynamics */}
       <section
-        className="mb-3 rounded-[14px] border border-[#dfe7f0] bg-white p-[15px] shadow-[0_7px_18px_rgba(29,41,57,0.05)]"
+        className="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-xs"
         aria-labelledby="fit-heading"
       >
-        <div className="mb-3.5 flex items-center justify-between">
-          <h2
-            id="fit-heading"
-            className="text-sm font-bold leading-tight tracking-[-0.01em] text-[#172033]"
-          >
-            Your fit
-          </h2>
+        <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-2">
+          <div className="flex items-center gap-1.5">
+            <TargetIcon className="size-3.5 text-slate-500" />
+            <h2 id="fit-heading" className="text-xs font-bold text-slate-900">
+              Your Fit & Rates
+            </h2>
+          </div>
           {fit.applicationState && (
-            <span className="text-[10px] text-[#718096]">
+            <span className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
               {formatApplicationState(fit.applicationState)}
             </span>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-x-3 gap-y-3.5">
-          <Metric label="Requirements matched" value={qualificationCount} accent />
-          <Metric label="Your hourly rate" value={formatMoney(fit.freelancerHourlyRate, 'USD')} />
-          <Metric label="Client average" value={formatMoney(client.averageHourlyRate, 'USD')} />
-          <Metric label="Rate context" value={formatRateContext(fit.rateContext)} />
+
+        <div className="space-y-3">
+          {/* Qualifications Match */}
+          <div className="flex items-center justify-between rounded-xl bg-slate-50 p-2.5 border border-slate-100">
+            <span className="text-xs font-medium text-slate-600">Qualifications Matched</span>
+            <span className="rounded-md bg-white border border-slate-200/90 px-2 py-0.5 text-xs font-bold tabular-nums text-slate-900 shadow-2xs">
+              {qualificationSummary ?? 'Not available'}
+            </span>
+          </div>
+
+          {/* Rate Comparison Box */}
+          <div className="rounded-xl border border-slate-100 bg-slate-50 p-2.5">
+            <div className="grid grid-cols-2 gap-2 pb-2">
+              <div>
+                <span className="block text-[10.5px] font-medium text-slate-500">
+                  Your Hourly Rate
+                </span>
+                <span className="text-xs font-bold tabular-nums text-slate-900">
+                  {formatMoney(fit.freelancerHourlyRate, 'USD')}
+                </span>
+              </div>
+              <div>
+                <span className="block text-[10.5px] font-medium text-slate-500">
+                  Client Avg Rate
+                </span>
+                <span className="text-xs font-bold tabular-nums text-slate-900">
+                  {formatMoney(client.averageHourlyRate, 'USD')}
+                </span>
+              </div>
+            </div>
+
+            {fit.rateContext !== null && (
+              <div className="border-t border-slate-200/60 pt-2 flex items-center justify-between">
+                <span className="text-[11px] font-medium text-slate-500">Rate Comparison</span>
+                <span className="rounded bg-slate-200/80 px-2 py-0.5 text-[11px] font-semibold text-slate-800 tabular-nums">
+                  {formatRateContext(fit.rateContext)}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
-      <HistoryDetails title="Client history" jobs={history.recentJobs} />
-      <HistoryDetails title="Related jobs" jobs={history.relatedJobs} />
+      {/* Expandable History Sections */}
+      <HistoryDetails
+        title="Related Previous Jobs"
+        jobs={history.relatedJobs}
+        badgeText="Repeat Context"
+        defaultOpen={true}
+      />
 
-      <footer className="flex justify-between gap-3 px-0.5 pb-1 pt-px text-[10px] text-[#718096]">
-        <span>Posted {formatDate(job.postedOn)}</span>
-        <span className="text-right">
-          {job.budgetAmount === null
-            ? 'Budget not provided'
-            : formatMoney(job.budgetAmount, job.budgetCurrency)}
-        </span>
+      <HistoryDetails title="Client Hiring History" jobs={history.recentJobs} defaultOpen={false} />
+
+      {/* Footer */}
+      <footer className="mt-1 flex flex-col gap-1 rounded-xl bg-slate-200/50 p-2.5 text-[10.5px] text-slate-500">
+        <div className="flex items-center justify-between">
+          <span>Posted: {formatDate(job.postedOn)}</span>
+          <span className="font-medium text-slate-700">
+            {job.budgetAmount === null
+              ? 'Budget: Not provided'
+              : `Budget: ${formatMoney(job.budgetAmount, job.budgetCurrency)}`}
+          </span>
+        </div>
+        <div className="text-center text-[10px] text-slate-400">
+          Local session insights · Authenticated GraphQL snapshot
+        </div>
       </footer>
-    </>
+    </div>
   );
 }

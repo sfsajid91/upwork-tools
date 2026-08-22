@@ -45,7 +45,7 @@ function App() {
   }, []);
 
   return (
-    <main className="min-h-[520px] w-full bg-[#eef3f9] p-[18px] text-[#172033]">
+    <main className="min-h-[520px] w-full bg-slate-100/90 p-3.5 text-slate-900">
       {state.kind === 'loading' && <LoadingState />}
       {state.kind === 'empty' && (
         <EmptyState

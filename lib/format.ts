@@ -15,6 +15,30 @@ export function formatPercent(value: number | null): string {
   return value === null ? 'Not available' : `${value.toFixed(1)}%`;
 }
 
+export function formatRating(value: number | null): string {
+  return value === null ? 'Not available' : value.toFixed(2);
+}
+
+export function formatRateContext(value: number | null): string {
+  return value === null ? 'Not available' : `~${value.toFixed(1)}× client average`;
+}
+
+export function formatJobStatus(value: string | null): string {
+  if (!value) return 'Status not available';
+  return value.toLowerCase() === 'filled'
+    ? 'Filled'
+    : value.toLowerCase() === 'open'
+      ? 'Open'
+      : value;
+}
+
+export function formatApplicationState(value: 'applied' | 'invited' | 'hired' | null): string {
+  if (value === 'applied') return 'Already applied';
+  if (value === 'invited') return 'Client invited you';
+  if (value === 'hired') return 'Already hired';
+  return 'No application signal';
+}
+
 export function formatDate(value: string | null): string {
   if (!value) return 'Not available';
   const date = new Date(value);

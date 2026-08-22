@@ -1,3 +1,16 @@
+export type ApplicationState = 'applied' | 'invited' | 'hired';
+export type JobWarning = 'position-filled' | 'already-hired' | 'already-applied' | 'client-invited';
+
+export interface ClientHistoryEntry {
+  id: string | null;
+  title: string | null;
+  type: string | null;
+  amountPaid: number | null;
+  feedbackScore: number | null;
+  status: string | null;
+  startedOn: string | null;
+}
+
 export interface JobInsights {
   job: {
     id: string | null;
@@ -16,13 +29,13 @@ export interface JobInsights {
     duration: string | null;
     category: string | null;
     skills: string[];
+    restrictions: string[];
   };
   activity: {
     exactProposals: number | null;
+    interviewed: number | null;
+    interviewRate: number | null;
     totalHired: number | null;
-    invitedToInterview: number | null;
-    unansweredInvites: number | null;
-    invitationsSent: number | null;
     positionsToHire: number | null;
     lastBuyerActivity: string | null;
   };
@@ -41,7 +54,20 @@ export interface JobInsights {
     hireRate: number | null;
     totalCharges: number | null;
     averageHourlyRate: number | null;
+    memberSince: string | null;
   };
+  fit: {
+    qualificationsMatched: number | null;
+    qualificationsTotal: number | null;
+    freelancerHourlyRate: number | null;
+    rateContext: number | null;
+    applicationState: ApplicationState | null;
+  };
+  history: {
+    recentJobs: ClientHistoryEntry[];
+    relatedJobs: ClientHistoryEntry[];
+  };
+  warnings: JobWarning[];
 }
 
 type RecordValue = Record<string, unknown>;
@@ -80,12 +106,161 @@ function firstNumber(...values: unknown[]): number | null {
   return null;
 }
 
+function firstString(...values: unknown[]): string | null {
+  for (const value of values) {
+    const string = nullableString(value);
+    if (string !== null) return string;
+  }
+  return null;
+}
+
 function skillNames(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.flatMap((skill) => {
     const name = nullableString(valueAt(skill, 'prefLabel'));
     return name ? [name] : [];
   });
+}
+
+function uniqueStrings(values: string[]): string[] {
+  return [...new Set(values)];
+}
+
+function labels(value: unknown): string[] {
+  if (typeof value === 'string') return value.length > 0 ? [value] : [];
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (typeof item === 'string') return item.length > 0 ? [item] : [];
+    return [
+      firstString(
+        valueAt(item, 'name'),
+        valueAt(item, 'label'),
+        valueAt(item, 'value'),
+        valueAt(item, 'country'),
+        valueAt(item, 'state'),
+      ),
+    ].filter((label): label is string => label !== null);
+  });
+}
+
+function restrictionLabels(qualifications: RecordValue | null): string[] {
+  if (!qualifications) return [];
+  const restrictions = [
+    ...labels(qualifications.countries).map((value) => value),
+    ...labels(qualifications.states).map((value) => value),
+    ...labels(qualifications.timezones).map((value) => value),
+  ];
+  const minimumJobSuccessScore = nullableNumber(qualifications.minJobSuccessScore);
+  if (minimumJobSuccessScore !== null && minimumJobSuccessScore > 0) {
+    restrictions.push(`${minimumJobSuccessScore}%+ JSS`);
+  }
+  const englishSkill = nullableString(qualifications.prefEnglishSkill);
+  if (englishSkill && englishSkill !== 'ANY') restrictions.push(`English: ${englishSkill}`);
+  if (qualifications.shouldHavePortfolio === true) restrictions.push('Portfolio required');
+  if (qualifications.readyToStartToday === true) restrictions.push('Ready to start today');
+  return uniqueStrings(restrictions);
+}
+
+function normalizeHistory(value: unknown): ClientHistoryEntry[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .flatMap((entry) => {
+      const entryObject = record(entry);
+      const jobInfo = record(entryObject?.jobInfo);
+      if (!entryObject || !jobInfo) return [];
+      const feedback = record(entryObject.feedback);
+      return [
+        {
+          id: firstString(jobInfo.id, jobInfo.uid),
+          title: nullableString(jobInfo.title),
+          type: nullableString(jobInfo.type),
+          amountPaid: nullableNumber(entryObject.totalCharge),
+          feedbackScore: nullableNumber(feedback?.score),
+          status: nullableString(entryObject.status),
+          startedOn: nullableString(entryObject.startDate),
+        },
+      ];
+    })
+    .sort((left, right) => {
+      const leftTime = left.startedOn ? Date.parse(left.startedOn) : 0;
+      const rightTime = right.startedOn ? Date.parse(right.startedOn) : 0;
+      return rightTime - leftTime;
+    })
+    .slice(0, 5);
+}
+
+const RELATED_TITLE_STOP_WORDS: Record<string, true> = {
+  and: true,
+  for: true,
+  from: true,
+  needed: true,
+  with: true,
+  the: true,
+  this: true,
+  that: true,
+  job: true,
+};
+
+function titleTokens(title: string | null): Set<string> {
+  if (!title) return new Set();
+  return new Set(
+    title
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter((token) => token.length >= 4 && !RELATED_TITLE_STOP_WORDS[token]),
+  );
+}
+
+function relatedHistory(
+  currentTitle: string | null,
+  recentJobs: ClientHistoryEntry[],
+): ClientHistoryEntry[] {
+  const currentTokens = titleTokens(currentTitle);
+  if (currentTokens.size === 0) return [];
+  const threshold = currentTokens.size === 1 ? 1 : 2;
+  return recentJobs
+    .filter((job) => {
+      const matchingTokens = [...titleTokens(job.title)].filter((token) =>
+        currentTokens.has(token),
+      );
+      return matchingTokens.length >= threshold;
+    })
+    .slice(0, 3);
+}
+
+function applicationState(freelancerInfo: RecordValue | null): ApplicationState | null {
+  if (!freelancerInfo) return null;
+  if (
+    freelancerInfo.hired !== null &&
+    freelancerInfo.hired !== undefined &&
+    freelancerInfo.hired !== false
+  )
+    return 'hired';
+  if (
+    freelancerInfo.applied !== null &&
+    freelancerInfo.applied !== undefined &&
+    freelancerInfo.applied !== false
+  )
+    return 'applied';
+  if (
+    freelancerInfo.pendingInvite !== null &&
+    freelancerInfo.pendingInvite !== undefined &&
+    freelancerInfo.pendingInvite !== false
+  )
+    return 'invited';
+  return null;
+}
+
+function warningLabels(
+  status: string | null,
+  currentApplicationState: ApplicationState | null,
+): JobWarning[] {
+  const warnings: JobWarning[] = [];
+  if (status?.toUpperCase() === 'FILLED') warnings.push('position-filled');
+  if (currentApplicationState === 'hired') warnings.push('already-hired');
+  if (currentApplicationState === 'applied') warnings.push('already-applied');
+  if (currentApplicationState === 'invited') warnings.push('client-invited');
+  return warnings;
 }
 
 export function normalizeJobInsights(payload: unknown): JobInsights | null {
@@ -98,22 +273,39 @@ export function normalizeJobInsights(payload: unknown): JobInsights | null {
   const info = record(valueAt(job, 'info'));
   const budget = record(valueAt(job, 'budget'));
   const activity = record(valueAt(job, 'clientActivity'));
+  const qualifications = record(valueAt(details, 'opening', 'qualifications'));
   const buyer = record(valueAt(details, 'buyer'));
   const buyerInfo = record(valueAt(buyer, 'info'));
   const buyerStats = record(valueAt(buyerInfo, 'stats'));
   const buyerJobs = record(valueAt(buyerInfo, 'jobs'));
+  const buyerCompany = record(valueAt(buyerInfo, 'company'));
   const location = record(valueAt(buyerInfo, 'location'));
   const hourlyRate = record(valueAt(buyerInfo, 'avgHourlyJobsRate'));
   const extendedBudget = record(valueAt(job, 'extendedBudgetInfo'));
-  const postedCount = nullableNumber(buyerJobs?.postedCount);
-  const hiredCount = nullableNumber(buyerStats?.totalJobsWithHires);
+  const freelancerInfo = record(valueAt(details, 'currentUserInfo', 'freelancerInfo'));
+  const qualificationMatches = valueAt(freelancerInfo, 'qualificationsMatches', 'matches');
+  const recentJobs = normalizeHistory(valueAt(details, 'workHistory'));
+  const currentTitle = nullableString(info?.title);
+  const currentStatus = nullableString(job?.status);
+  const exactProposals = nullableNumber(activity?.totalApplicants);
+  const interviewed = nullableNumber(activity?.totalInvitedToInterview);
+  const clientAverageHourlyRate = firstNumber(hourlyRate?.amount);
+  const freelancerHourlyRate = nullableNumber(valueAt(freelancerInfo, 'hourlyRate', 'amount'));
+  const currentApplicationState = applicationState(freelancerInfo);
+  const matches = Array.isArray(qualificationMatches) ? qualificationMatches : [];
+  const qualifiedMatches = matches.filter((match) => valueAt(match, 'qualified') === true).length;
+  const hasQualificationMatches = Array.isArray(qualificationMatches);
+  const history = {
+    recentJobs,
+    relatedJobs: relatedHistory(currentTitle, recentJobs),
+  };
 
   return {
     job: {
       id: nullableString(info?.id),
-      title: nullableString(info?.title),
+      title: currentTitle,
       description: nullableString(job?.description),
-      status: nullableString(job?.status),
+      status: currentStatus,
       type: nullableString(info?.type),
       postedOn: nullableString(job?.postedOn ?? info?.createdOn),
       publishTime: nullableString(job?.publishTime),
@@ -128,13 +320,16 @@ export function normalizeJobInsights(payload: unknown): JobInsights | null {
       skills: skillNames(valueAt(job, 'sandsData', 'ontologySkills')).concat(
         skillNames(valueAt(job, 'sandsData', 'additionalSkills')),
       ),
+      restrictions: restrictionLabels(qualifications),
     },
     activity: {
-      exactProposals: nullableNumber(activity?.totalApplicants),
+      exactProposals,
+      interviewed,
+      interviewRate:
+        exactProposals !== null && exactProposals > 0 && interviewed !== null
+          ? (interviewed / exactProposals) * 100
+          : null,
       totalHired: nullableNumber(activity?.totalHired),
-      invitedToInterview: nullableNumber(activity?.totalInvitedToInterview),
-      unansweredInvites: nullableNumber(activity?.unansweredInvites),
-      invitationsSent: nullableNumber(activity?.invitationsSent),
       positionsToHire: nullableNumber(activity?.numberOfPositionsToHire),
       lastBuyerActivity: nullableString(activity?.lastBuyerActivity),
     },
@@ -148,16 +343,57 @@ export function normalizeJobInsights(payload: unknown): JobInsights | null {
       hours: nullableNumber(buyerStats?.hoursCount),
       feedbackCount: nullableNumber(buyerStats?.feedbackCount),
       rating: nullableNumber(buyerStats?.score),
-      totalJobsWithHires: hiredCount,
-      jobsPosted: postedCount,
+      totalJobsWithHires: nullableNumber(buyerStats?.totalJobsWithHires),
+      jobsPosted: nullableNumber(buyerJobs?.postedCount),
       hireRate:
-        hiredCount !== null && postedCount !== null && postedCount > 0
-          ? (hiredCount / postedCount) * 100
+        nullableNumber(buyerStats?.totalJobsWithHires) !== null &&
+        nullableNumber(buyerJobs?.postedCount) !== null &&
+        (nullableNumber(buyerJobs?.postedCount) as number) > 0
+          ? ((nullableNumber(buyerStats?.totalJobsWithHires) as number) /
+              (nullableNumber(buyerJobs?.postedCount) as number)) *
+            100
           : null,
       totalCharges: nullableNumber(valueAt(buyerStats, 'totalCharges', 'amount')),
-      averageHourlyRate: firstNumber(hourlyRate?.amount),
+      averageHourlyRate: clientAverageHourlyRate,
+      memberSince: nullableString(valueAt(buyerCompany, 'contractDate')),
     },
+    fit: {
+      qualificationsMatched: hasQualificationMatches ? qualifiedMatches : null,
+      qualificationsTotal: hasQualificationMatches ? matches.length : null,
+      freelancerHourlyRate,
+      rateContext:
+        freelancerHourlyRate !== null &&
+        clientAverageHourlyRate !== null &&
+        clientAverageHourlyRate > 0
+          ? freelancerHourlyRate / clientAverageHourlyRate
+          : null,
+      applicationState: currentApplicationState,
+    },
+    history,
+    warnings: warningLabels(currentStatus, currentApplicationState),
   };
+}
+
+function isNullableStringValue(key: string, source: RecordValue): boolean {
+  return source[key] === null || typeof source[key] === 'string';
+}
+
+function isNullableNumberValue(key: string, source: RecordValue): boolean {
+  return source[key] === null || (typeof source[key] === 'number' && Number.isFinite(source[key]));
+}
+
+function isNullableBooleanValue(key: string, source: RecordValue): boolean {
+  return source[key] === null || typeof source[key] === 'boolean';
+}
+
+function isHistoryEntry(value: unknown): value is ClientHistoryEntry {
+  const entry = record(value);
+  if (!entry) return false;
+  return (
+    ['id', 'title', 'type', 'status', 'startedOn'].every((key) =>
+      isNullableStringValue(key, entry),
+    ) && ['amountPaid', 'feedbackScore'].every((key) => isNullableNumberValue(key, entry))
+  );
 }
 
 export function isJobInsights(value: unknown): value is JobInsights {
@@ -165,17 +401,34 @@ export function isJobInsights(value: unknown): value is JobInsights {
   const job = record(object?.job);
   const activity = record(object?.activity);
   const client = record(object?.client);
-  if (!job || !activity || !client || !Array.isArray(job.skills)) return false;
-
-  const nullableStringValue = (key: string, source: RecordValue) =>
-    source[key] === null || typeof source[key] === 'string';
-  const nullableNumberValue = (key: string, source: RecordValue) =>
-    source[key] === null || (typeof source[key] === 'number' && Number.isFinite(source[key]));
-  const nullableBooleanValue = (key: string, source: RecordValue) =>
-    source[key] === null || typeof source[key] === 'boolean';
+  const fit = record(object?.fit);
+  const history = record(object?.history);
+  const warnings = object?.warnings;
+  if (
+    !job ||
+    !activity ||
+    !client ||
+    !fit ||
+    !history ||
+    !Array.isArray(job.skills) ||
+    !Array.isArray(job.restrictions) ||
+    !Array.isArray(history.recentJobs) ||
+    !Array.isArray(history.relatedJobs) ||
+    !Array.isArray(warnings)
+  ) {
+    return false;
+  }
 
   return (
     job.skills.every((skill) => typeof skill === 'string') &&
+    job.restrictions.every((restriction) => typeof restriction === 'string') &&
+    history.recentJobs.every(isHistoryEntry) &&
+    history.relatedJobs.every(isHistoryEntry) &&
+    warnings.every((warning): warning is JobWarning =>
+      ['position-filled', 'already-hired', 'already-applied', 'client-invited'].includes(
+        warning as string,
+      ),
+    ) &&
     [
       'id',
       'title',
@@ -189,21 +442,16 @@ export function isJobInsights(value: unknown): value is JobInsights {
       'budgetCurrency',
       'duration',
       'category',
-    ].every((key) => nullableStringValue(key, job)) &&
+    ].every((key) => isNullableStringValue(key, job)) &&
     ['budgetAmount', 'hourlyBudgetMin', 'hourlyBudgetMax'].every((key) =>
-      nullableNumberValue(key, job),
+      isNullableNumberValue(key, job),
     ) &&
-    [
-      'exactProposals',
-      'totalHired',
-      'invitedToInterview',
-      'unansweredInvites',
-      'invitationsSent',
-      'positionsToHire',
-    ].every((key) => nullableNumberValue(key, activity)) &&
-    nullableStringValue('lastBuyerActivity', activity) &&
-    ['topClient', 'paymentVerified'].every((key) => nullableBooleanValue(key, client)) &&
-    ['country', 'city'].every((key) => nullableStringValue(key, client)) &&
+    ['exactProposals', 'interviewed', 'interviewRate', 'totalHired', 'positionsToHire'].every(
+      (key) => isNullableNumberValue(key, activity),
+    ) &&
+    isNullableStringValue('lastBuyerActivity', activity) &&
+    ['topClient', 'paymentVerified'].every((key) => isNullableBooleanValue(key, client)) &&
+    ['country', 'city', 'memberSince'].every((key) => isNullableStringValue(key, client)) &&
     [
       'totalAssignments',
       'activeAssignments',
@@ -215,6 +463,13 @@ export function isJobInsights(value: unknown): value is JobInsights {
       'hireRate',
       'totalCharges',
       'averageHourlyRate',
-    ].every((key) => nullableNumberValue(key, client))
+    ].every((key) => isNullableNumberValue(key, client)) &&
+    ['qualificationsMatched', 'qualificationsTotal', 'freelancerHourlyRate', 'rateContext'].every(
+      (key) => isNullableNumberValue(key, fit),
+    ) &&
+    (fit.applicationState === null ||
+      fit.applicationState === 'applied' ||
+      fit.applicationState === 'invited' ||
+      fit.applicationState === 'hired')
   );
 }

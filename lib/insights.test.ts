@@ -1,0 +1,122 @@
+import { describe, expect, test } from 'bun:test';
+import { normalizeJobInsights } from './insights';
+
+function payload(overrides: Record<string, unknown> = {}) {
+  return {
+    data: {
+      jobAuthDetails: {
+        topClient: false,
+        opening: {
+          job: {
+            status: 'FILLED',
+            postedOn: '2026-08-05T13:01:22.491Z',
+            info: {
+              id: 'job-1',
+              title: 'Landing page backend',
+              type: 'FIXED',
+              createdOn: '2026-08-05T13:01:22.491Z',
+            },
+            clientActivity: {
+              totalApplicants: 38,
+              totalInvitedToInterview: 4,
+              totalHired: 1,
+              numberOfPositionsToHire: 1,
+              lastBuyerActivity: '2026-08-10T15:25:34.622Z',
+            },
+            budget: { amount: 400, currencyCode: 'USD' },
+          },
+          qualifications: {
+            minJobSuccessScore: 90,
+            prefEnglishSkill: 'FLUENT',
+          },
+        },
+        buyer: {
+          isPaymentMethodVerified: true,
+          info: {
+            location: { city: 'Oslo', country: 'Norway' },
+            stats: {
+              totalAssignments: 50,
+              activeAssignmentsCount: 1,
+              hoursCount: 7,
+              feedbackCount: 40,
+              score: 4.99,
+              totalJobsWithHires: 49,
+              totalCharges: { amount: 3393.46 },
+            },
+            jobs: { postedCount: 62 },
+            avgHourlyJobsRate: { amount: 10.16 },
+            company: { contractDate: '2009-10-04T00:00:00.000Z' },
+          },
+        },
+        workHistory: [
+          {
+            status: 'CLOSED',
+            startDate: '2026-07-21T00:34:12.125Z',
+            totalCharge: 400,
+            jobInfo: { id: 'history-1', title: 'Premium landing page design', type: 'FIXED' },
+            feedback: { score: 5 },
+          },
+        ],
+        currentUserInfo: {
+          freelancerInfo: {
+            applied: true,
+            hourlyRate: { amount: 25 },
+            qualificationsMatches: {
+              matches: [{ qualified: true }, { qualified: false }],
+            },
+          },
+        },
+        ...overrides,
+      },
+    },
+  };
+}
+
+describe('normalizeJobInsights', () => {
+  test('normalizes scope metrics, fit, warnings, and related history', () => {
+    const insights = normalizeJobInsights(payload());
+
+    expect(insights).not.toBeNull();
+    expect(Math.abs((insights?.activity.interviewRate ?? 0) - 10.526) < 0.001).toBe(true);
+    expect(Math.abs((insights?.client.hireRate ?? 0) - 79.032) < 0.001).toBe(true);
+    expect(insights?.fit.qualificationsMatched).toBe(1);
+    expect(insights?.fit.qualificationsTotal).toBe(2);
+    expect(Math.abs((insights?.fit.rateContext ?? 0) - 2.46) < 0.01).toBe(true);
+    expect(insights?.warnings).toEqual(['position-filled', 'already-applied']);
+    expect(insights?.history.recentJobs.length).toBe(1);
+    expect(insights?.history.relatedJobs.length).toBe(1);
+    expect(insights?.job.restrictions).toEqual(['90%+ JSS', 'English: FLUENT']);
+  });
+
+  test('preserves zero applicants and does not invent an interview rate', () => {
+    const insights = normalizeJobInsights(
+      payload({
+        opening: {
+          job: {
+            status: 'OPEN',
+            clientActivity: {
+              totalApplicants: 0,
+              totalInvitedToInterview: 0,
+              totalHired: 0,
+              numberOfPositionsToHire: 0,
+            },
+            info: { title: 'Zero applicant job' },
+          },
+          qualifications: {},
+        },
+        currentUserInfo: {
+          freelancerInfo: {
+            applied: null,
+            hired: null,
+            pendingInvite: null,
+          },
+        },
+      }),
+    );
+
+    expect(insights?.activity.exactProposals).toBe(0);
+    expect(insights?.activity.interviewRate).toBeNull();
+    expect(Math.abs((insights?.client.hireRate ?? 0) - 79.032) < 0.001).toBe(true);
+    expect(insights?.warnings).toEqual([]);
+  });
+});

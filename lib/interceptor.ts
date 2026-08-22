@@ -75,7 +75,7 @@ function installFetchAndResponseHooks(page: InterceptedWindow): void {
     }
   };
 
-  const wrappedFetches = new WeakSet<Function>();
+  const wrappedFetches = new WeakSet<typeof window.fetch>();
   const wrapFetch = (original: typeof window.fetch): typeof window.fetch => {
     if (wrappedFetches.has(original)) return original;
     const wrapped: typeof window.fetch = function (this: Window, ...args) {

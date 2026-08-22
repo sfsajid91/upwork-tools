@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 import { isJobInsights, normalizeJobInsights } from '../lib/insights';
-import { createPageEvent, isPageEvent, isRuntimeMessage, STORE_JOB_INSIGHTS } from '../lib/protocol';
+import {
+  createPageEvent,
+  isPageEvent,
+  isRuntimeMessage,
+  STORE_JOB_INSIGHTS,
+} from '../lib/protocol';
 
 const rawResponse = {
   data: {

@@ -176,21 +176,45 @@ export function isJobInsights(value: unknown): value is JobInsights {
 
   return (
     job.skills.every((skill) => typeof skill === 'string') &&
-    ['id', 'title', 'description', 'status', 'type', 'postedOn', 'publishTime', 'workload',
-      'contractorTier', 'budgetCurrency', 'duration', 'category'].every((key) =>
-      nullableStringValue(key, job),
-    ) &&
+    [
+      'id',
+      'title',
+      'description',
+      'status',
+      'type',
+      'postedOn',
+      'publishTime',
+      'workload',
+      'contractorTier',
+      'budgetCurrency',
+      'duration',
+      'category',
+    ].every((key) => nullableStringValue(key, job)) &&
     ['budgetAmount', 'hourlyBudgetMin', 'hourlyBudgetMax'].every((key) =>
       nullableNumberValue(key, job),
     ) &&
-    ['exactProposals', 'totalHired', 'invitedToInterview', 'unansweredInvites',
-      'invitationsSent', 'positionsToHire'].every((key) => nullableNumberValue(key, activity)) &&
+    [
+      'exactProposals',
+      'totalHired',
+      'invitedToInterview',
+      'unansweredInvites',
+      'invitationsSent',
+      'positionsToHire',
+    ].every((key) => nullableNumberValue(key, activity)) &&
     nullableStringValue('lastBuyerActivity', activity) &&
     ['topClient', 'paymentVerified'].every((key) => nullableBooleanValue(key, client)) &&
     ['country', 'city'].every((key) => nullableStringValue(key, client)) &&
-    ['totalAssignments', 'activeAssignments', 'hours', 'feedbackCount', 'rating',
-      'totalJobsWithHires', 'jobsPosted', 'hireRate', 'totalCharges', 'averageHourlyRate'].every(
-      (key) => nullableNumberValue(key, client),
-    )
+    [
+      'totalAssignments',
+      'activeAssignments',
+      'hours',
+      'feedbackCount',
+      'rating',
+      'totalJobsWithHires',
+      'jobsPosted',
+      'hireRate',
+      'totalCharges',
+      'averageHourlyRate',
+    ].every((key) => nullableNumberValue(key, client))
   );
 }

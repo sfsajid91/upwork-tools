@@ -1,4 +1,4 @@
-import { normalizeJobInsights, type JobInsights } from './insights';
+import { type JobInsights, normalizeJobInsights } from './insights';
 import { createPageEvent } from './protocol';
 
 const JOB_DETAILS_ALIAS = 'gql-query-get-auth-job-details-v2';
@@ -15,8 +15,7 @@ let previousCapture: { signature: string; capturedAt: number } | null = null;
 function isSupportedUrl(value: string): boolean {
   try {
     const url = new URL(value, window.location.href);
-    const isUpwork =
-      url.hostname === 'upwork.com' || url.hostname.endsWith('.upwork.com');
+    const isUpwork = url.hostname === 'upwork.com' || url.hostname.endsWith('.upwork.com');
     return isUpwork && url.searchParams.get('alias') === JOB_DETAILS_ALIAS;
   } catch {
     return false;
@@ -41,7 +40,11 @@ function emitInsights(insights: JobInsights): void {
     insights.activity.exactProposals,
   ]);
   const now = Date.now();
-  if (previousCapture && previousCapture.signature === signature && now - previousCapture.capturedAt < 1000) {
+  if (
+    previousCapture &&
+    previousCapture.signature === signature &&
+    now - previousCapture.capturedAt < 1000
+  ) {
     return;
   }
   previousCapture = { signature, capturedAt: now };
@@ -167,16 +170,21 @@ function installXhrHooks(): void {
   } as typeof XMLHttpRequest.prototype.open;
 
   XMLHttpRequest.prototype.send = function (...args: Parameters<XMLHttpRequest['send']>) {
-    this.addEventListener('load', () => {
-      try {
-        const url = urls.get(this) ?? this.responseURL;
-        if (!isSupportedUrl(url)) return;
-        const payload = this.responseType === 'json' ? this.response : JSON.parse(this.responseText);
-        inspectPayload(payload, url);
-      } catch {
-        // Inspection must never affect the host page.
-      }
-    }, { once: true });
+    this.addEventListener(
+      'load',
+      () => {
+        try {
+          const url = urls.get(this) ?? this.responseURL;
+          if (!isSupportedUrl(url)) return;
+          const payload =
+            this.responseType === 'json' ? this.response : JSON.parse(this.responseText);
+          inspectPayload(payload, url);
+        } catch {
+          // Inspection must never affect the host page.
+        }
+      },
+      { once: true },
+    );
     return originalSend.apply(this, args);
   };
 }

@@ -1,9 +1,5 @@
 import { isJobInsights } from '../lib/insights';
-import {
-  GET_JOB_INSIGHTS,
-  isRuntimeMessage,
-  STORE_JOB_INSIGHTS,
-} from '../lib/protocol';
+import { isRuntimeMessage, STORE_JOB_INSIGHTS } from '../lib/protocol';
 
 const BADGE_COLOR = '#152d4f';
 const storageKey = (tabId: number) => `job-insights:${tabId}`;
@@ -42,7 +38,11 @@ export default defineBackground(() => {
       if (tabId === undefined || !Number.isInteger(tabId) || tabId < 0) return undefined;
       try {
         await browser.storage.session.set({ [storageKey(tabId)]: message.payload });
-        await setBadge(tabId, sender.tab?.url, String(message.payload.activity.exactProposals ?? ''));
+        await setBadge(
+          tabId,
+          sender.tab?.url,
+          String(message.payload.activity.exactProposals ?? ''),
+        );
       } catch {
         // Session storage failures must not affect the host page.
       }

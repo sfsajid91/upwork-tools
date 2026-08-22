@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.16/schema.json",
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -8,7 +8,8 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "maxSize": 1048576
+    "maxSize": 1048576,
+    "includes": ["**", "!!node_modules", "!!.output", "!!.wxt", "!!dist", "!!coverage", "!!.agents"]
   },
   "formatter": {
     "enabled": true,

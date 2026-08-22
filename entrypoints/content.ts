@@ -1,5 +1,5 @@
 import { browser } from 'wxt/browser';
-import { STORE_JOB_INSIGHTS, isPageEvent } from '../lib/protocol';
+import { isPageEvent, STORE_JOB_INSIGHTS } from '../lib/protocol';
 
 export default defineContentScript({
   matches: ['*://*.upwork.com/*'],

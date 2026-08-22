@@ -3,6 +3,7 @@ import { browser } from 'wxt/browser';
 import type { JobInsights } from '../../lib/insights';
 import { isJobInsights } from '../../lib/insights';
 import { GET_JOB_INSIGHTS } from '../../lib/protocol';
+import { useTheme } from '../../lib/theme';
 import { AvailableState, EmptyState, LoadingState } from './InsightsView';
 
 type ViewState =
@@ -12,6 +13,7 @@ type ViewState =
   | { kind: 'ready'; insights: JobInsights };
 
 function App() {
+  const { mode, cycleTheme } = useTheme();
   const [state, setState] = useState<ViewState>({ kind: 'loading' });
 
   useEffect(() => {
@@ -45,18 +47,28 @@ function App() {
   }, []);
 
   return (
-    <main className="min-h-[520px] w-full bg-slate-100/90 p-3.5 text-slate-900">
-      {state.kind === 'loading' && <LoadingState />}
+    <main className="min-h-[520px] w-full bg-slate-100/90 p-3.5 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      {state.kind === 'loading' && <LoadingState themeMode={mode} onToggleTheme={cycleTheme} />}
       {state.kind === 'empty' && (
         <EmptyState
           title="No job insight yet"
           copy="Open an Upwork job and let its details load normally, then reopen this popup."
+          themeMode={mode}
+          onToggleTheme={cycleTheme}
         />
       )}
       {state.kind === 'error' && (
-        <EmptyState title="Insights unavailable" copy={state.message} tone="error" />
+        <EmptyState
+          title="Insights unavailable"
+          copy={state.message}
+          tone="error"
+          themeMode={mode}
+          onToggleTheme={cycleTheme}
+        />
       )}
-      {state.kind === 'ready' && <AvailableState insights={state.insights} />}
+      {state.kind === 'ready' && (
+        <AvailableState insights={state.insights} themeMode={mode} onToggleTheme={cycleTheme} />
+      )}
     </main>
   );
 }

@@ -19,6 +19,13 @@
     background: rgba(100, 116, 139, 0.6);
   }
 
+  .dark ::-webkit-scrollbar-thumb {
+    background: rgba(71, 85, 105, 0.5);
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.8);
+  }
+
   details > summary::-webkit-details-marker {
     display: none;
   }

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { renderToString } from 'react-dom/server';
 import { normalizeJobInsights } from '../../lib/insights';
-import { AvailableState, EmptyState, LoadingState } from './InsightsView';
+import { AvailableState, EmptyState, LoadingState, ThemeToggle } from './InsightsView';
 
 function samplePayload() {
   return {
@@ -109,5 +109,16 @@ describe('InsightsView components', () => {
     expect(html.includes('Your Fit &amp; Rates')).toBe(true);
     expect(html.includes('Related Previous Jobs')).toBe(true);
     expect(html.includes('Repeat Context')).toBe(true);
+  });
+
+  test('renders ThemeToggle in system, light, and dark modes', () => {
+    const systemHtml = renderToString(<ThemeToggle mode="system" onToggle={() => {}} />);
+    expect(systemHtml.includes('System')).toBe(true);
+
+    const lightHtml = renderToString(<ThemeToggle mode="light" onToggle={() => {}} />);
+    expect(lightHtml.includes('Light')).toBe(true);
+
+    const darkHtml = renderToString(<ThemeToggle mode="dark" onToggle={() => {}} />);
+    expect(darkHtml.includes('Dark')).toBe(true);
   });
 });

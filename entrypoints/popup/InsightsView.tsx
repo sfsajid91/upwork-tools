@@ -11,6 +11,7 @@ import {
   formatRelativeTime,
 } from '../../lib/format';
 import type { ClientHistoryEntry, JobInsights, JobWarning } from '../../lib/insights';
+import type { ThemeMode } from '../../lib/theme';
 
 // --- Vector Icons ---
 
@@ -217,6 +218,67 @@ function RadarIcon({ className = 'size-6' }: { className?: string }) {
   );
 }
 
+function SunIcon({ className = 'size-3.5' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2" />
+      <path d="M12 20v2" />
+      <path d="m4.93 4.93 1.41 1.41" />
+      <path d="m17.66 17.66 1.41 1.41" />
+      <path d="M2 12h2" />
+      <path d="M20 12h2" />
+      <path d="m6.34 17.66-1.41 1.41" />
+      <path d="m19.07 4.93-1.41 1.41" />
+    </svg>
+  );
+}
+
+function MoonIcon({ className = 'size-3.5' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+    </svg>
+  );
+}
+
+function MonitorIcon({ className = 'size-3.5' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect width="20" height="14" x="2" y="3" rx="2" />
+      <line x1="8" x2="16" y1="21" y2="21" />
+      <line x1="12" y1="12" x2="12" y2="21" />
+    </svg>
+  );
+}
+
 // --- Component Helpers ---
 
 const WARNING_COPY: Record<JobWarning, string> = {
@@ -225,6 +287,30 @@ const WARNING_COPY: Record<JobWarning, string> = {
   'already-applied': 'Already applied to this job',
   'client-invited': 'Client invited you to apply',
 };
+
+export function ThemeToggle({ mode, onToggle }: { mode: ThemeMode; onToggle: () => void }) {
+  const label =
+    mode === 'dark'
+      ? 'Theme: Dark (switch to Light)'
+      : mode === 'light'
+        ? 'Theme: Light (switch to System)'
+        : 'Theme: System (switch to Dark)';
+
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="flex cursor-pointer items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10.5px] font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-700/80 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+      aria-label={label}
+      title={label}
+    >
+      {mode === 'dark' && <MoonIcon className="size-3 text-indigo-400" />}
+      {mode === 'light' && <SunIcon className="size-3 text-amber-500" />}
+      {mode === 'system' && <MonitorIcon className="size-3 text-slate-400" />}
+      <span className="capitalize">{mode}</span>
+    </button>
+  );
+}
 
 function MetricCell({
   label,
@@ -241,20 +327,22 @@ function MetricCell({
 }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <div className="flex items-center gap-1 text-[11px] font-medium text-slate-500">
+      <div className="flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
         {icon}
         <span>{label}</span>
       </div>
       <div className="flex items-baseline gap-1.5">
         <span
           className={`text-[13px] font-semibold tracking-tight tabular-nums ${
-            accent ? 'text-emerald-700' : 'text-slate-900'
+            accent ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-900 dark:text-slate-100'
           }`}
         >
           {value}
         </span>
         {subvalue && (
-          <span className="text-[10.5px] font-normal text-slate-500 tabular-nums">{subvalue}</span>
+          <span className="text-[10.5px] font-normal text-slate-500 tabular-nums dark:text-slate-400">
+            {subvalue}
+          </span>
         )}
       </div>
     </div>
@@ -270,13 +358,15 @@ function WarningStrip({ insights }: { insights: JobInsights }) {
 
   return (
     <aside
-      className="mb-3 rounded-xl border border-amber-300/80 bg-amber-50/90 p-3 text-amber-950 shadow-xs"
+      className="mb-3 rounded-xl border border-amber-300/80 bg-amber-50/90 p-3 text-amber-950 shadow-xs dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-200"
       aria-label="Important job notices"
       role="alert"
     >
       <div className="mb-1.5 flex items-center gap-1.5">
-        <AlertTriangleIcon className="size-4 shrink-0 text-amber-600" />
-        <span className="text-xs font-bold tracking-tight text-amber-900">Important Notice</span>
+        <AlertTriangleIcon className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+        <span className="text-xs font-bold tracking-tight text-amber-900 dark:text-amber-200">
+          Important Notice
+        </span>
       </div>
 
       {warnings.length > 0 && (
@@ -284,9 +374,9 @@ function WarningStrip({ insights }: { insights: JobInsights }) {
           {warnings.map((message) => (
             <li
               key={message}
-              className="flex items-center gap-1.5 text-xs font-medium text-amber-900 leading-snug"
+              className="flex items-center gap-1.5 text-xs font-medium text-amber-900 leading-snug dark:text-amber-200"
             >
-              <span className="size-1.5 rounded-full bg-amber-500 shrink-0" />
+              <span className="size-1.5 shrink-0 rounded-full bg-amber-500 dark:bg-amber-400" />
               <span>{message}</span>
             </li>
           ))}
@@ -295,13 +385,13 @@ function WarningStrip({ insights }: { insights: JobInsights }) {
 
       {restrictions.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-700">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
             Requirements:
           </span>
           {restrictions.map((restriction) => (
             <span
               key={restriction}
-              className="rounded-md border border-amber-200/90 bg-amber-100/80 px-2 py-0.5 text-[11px] font-medium text-amber-900 leading-none"
+              className="rounded-md border border-amber-200/90 bg-amber-100/80 px-2 py-0.5 text-[11px] font-medium text-amber-900 leading-none dark:border-amber-700/50 dark:bg-amber-900/40 dark:text-amber-300"
             >
               {restriction}
             </span>
@@ -320,32 +410,34 @@ function HistoryRow({ job }: { job: ClientHistoryEntry }) {
     job.feedbackScore === null ? null : `${formatRating(job.feedbackScore)} ★`;
 
   return (
-    <li className="flex flex-col gap-1 py-2.5 first:pt-1 last:pb-1 border-b border-slate-100 last:border-b-0">
+    <li className="flex flex-col gap-1 border-b border-slate-100 py-2.5 first:pt-1 last:border-b-0 last:pb-1 dark:border-slate-800">
       <div className="flex items-start justify-between gap-2">
-        <span className="text-xs font-medium text-slate-900 leading-tight line-clamp-2">
+        <span className="text-xs font-medium text-slate-900 leading-tight line-clamp-2 dark:text-slate-200">
           {job.title ?? 'Untitled job'}
         </span>
         {formattedAmount && (
-          <span className="shrink-0 text-xs font-semibold tabular-nums text-slate-900 bg-slate-100/90 px-1.5 py-0.5 rounded">
+          <span className="shrink-0 rounded bg-slate-100/90 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-slate-900 dark:bg-slate-800 dark:text-slate-200">
             {formattedAmount}
           </span>
         )}
       </div>
-      <div className="flex items-center gap-2 text-[11px] text-slate-500">
-        <span className="font-medium text-slate-600">{typeTag}</span>
+      <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+        <span className="font-medium text-slate-600 dark:text-slate-300">{typeTag}</span>
         {formattedRating && (
           <>
-            <span className="text-slate-300">·</span>
-            <span className="flex items-center gap-0.5 text-amber-700 font-medium tabular-nums">
-              <StarIcon className="size-3 text-amber-500 fill-amber-400" />
+            <span className="text-slate-300 dark:text-slate-600">·</span>
+            <span className="flex items-center gap-0.5 font-medium tabular-nums text-amber-700 dark:text-amber-400">
+              <StarIcon className="size-3 fill-amber-400 text-amber-500" />
               {formattedRating}
             </span>
           </>
         )}
         {job.status && (
           <>
-            <span className="text-slate-300">·</span>
-            <span className="capitalize text-slate-400">{job.status.toLowerCase()}</span>
+            <span className="text-slate-300 dark:text-slate-600">·</span>
+            <span className="capitalize text-slate-400 dark:text-slate-500">
+              {job.status.toLowerCase()}
+            </span>
           </>
         )}
       </div>
@@ -368,26 +460,26 @@ function HistoryDetails({
 
   return (
     <details
-      className="group mb-2.5 overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-xs transition-colors"
+      className="group mb-2.5 overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-xs transition-colors dark:border-slate-800/90 dark:bg-slate-900"
       open={defaultOpen}
     >
-      <summary className="flex cursor-pointer list-none items-center justify-between px-3.5 py-3 text-xs font-semibold text-slate-800 select-none hover:bg-slate-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
+      <summary className="flex cursor-pointer list-none items-center justify-between px-3.5 py-3 text-xs font-semibold text-slate-800 select-none hover:bg-slate-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-slate-200 dark:hover:bg-slate-800/60">
         <div className="flex items-center gap-2">
           <span>{title}</span>
           {badgeText && (
-            <span className="rounded bg-indigo-50 border border-indigo-200/70 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700 leading-none">
+            <span className="rounded border border-indigo-200/70 bg-indigo-50 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700 leading-none dark:border-indigo-800/70 dark:bg-indigo-950/60 dark:text-indigo-300">
               {badgeText}
             </span>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 tabular-nums">
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 tabular-nums dark:bg-slate-800 dark:text-slate-300">
             {jobs.length}
           </span>
-          <ChevronDownIcon className="size-3.5 text-slate-400 transition-transform duration-200 group-open:rotate-180" />
+          <ChevronDownIcon className="size-3.5 text-slate-400 transition-transform duration-200 group-open:rotate-180 dark:text-slate-500" />
         </div>
       </summary>
-      <div className="border-t border-slate-100 bg-slate-50/40 px-3.5 py-2">
+      <div className="border-t border-slate-100 bg-slate-50/40 px-3.5 py-2 dark:border-slate-800 dark:bg-slate-900/50">
         <ul className="m-0 list-none p-0" aria-label={title}>
           {jobs.map((job, index) => (
             <HistoryRow
@@ -410,18 +502,28 @@ export function EmptyState({
   title,
   copy,
   tone = 'default',
+  themeMode,
+  onToggleTheme,
 }: {
   title: string;
   copy: string;
   tone?: 'default' | 'error';
+  themeMode?: ThemeMode;
+  onToggleTheme?: () => void;
 }) {
   return (
-    <section className="flex min-h-[460px] flex-col items-center justify-center rounded-2xl border border-slate-200/90 bg-white p-6 text-center shadow-xs">
+    <section className="flex min-h-[460px] flex-col items-center justify-center rounded-2xl border border-slate-200/90 bg-white p-6 text-center shadow-xs dark:border-slate-800/90 dark:bg-slate-900">
+      {themeMode && onToggleTheme && (
+        <div className="mb-4 flex w-full justify-end">
+          <ThemeToggle mode={themeMode} onToggle={onToggleTheme} />
+        </div>
+      )}
+
       <div
         className={`mb-4 flex size-12 items-center justify-center rounded-2xl shadow-inner ${
           tone === 'error'
-            ? 'bg-rose-50 border border-rose-200 text-rose-600'
-            : 'bg-emerald-50 border border-emerald-200 text-emerald-600'
+            ? 'border border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-400'
+            : 'border border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-400'
         }`}
         aria-hidden="true"
       >
@@ -432,15 +534,19 @@ export function EmptyState({
         )}
       </div>
 
-      <h1 className="mb-2 text-lg font-bold tracking-tight text-slate-900">{title}</h1>
-      <p className="mb-6 max-w-[32ch] text-xs leading-relaxed text-slate-500">{copy}</p>
+      <h1 className="mb-2 text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
+        {title}
+      </h1>
+      <p className="mb-6 max-w-[32ch] text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+        {copy}
+      </p>
 
       {tone === 'default' && (
-        <div className="w-full rounded-xl border border-slate-100 bg-slate-50 p-3.5 text-left">
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+        <div className="w-full rounded-xl border border-slate-100 bg-slate-50 p-3.5 text-left dark:border-slate-800 dark:bg-slate-800/60">
+          <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
             How it works
           </div>
-          <ol className="m-0 list-decimal space-y-1.5 pl-4 text-xs text-slate-600">
+          <ol className="m-0 list-decimal space-y-1.5 pl-4 text-xs text-slate-600 dark:text-slate-300">
             <li>Open any job post on Upwork.</li>
             <li>Let the page finish loading its details.</li>
             <li>Open this popup for instant authenticated signals.</li>
@@ -448,36 +554,45 @@ export function EmptyState({
         </div>
       )}
 
-      <div className="mt-6 flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
-        <ShieldCheckIcon className="size-3.5 text-emerald-600" />
+      <div className="mt-6 flex items-center gap-1.5 text-[11px] font-medium text-slate-400 dark:text-slate-500">
+        <ShieldCheckIcon className="size-3.5 text-emerald-600 dark:text-emerald-400" />
         <span>100% Local session data · No duplicate requests</span>
       </div>
     </section>
   );
 }
 
-export function LoadingState() {
+export function LoadingState({
+  themeMode,
+  onToggleTheme,
+}: {
+  themeMode?: ThemeMode;
+  onToggleTheme?: () => void;
+}) {
   return (
     <section
-      className="flex min-h-[460px] flex-col rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs"
+      className="flex min-h-[460px] flex-col rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs dark:border-slate-800/90 dark:bg-slate-900"
       aria-busy="true"
       aria-label="Loading job insights"
     >
       <div className="mb-3 flex items-center justify-between">
-        <div className="h-3 w-20 animate-pulse rounded bg-slate-200" />
-        <div className="h-5 w-16 animate-pulse rounded-full bg-slate-200" />
+        <div className="h-3 w-20 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+        <div className="flex items-center gap-2">
+          {themeMode && onToggleTheme && <ThemeToggle mode={themeMode} onToggle={onToggleTheme} />}
+          <div className="h-5 w-16 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" />
+        </div>
       </div>
 
-      <div className="mb-1.5 h-6 w-3/4 animate-pulse rounded bg-slate-200" />
-      <div className="mb-4 h-3.5 w-1/2 animate-pulse rounded bg-slate-200" />
+      <div className="mb-1.5 h-6 w-3/4 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+      <div className="mb-4 h-3.5 w-1/2 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
 
       {/* Hero Skeleton */}
-      <div className="mb-3 rounded-2xl bg-slate-900 p-4">
+      <div className="mb-3 rounded-2xl bg-slate-900 p-4 ring-1 ring-white/10 dark:bg-slate-950 dark:ring-slate-800">
         <div className="flex items-center justify-between">
-          <div className="h-3 w-24 animate-pulse rounded bg-slate-700" />
-          <div className="h-4 w-28 animate-pulse rounded-full bg-slate-800" />
+          <div className="h-3 w-24 animate-pulse rounded bg-slate-700 dark:bg-slate-800" />
+          <div className="h-4 w-28 animate-pulse rounded-full bg-slate-800 dark:bg-slate-800" />
         </div>
-        <div className="my-3 h-10 w-20 animate-pulse rounded bg-slate-700" />
+        <div className="my-3 h-10 w-20 animate-pulse rounded bg-slate-700 dark:bg-slate-800" />
         <div className="border-t border-slate-800 pt-3">
           <div className="grid grid-cols-4 gap-2">
             <div className="h-6 animate-pulse rounded bg-slate-800" />
@@ -490,14 +605,22 @@ export function LoadingState() {
 
       {/* Grid Skeleton */}
       <div className="grid grid-cols-2 gap-2.5">
-        <div className="h-24 animate-pulse rounded-xl bg-slate-100" />
-        <div className="h-24 animate-pulse rounded-xl bg-slate-100" />
+        <div className="h-24 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800/60" />
+        <div className="h-24 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800/60" />
       </div>
     </section>
   );
 }
 
-export function AvailableState({ insights }: { insights: JobInsights }) {
+export function AvailableState({
+  insights,
+  themeMode,
+  onToggleTheme,
+}: {
+  insights: JobInsights;
+  themeMode?: ThemeMode;
+  onToggleTheme?: () => void;
+}) {
   const { job, activity, client, fit, history } = insights;
 
   const location = [client.city, client.country].filter(Boolean).join(', ') || 'Not available';
@@ -514,15 +637,19 @@ export function AvailableState({ insights }: { insights: JobInsights }) {
     <span
       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10.5px] font-bold leading-tight ${
         isStatusFilled
-          ? 'border border-amber-300 bg-amber-100 text-amber-900'
+          ? 'border border-amber-300 bg-amber-100 text-amber-900 dark:border-amber-700/60 dark:bg-amber-950/60 dark:text-amber-300'
           : isStatusOpen
-            ? 'border border-emerald-300 bg-emerald-100 text-emerald-900'
-            : 'border border-slate-200 bg-slate-100 text-slate-700'
+            ? 'border border-emerald-300 bg-emerald-100 text-emerald-900 dark:border-emerald-700/60 dark:bg-emerald-950/60 dark:text-emerald-300'
+            : 'border border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
       }`}
     >
       <span
         className={`size-1.5 rounded-full ${
-          isStatusFilled ? 'bg-amber-600' : isStatusOpen ? 'bg-emerald-600' : 'bg-slate-500'
+          isStatusFilled
+            ? 'bg-amber-600 dark:bg-amber-400'
+            : isStatusOpen
+              ? 'bg-emerald-600 dark:bg-emerald-400'
+              : 'bg-slate-500'
         }`}
       />
       {formatJobStatus(job.status)}
@@ -534,23 +661,30 @@ export function AvailableState({ insights }: { insights: JobInsights }) {
   return (
     <div className="flex flex-col gap-2.5">
       {/* Header */}
-      <header className="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-xs">
+      <header className="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-xs dark:border-slate-800/90 dark:bg-slate-900">
         <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <span className="flex size-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[10px] font-bold tracking-widest uppercase text-slate-500">
+            <span className="flex size-2 animate-pulse rounded-full bg-emerald-500" />
+            <span className="text-[10px] font-bold tracking-widest uppercase text-slate-500 dark:text-slate-400">
               UPWORK TOOLS
             </span>
           </div>
-          {statusBadge}
+          <div className="flex items-center gap-2">
+            {themeMode && onToggleTheme && (
+              <ThemeToggle mode={themeMode} onToggle={onToggleTheme} />
+            )}
+            {statusBadge}
+          </div>
         </div>
 
-        <h1 className="text-[15px] font-bold leading-snug tracking-tight text-slate-900 line-clamp-2">
+        <h1 className="text-[15px] font-bold leading-snug tracking-tight text-slate-900 line-clamp-2 dark:text-slate-100">
           {job.title ?? 'Untitled Job'}
         </h1>
 
         {subTitleParts.length > 0 && (
-          <p className="mt-1 text-[11px] font-medium text-slate-500">{subTitleParts.join(' · ')}</p>
+          <p className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+            {subTitleParts.join(' · ')}
+          </p>
         )}
       </header>
 
@@ -559,7 +693,7 @@ export function AvailableState({ insights }: { insights: JobInsights }) {
 
       {/* Hero Metric: Exact Proposals */}
       <section
-        className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 p-4 text-white shadow-md ring-1 ring-white/10"
+        className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 p-4 text-white shadow-md ring-1 ring-white/10 dark:from-slate-950 dark:via-slate-950 dark:to-black dark:ring-slate-800"
         aria-labelledby="hero-proposals-heading"
       >
         <div className="flex items-center justify-between">
@@ -622,18 +756,21 @@ export function AvailableState({ insights }: { insights: JobInsights }) {
 
       {/* Client Track Record */}
       <section
-        className="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-xs"
+        className="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-xs dark:border-slate-800/90 dark:bg-slate-900"
         aria-labelledby="client-heading"
       >
-        <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-2">
+        <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-2 dark:border-slate-800">
           <div className="flex items-center gap-1.5">
-            <BuildingIcon className="size-3.5 text-slate-500" />
-            <h2 id="client-heading" className="text-xs font-bold text-slate-900">
+            <BuildingIcon className="size-3.5 text-slate-500 dark:text-slate-400" />
+            <h2
+              id="client-heading"
+              className="text-xs font-bold text-slate-900 dark:text-slate-100"
+            >
               Client Track Record
             </h2>
           </div>
           {client.topClient && (
-            <span className="rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700">
+            <span className="rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300">
               Top Client
             </span>
           )}
@@ -644,12 +781,12 @@ export function AvailableState({ insights }: { insights: JobInsights }) {
             label="Payment Status"
             value={
               client.paymentVerified === true ? (
-                <span className="inline-flex items-center gap-1 text-emerald-700">
+                <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400">
                   <CheckCircleIcon className="size-3.5" />
                   <span>Verified</span>
                 </span>
               ) : client.paymentVerified === false ? (
-                <span className="text-slate-600">Unverified</span>
+                <span className="text-slate-600 dark:text-slate-400">Unverified</span>
               ) : (
                 'Not available'
               )
@@ -661,7 +798,7 @@ export function AvailableState({ insights }: { insights: JobInsights }) {
             value={
               client.rating !== null ? (
                 <span className="inline-flex items-center gap-1">
-                  <StarIcon className="size-3 text-amber-500 fill-amber-400" />
+                  <StarIcon className="size-3 fill-amber-400 text-amber-500" />
                   <span>{formatRating(client.rating)}</span>
                 </span>
               ) : (
@@ -699,8 +836,8 @@ export function AvailableState({ insights }: { insights: JobInsights }) {
 
           <MetricCell label="Member Since" value={formatDate(client.memberSince)} />
 
-          <div className="col-span-2 flex items-center gap-1.5 pt-1 text-[11px] text-slate-500">
-            <MapPinIcon className="size-3 text-slate-400" />
+          <div className="col-span-2 flex items-center gap-1.5 pt-1 text-[11px] text-slate-500 dark:text-slate-400">
+            <MapPinIcon className="size-3 text-slate-400 dark:text-slate-500" />
             <span>{location}</span>
           </div>
         </div>
@@ -708,18 +845,18 @@ export function AvailableState({ insights }: { insights: JobInsights }) {
 
       {/* Your Fit & Rate Dynamics */}
       <section
-        className="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-xs"
+        className="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-xs dark:border-slate-800/90 dark:bg-slate-900"
         aria-labelledby="fit-heading"
       >
-        <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-2">
+        <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-2 dark:border-slate-800">
           <div className="flex items-center gap-1.5">
-            <TargetIcon className="size-3.5 text-slate-500" />
-            <h2 id="fit-heading" className="text-xs font-bold text-slate-900">
+            <TargetIcon className="size-3.5 text-slate-500 dark:text-slate-400" />
+            <h2 id="fit-heading" className="text-xs font-bold text-slate-900 dark:text-slate-100">
               Your Fit & Rates
             </h2>
           </div>
           {fit.applicationState && (
-            <span className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
+            <span className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
               {formatApplicationState(fit.applicationState)}
             </span>
           )}
@@ -727,38 +864,42 @@ export function AvailableState({ insights }: { insights: JobInsights }) {
 
         <div className="space-y-3">
           {/* Qualifications Match */}
-          <div className="flex items-center justify-between rounded-xl bg-slate-50 p-2.5 border border-slate-100">
-            <span className="text-xs font-medium text-slate-600">Qualifications Matched</span>
-            <span className="rounded-md bg-white border border-slate-200/90 px-2 py-0.5 text-xs font-bold tabular-nums text-slate-900 shadow-2xs">
+          <div className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 p-2.5 dark:border-slate-800 dark:bg-slate-800/60">
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+              Qualifications Matched
+            </span>
+            <span className="rounded-md border border-slate-200/90 bg-white px-2 py-0.5 text-xs font-bold tabular-nums text-slate-900 shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
               {qualificationSummary ?? 'Not available'}
             </span>
           </div>
 
           {/* Rate Comparison Box */}
-          <div className="rounded-xl border border-slate-100 bg-slate-50 p-2.5">
+          <div className="rounded-xl border border-slate-100 bg-slate-50 p-2.5 dark:border-slate-800 dark:bg-slate-800/60">
             <div className="grid grid-cols-2 gap-2 pb-2">
               <div>
-                <span className="block text-[10.5px] font-medium text-slate-500">
+                <span className="block text-[10.5px] font-medium text-slate-500 dark:text-slate-400">
                   Your Hourly Rate
                 </span>
-                <span className="text-xs font-bold tabular-nums text-slate-900">
+                <span className="text-xs font-bold tabular-nums text-slate-900 dark:text-slate-100">
                   {formatMoney(fit.freelancerHourlyRate, 'USD')}
                 </span>
               </div>
               <div>
-                <span className="block text-[10.5px] font-medium text-slate-500">
+                <span className="block text-[10.5px] font-medium text-slate-500 dark:text-slate-400">
                   Client Avg Rate
                 </span>
-                <span className="text-xs font-bold tabular-nums text-slate-900">
+                <span className="text-xs font-bold tabular-nums text-slate-900 dark:text-slate-100">
                   {formatMoney(client.averageHourlyRate, 'USD')}
                 </span>
               </div>
             </div>
 
             {fit.rateContext !== null && (
-              <div className="border-t border-slate-200/60 pt-2 flex items-center justify-between">
-                <span className="text-[11px] font-medium text-slate-500">Rate Comparison</span>
-                <span className="rounded bg-slate-200/80 px-2 py-0.5 text-[11px] font-semibold text-slate-800 tabular-nums">
+              <div className="flex items-center justify-between border-t border-slate-200/60 pt-2 dark:border-slate-700/60">
+                <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                  Rate Comparison
+                </span>
+                <span className="rounded bg-slate-200/80 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-slate-800 dark:bg-slate-700 dark:text-slate-200">
                   {formatRateContext(fit.rateContext)}
                 </span>
               </div>
@@ -778,16 +919,16 @@ export function AvailableState({ insights }: { insights: JobInsights }) {
       <HistoryDetails title="Client Hiring History" jobs={history.recentJobs} defaultOpen={false} />
 
       {/* Footer */}
-      <footer className="mt-1 flex flex-col gap-1 rounded-xl bg-slate-200/50 p-2.5 text-[10.5px] text-slate-500">
+      <footer className="mt-1 flex flex-col gap-1 rounded-xl bg-slate-200/50 p-2.5 text-[10.5px] text-slate-500 dark:bg-slate-900/60 dark:text-slate-400">
         <div className="flex items-center justify-between">
           <span>Posted: {formatDate(job.postedOn)}</span>
-          <span className="font-medium text-slate-700">
+          <span className="font-medium text-slate-700 dark:text-slate-300">
             {job.budgetAmount === null
               ? 'Budget: Not provided'
               : `Budget: ${formatMoney(job.budgetAmount, job.budgetCurrency)}`}
           </span>
         </div>
-        <div className="text-center text-[10px] text-slate-400">
+        <div className="text-center text-[10px] text-slate-400 dark:text-slate-500">
           Local session insights · Authenticated GraphQL snapshot
         </div>
       </footer>

@@ -1,0 +1,1916 @@
+# Upwork Tools — High-Level Context
+
+## Goal
+
+Build a local-first browser extension that shows useful information from Upwork's existing authenticated job-details response, with **Exact Proposals** as the primary metric.
+
+The extension should:
+
+- show applicant count and supporting client/job signals;
+- avoid duplicate Upwork requests;
+- keep data local to the browser session;
+- never break or modify Upwork's normal behavior; and
+- show the current job for the active browser tab.
+
+**Extension Name: ** Upwork Tools
+
+## Implementation
+
+1. **Intercept Upwork network activity**
+   - The MAIN-world content script runs on Upwork at `document_start`.
+   - It wraps `window.fetch` while preserving the original request and response behavior.
+   - It also listens through compatible `Response`, `JSON`, and `XMLHttpRequest` paths.
+   - Only responses matching `gql-query-get-auth-job-details-v2` are inspected.
+   - Matching responses are cloned before parsing so the original Upwork response is untouched.
+   - Inspection failures are caught and cannot affect Upwork.
+
+2. **Parse and normalize the response**
+   - The GraphQL handler recognizes the supported job-details URL.
+   - The parser extracts job, applicant/activity, and client fields.
+   - Raw GraphQL data is converted into the nullable `JobInsights` model.
+   - Missing or invalid values become `null`; valid zeroes remain `0`.
+
+3. **Send a validated page event**
+   - The MAIN-world script emits a `JOB_DETAILS_RECEIVED` window event.
+   - The event has a fixed source, version, type, and normalized payload.
+   - The isolated content script adds a `window.message` listener.
+   - It validates the event source, origin, envelope, and payload before forwarding it.
+
+4. **Store the latest insight per tab**
+   - The isolated script sends an exact runtime message to the background service worker.
+   - The service worker validates the message and sender tab ID.
+   - It replaces the previous snapshot in `browser.storage.session`.
+   - Each tab has its own snapshot; jobs are never merged.
+   - Tab data is removed when the tab closes or starts loading a new page.
+
+5. **Render the popup**
+   - The React popup asks the background worker for the active tab's snapshot.
+   - It displays loading, empty, error, or available states.
+   - The Job Insights panel shows Exact Proposals prominently, followed by activity and client metrics.
+   - Formatting helpers handle money, percentages, dates, relative activity, and `Not available` values.
+   - Historical client hire rate is calculated from jobs with hires and jobs posted.
+
+## Stack
+
+WXT, Manifest V3, TypeScript, React, and Bun. Chromium 111+ is the primary target.
+
+## Explicit boundaries
+
+No backend, accounts, analytics, telemetry, cloud sync, persistent job history, automatic applications, Connect spending, duplicate job-details requests, or Upwork DOM/page UI.
+
+
+Request URL https://www.upwork.com/api/graphql/v1?alias=gql-query-get-auth-job-details-v2
+Request Method POST
+```json
+{
+    "data": {
+        "jobAuthDetails": {
+            "hiredApplicantNames": null,
+            "topClient": false,
+            "opening": {
+                "job": {
+                    "status": "FILLED",
+                    "postedOn": "2026-08-05T13:01:22.491Z",
+                    "publishTime": "2026-08-05T16:05:51.185Z",
+                    "sourcingTime": null,
+                    "startDate": null,
+                    "deliveryDate": "2026-08-10T00:00:00.000Z",
+                    "workload": "Less than 30 hrs/week",
+                    "contractorTier": "INTERMEDIATE",
+                    "description": "We already have the front-end template for a domain landing page. Now I need the backend layer that makes it work across a large domain portfolio.\n\nEach domain should use the same shared template, but the content must change dynamically based on the hostname.\n\nWhat I need:\n- hostname-based routing\n- a simple way to map domains to content\n- support for Norwegian, Swedish, and English\n- a practical contact form solution\n- a way to add or update domains without editing the template manually every time\n- clean, maintainable code and deployment instructions\n\nThe backend should:\n- detect the requested hostname\n- load the correct content for that domain\n- inject the right domain name, status text, CTA label, meta text, and language-specific text\n- handle contact form submissions\n- keep the system simple and inexpensive to run\n\nI’m open to the implementation, but I expect a good proposal to explain whether you would use:\n- Cloudflare Workers with hostname routing and a small data store, or\n- a dedicated form backend for the contact form, if that is the simpler option\n\nIf you recommend a third-party form service, please explain why it is the better choice here and how submissions would be handled.\n\nPlease avoid unnecessary frameworks and overengineering. I’m looking for a lightweight, maintainable solution that will be easy to extend later.\n\nIn your proposal, please include:\n- your suggested architecture\n- how hostname-to-content mapping would work\n- how you would handle the contact form\n- any relevant experience with Cloudflare Workers, routing, or similar multi-domain setups\n- your fixed price for the work",
+                    "info": {
+                        "ciphertext": "~022084988130242730504",
+                        "id": "2084988130242730504",
+                        "type": "HOURLY",
+                        "access": "PUBLIC_INDEX",
+                        "title": "Cloudflare Backend for Multi-Domain Landing Page",
+                        "hideBudget": false,
+                        "createdOn": "2026-08-05T13:01:22.491Z",
+                        "notSureProjectDuration": false,
+                        "notSureFreelancersToHire": false,
+                        "notSureExperienceLevel": false,
+                        "notSureLocationPreference": false,
+                        "premium": false
+                    },
+                    "segmentationData": [
+                        {
+                            "customValue": null,
+                            "label": "Ongoing project",
+                            "name": "Employment",
+                            "sortOrder": 1,
+                            "type": "EMPLOYMENT",
+                            "value": "EMPLOYMENT_POSITION",
+                            "skill": null
+                        }
+                    ],
+                    "sandsData": {
+                        "occupation": {
+                            "freeText": null,
+                            "ontologyId": "upworkOccupation:backenddevelopment",
+                            "prefLabel": "Back-End Development",
+                            "id": "1110580748673863680",
+                            "uid": "1110580748673863680"
+                        },
+                        "ontologySkills": [
+                            {
+                                "groupId": "1110580497527328768",
+                                "id": "996364628025274389",
+                                "freeText": null,
+                                "prefLabel": "TypeScript",
+                                "groupPrefLabel": "Back-End Programming Languages",
+                                "relevance": "MANDATORY"
+                            },
+                            {
+                                "groupId": "1204836482861350912",
+                                "id": "1031626725023793152",
+                                "freeText": null,
+                                "prefLabel": "Cloudflare",
+                                "groupPrefLabel": "Web Servers",
+                                "relevance": "MANDATORY"
+                            },
+                            {
+                                "groupId": "1110580497267281920",
+                                "id": "1110580482322976768",
+                                "freeText": null,
+                                "prefLabel": "API",
+                                "groupPrefLabel": "Back-End Development Deliverables",
+                                "relevance": "MANDATORY"
+                            },
+                            {
+                                "groupId": "1110580497267281920",
+                                "id": "1484275089232547840",
+                                "freeText": null,
+                                "prefLabel": "Back-End Development",
+                                "groupPrefLabel": "Back-End Development Deliverables",
+                                "relevance": "MANDATORY"
+                            }
+                        ],
+                        "additionalSkills": [
+                            {
+                                "groupId": null,
+                                "id": "996364628025274383",
+                                "freeText": null,
+                                "prefLabel": "JavaScript",
+                                "relevance": "MANDATORY"
+                            },
+                            {
+                                "groupId": null,
+                                "id": "1031626745110315008",
+                                "freeText": null,
+                                "prefLabel": "HTML",
+                                "relevance": "MANDATORY"
+                            },
+                            {
+                                "groupId": null,
+                                "id": "1031626728794472448",
+                                "freeText": null,
+                                "prefLabel": "CSS",
+                                "relevance": "MANDATORY"
+                            },
+                            {
+                                "groupId": null,
+                                "id": "1031626795211276288",
+                                "freeText": null,
+                                "prefLabel": "Web Development",
+                                "relevance": "MANDATORY"
+                            }
+                        ]
+                    },
+                    "category": {
+                        "name": "Web Development",
+                        "urlSlug": "web-development"
+                    },
+                    "categoryGroup": {
+                        "name": "Web, Mobile & Software Dev",
+                        "urlSlug": "web-mobile-software-dev"
+                    },
+                    "budget": {
+                        "amount": 0.0,
+                        "currencyCode": "USD"
+                    },
+                    "annotations": {
+                        "customFields": {
+                            "siteSource": "desktop_rjp",
+                            "publishTime": "2026-08-05T16:05:51.185Z",
+                            "sourcingUpdateCount": "0",
+                            "sourcingUpdateForbidden": "false",
+                            "type": "RJP",
+                            "optInDescriptionAIv2": "no",
+                            "browser": "Chrome",
+                            "device": "Windows",
+                            "flowType": "RJP"
+                        },
+                        "tags": [
+                            "contractToHireSet",
+                            "searchable",
+                            "C2HJobsOptInEducation"
+                        ]
+                    },
+                    "engagementDuration": {
+                        "label": "1 to 3 months",
+                        "weeks": 9
+                    },
+                    "extendedBudgetInfo": {
+                        "hourlyBudgetMin": null,
+                        "hourlyBudgetMax": null,
+                        "hourlyBudgetType": "NOT_PROVIDED"
+                    },
+                    "attachments": [],
+                    "clientActivity": {
+                        "lastBuyerActivity": "2026-08-10T15:25:34.622Z",
+                        "totalApplicants": 38,
+                        "totalHired": 1,
+                        "totalInvitedToInterview": 4,
+                        "unansweredInvites": 0,
+                        "invitationsSent": 0,
+                        "numberOfPositionsToHire": 1
+                    },
+                    "deliverables": null,
+                    "deadline": null,
+                    "tools": []
+                },
+                "qualifications": {
+                    "countries": null,
+                    "earnings": null,
+                    "groupRecno": null,
+                    "languages": null,
+                    "localDescription": null,
+                    "localFlexibilityDescription": null,
+                    "localMarket": false,
+                    "minJobSuccessScore": 0,
+                    "minOdeskHours": 0,
+                    "onSiteType": null,
+                    "prefEnglishSkill": "ANY",
+                    "regions": null,
+                    "risingTalent": false,
+                    "shouldHavePortfolio": false,
+                    "states": null,
+                    "tests": null,
+                    "timezones": null,
+                    "type": "ANY",
+                    "locationCheckRequired": false,
+                    "group": null,
+                    "location": null,
+                    "locations": null,
+                    "readyToStartToday": null
+                },
+                "questions": []
+            },
+            "buyer": {
+                "enterprise": false,
+                "isPaymentMethodVerified": true,
+                "info": {
+                    "location": {
+                        "offsetFromUtcMillis": 7200000,
+                        "countryTimezone": "Europe/Berlin (UTC+02:00)",
+                        "city": "Oslo",
+                        "country": "Norway"
+                    },
+                    "stats": {
+                        "totalAssignments": 50,
+                        "activeAssignmentsCount": 1,
+                        "hoursCount": 7.0,
+                        "feedbackCount": 40,
+                        "score": 4.99,
+                        "totalJobsWithHires": 49,
+                        "totalCharges": {
+                            "amount": 3393.46
+                        }
+                    },
+                    "company": {
+                        "name": null,
+                        "companyId": "425212457435598848",
+                        "isEDCReplicated": null,
+                        "contractDate": "2009-10-04T00:00:00.000Z",
+                        "profile": {
+                            "industry": null,
+                            "size": null
+                        }
+                    },
+                    "jobs": {
+                        "openCount": 0,
+                        "postedCount": 62,
+                        "openJobs": []
+                    },
+                    "avgHourlyJobsRate": {
+                        "amount": 10.16
+                    }
+                },
+                "workHistory": [
+                    {
+                        "isPtcJob": false,
+                        "status": "ACTIVE",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2026-08-10T19:34:34.771Z",
+                        "endDate": null,
+                        "totalCharge": 0.0,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Cloudflare Backend for Multi-Domain Landing Page",
+                            "id": "2084988130242730504",
+                            "uid": "2084988130242730504",
+                            "access": "PUBLIC_INDEX",
+                            "type": "FIXED",
+                            "ciphertext": "~022084988130242730504"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Anton K.",
+                            "accessType": "PUBLIC_INDEX",
+                            "ciphertext": "~013f91373dfd3583db"
+                        },
+                        "rate": null,
+                        "feedback": null,
+                        "feedbackToClient": null
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2026-07-21T00:34:12.125Z",
+                        "endDate": "2026-07-24T00:07:37.217Z",
+                        "totalCharge": 255.0,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Logo Redesign, Typography Refinement & Vectorization for Tech Brand",
+                            "id": "2079250643434378958",
+                            "uid": "2079250643434378958",
+                            "access": "PUBLIC",
+                            "type": "FIXED",
+                            "ciphertext": "~022079250643434378958"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Garry J.",
+                            "accessType": "PUBLIC_INDEX",
+                            "ciphertext": "~012ba4482e5047e331"
+                        },
+                        "rate": null,
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Garry did a fantastic job on the visual identity for my SaaS product. He quickly understood the brief, tightened the logo and typography in a genuinely premium way, and delivered far more than expected: multiple well‑structured logo versions, a clear colour system, and a mini brand guide that makes rollout across web, decks and print very easy. Communication was smooth, deadlines were met, and he showed real craft and attention to detail throughout. I’d be very happy to work with him again on future branding or design work."
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Cato was / is delightful to work and collaborate with."
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2026-05-29T19:44:43.703Z",
+                        "endDate": "2026-07-01T16:10:02.442Z",
+                        "totalCharge": 0.0,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Design and build a premium static website for a small Norwegian debt collection company",
+                            "id": "2057948711013758322",
+                            "uid": "2057948711013758322",
+                            "access": "PUBLIC_INDEX",
+                            "type": "FIXED",
+                            "ciphertext": "~022057948711013758322"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Aditya P.",
+                            "accessType": "PUBLIC_INDEX",
+                            "ciphertext": "~0144537ad6beed3186"
+                        },
+                        "rate": null,
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 4.0,
+                            "comment": "Aditya delivered a strong visual result and implemented a lot of detailed feedback. I appreciate the effort, especially across time zones.\n\nThe main challenge for me was communication: the project took significantly longer than planned, and I often had to ask for updates rather than getting proactive messages about delays and next steps.\n\nWith more consistent, detailed communication, I think he can be an excellent collaborator."
+                        },
+                        "feedbackToClient": null
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2026-06-16T22:56:30.889Z",
+                        "endDate": "2026-06-22T01:43:26.733Z",
+                        "totalCharge": 400.0,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Designer needed for premium domain landing page template",
+                            "id": "2066981044061784201",
+                            "uid": "2066981044061784201",
+                            "access": "PUBLIC",
+                            "type": "FIXED",
+                            "ciphertext": "~022066981044061784201"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Mark J.",
+                            "accessType": "PUBLIC_INDEX",
+                            "ciphertext": "~01929520fe49ca5f89"
+                        },
+                        "rate": null,
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Mark delivered a clean, well-structured HTML/CSS template and was very responsive to feedback. He handled several rounds of revisions calmly, including some fairly detailed typography and edge-case requests, and adjusted the design so it now works robustly. Communication was clear and professional throughout."
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": ""
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2020-02-10T22:00:04.000Z",
+                        "endDate": "2020-02-10T23:15:19.000Z",
+                        "totalCharge": 10.0,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Troubleshoot issues with charset in simple html-website",
+                            "id": "1226646918980091904",
+                            "uid": "1226646918980091904",
+                            "access": "PUBLIC",
+                            "type": "FIXED",
+                            "ciphertext": "~0193e810060e855965"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Victor M.",
+                            "accessType": "PUBLIC_INDEX",
+                            "ciphertext": "~01f1b1ab83a46d050f"
+                        },
+                        "rate": null,
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Prompt response, and Victor goes the extra mile to make everything perfect!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "It was a small task, but he was always tring to colaborate and we found a solution togheter. It was really nice!"
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2019-04-25T14:59:15.000Z",
+                        "endDate": "2019-04-25T23:38:43.000Z",
+                        "totalCharge": 20.0,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Create stunning presentation from 83 pictures.",
+                            "id": "1120857163524780032",
+                            "uid": "1120857163524780032",
+                            "access": "PUBLIC",
+                            "type": "FIXED",
+                            "ciphertext": "~012f25216ecef1f084"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Aleksandar G.",
+                            "accessType": "PUBLIC_INDEX",
+                            "ciphertext": "~018a29a5309a847a92"
+                        },
+                        "rate": null,
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Creative and quick! Recommended!"
+                        },
+                        "feedbackToClient": null
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2019-01-07T22:55:19.000Z",
+                        "endDate": "2019-01-07T23:16:42.000Z",
+                        "totalCharge": 15.0,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Quick troubleshoot of WordPress-installation",
+                            "id": "1082394254578642944",
+                            "uid": "1082394254578642944",
+                            "access": "PUBLIC",
+                            "type": "FIXED",
+                            "ciphertext": "~018de878386d89a9ab"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Dimitrije D.",
+                            "accessType": "PRIVATE",
+                            "ciphertext": "~01bc9fa691d1aa4b95"
+                        },
+                        "rate": null,
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": null
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Client was clear with requirements and it was easy to communicate with. Professional highly recommend!"
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2017-12-30T16:11:02.000Z",
+                        "endDate": "2018-01-03T01:15:25.000Z",
+                        "totalCharge": 20.0,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Simple logo for PC support business wanted",
+                            "id": "947128968256520192",
+                            "uid": "947128968256520192",
+                            "access": "PUBLIC",
+                            "type": "FIXED",
+                            "ciphertext": "~01b462e88944346577"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Zainul K.",
+                            "accessType": "PUBLIC_INDEX",
+                            "ciphertext": "~01b790c7c32312c543"
+                        },
+                        "rate": null,
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Great result from a quick request. Thanks again!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Nice to work with him, Clear and Professional approach"
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2017-06-14T15:02:11.000Z",
+                        "endDate": "2017-06-14T16:09:58.000Z",
+                        "totalCharge": 10.0,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Street signs with borders made of hearts",
+                            "id": "874758061520072704",
+                            "uid": "874758061520072704",
+                            "access": "PUBLIC",
+                            "type": "FIXED",
+                            "ciphertext": "~01a2bd921d137e8691"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Dmytro A.",
+                            "accessType": "PUBLIC_INDEX",
+                            "ciphertext": "~01d72c6ebd2f511c90"
+                        },
+                        "rate": null,
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Quick and efficient job. Well done!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Great client. Clear instructions. I enjoyed working with him and hope to have the opportunity to work with him again."
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2016-02-02T16:46:57.000Z",
+                        "endDate": "2016-02-02T19:19:07.000Z",
+                        "totalCharge": 25.0,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "WordPress - issues with plugins - site down",
+                            "id": "694317522257215488",
+                            "uid": "694317522257215488",
+                            "access": "PUBLIC",
+                            "type": "FIXED",
+                            "ciphertext": "~01144168f50110ee26"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Sergey S.",
+                            "accessType": "PUBLIC_INDEX",
+                            "ciphertext": "~01fd9a4a40fa7d5347"
+                        },
+                        "rate": null,
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Great, efficient and to the point!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Neat and precise - clean tasks and cooperative work, that was a pleasure. Takk, Cato"
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2015-11-17T01:01:06.000Z",
+                        "endDate": "2015-11-17T23:19:49.000Z",
+                        "totalCharge": 10.0,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Reformat brochure from Word to printer-ready",
+                            "id": "666415284790833152",
+                            "uid": "666415284790833152",
+                            "access": "PUBLIC",
+                            "type": "FIXED",
+                            "ciphertext": "~0125e2752936587ce2"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "stephanie lou r.",
+                            "accessType": "PRIVATE",
+                            "ciphertext": "~01001398085cb50ee6"
+                        },
+                        "rate": null,
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Great and efficient job!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "he  is very good on what his doing. very detailed ng easy working with"
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2015-03-05T09:58:08.000Z",
+                        "endDate": "2015-03-18T13:56:56.000Z",
+                        "totalCharge": 225.0,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Redesign simple 4-5-page website",
+                            "id": "573201988664823808",
+                            "uid": "573201988664823808",
+                            "access": "PUBLIC",
+                            "type": "FIXED",
+                            "ciphertext": "~01229da0bad0bec413"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Ashfaqur R.",
+                            "accessType": "PRIVATE",
+                            "ciphertext": "~0133c7c7599bed6dec"
+                        },
+                        "rate": null,
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Great skills and very dedicated!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Absolutely brilliant. Communication was great, extremely helpful. Its been a pleasure working with Cato Olsen. Thank you."
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2015-02-27T22:18:54.000Z",
+                        "endDate": "2015-03-01T00:22:22.000Z",
+                        "totalCharge": 25.0,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Design and format annual report",
+                            "id": "571408426302312448",
+                            "uid": "571408426302312448",
+                            "access": "PUBLIC",
+                            "type": "FIXED",
+                            "ciphertext": "~01ee3fe355116c8f34"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Ferose A.",
+                            "accessType": "PRIVATE",
+                            "ciphertext": "~01fc4b3e2a8fb50d87"
+                        },
+                        "rate": null,
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Great job - quick turnaround."
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "On of the best client and so helpful. I enjoyed working with him and hope to have the opportunity to work with him again."
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2015-01-27T22:21:32.000Z",
+                        "endDate": "2015-01-28T00:14:08.000Z",
+                        "totalCharge": 20.0,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Sort and change prices across 2800++ entrys",
+                            "id": "560180094859882496",
+                            "uid": "560180094859882496",
+                            "access": "PUBLIC",
+                            "type": "FIXED",
+                            "ciphertext": "~01294a6f964e77b038"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Jim M.",
+                            "accessType": "PUBLIC_INDEX",
+                            "ciphertext": "~01a308116469d617dc"
+                        },
+                        "rate": null,
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Great job! Very quick turn-around!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Excellent.  Great communication and a pleasure to work with."
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2014-09-19T02:11:09.000Z",
+                        "endDate": "2014-09-21T17:47:05.000Z",
+                        "totalCharge": 5.0,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Design area map for parking",
+                            "id": "518203927243264000",
+                            "uid": "518203927243264000",
+                            "access": "PUBLIC",
+                            "type": "FIXED",
+                            "ciphertext": "~014d9345d00074bf14"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Forhad B.",
+                            "accessType": "PRIVATE",
+                            "ciphertext": "~011e152ca8b9efd2a3"
+                        },
+                        "rate": null,
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": null
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": null
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2014-08-10T12:49:07.000Z",
+                        "endDate": "2014-08-10T14:54:27.000Z",
+                        "totalCharge": 10.0,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Business card revision",
+                            "id": "518151657088618496",
+                            "uid": "518151657088618496",
+                            "access": "PUBLIC",
+                            "type": "FIXED",
+                            "ciphertext": "~01cb98823c5dfddccb"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Mary Joey I.",
+                            "accessType": "PUBLIC",
+                            "ciphertext": "~010f6dee7dc3da329b"
+                        },
+                        "rate": null,
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": null
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "He's a very good client and I'm happy he has to notice every detail to make this project successful! Thanks :)"
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2013-06-18T00:00:00.000Z",
+                        "endDate": "2013-06-20T00:00:00.000Z",
+                        "totalCharge": 11.11,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Clean up formatting in Word document",
+                            "id": "518362690847772672",
+                            "uid": "518362690847772672",
+                            "access": "PUBLIC",
+                            "type": "HOURLY",
+                            "ciphertext": "~01b3310839a6a08351"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Izha I.",
+                            "accessType": "PRIVATE",
+                            "ciphertext": "~01cdfa76ea2b56ddea"
+                        },
+                        "rate": {
+                            "amount": 2.22
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Quick and easy help from Izha!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Great client! Would love to work with him again."
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2013-02-13T00:00:00.000Z",
+                        "endDate": "2013-02-14T00:00:00.000Z",
+                        "totalCharge": 11.11,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Quick text sorting job",
+                            "id": "519076496402026496",
+                            "uid": "519076496402026496",
+                            "access": "PUBLIC",
+                            "type": "HOURLY",
+                            "ciphertext": "~0193c8c7907ed0b0c7"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Vinod Kumar N.",
+                            "accessType": "PRIVATE",
+                            "ciphertext": "~010c4e6753509a5314"
+                        },
+                        "rate": {
+                            "amount": 0.0
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Great, quick and efficient work!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Awesome client, very organized and clear .. thanks!!!"
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2012-09-09T00:00:00.000Z",
+                        "endDate": "2012-09-10T00:00:00.000Z",
+                        "totalCharge": 11.11,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Data Analyst",
+                            "id": "518112733268021248",
+                            "uid": "518112733268021248",
+                            "access": "PUBLIC",
+                            "type": "HOURLY",
+                            "ciphertext": "~01d4189552a08a640c"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Nicholas B.",
+                            "accessType": "PRIVATE",
+                            "ciphertext": "~017cd4493627ee29e3"
+                        },
+                        "rate": {
+                            "amount": 5.0
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Quick &amp; efficient...;)"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Great to work for and quick response. Fast Job, thank you for the work and would gladly work for you again!"
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2012-09-08T00:00:00.000Z",
+                        "endDate": "2012-09-09T00:00:00.000Z",
+                        "totalCharge": 5.56,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Quick text sorting job",
+                            "id": "518440728924450816",
+                            "uid": "518440728924450816",
+                            "access": "PUBLIC",
+                            "type": "HOURLY",
+                            "ciphertext": "~01379e6db6b6fb9dd7"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "VILMA J.",
+                            "accessType": "PRIVATE",
+                            "ciphertext": "~018a6f9b59c876285d"
+                        },
+                        "rate": {
+                            "amount": 4.44
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Quick, thorough and efficient ;-)"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Thanks for the quick assignment. What a wonderful experience. Hope to work again for you in the future."
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2012-05-06T00:00:00.000Z",
+                        "endDate": "2012-05-19T00:00:00.000Z",
+                        "totalCharge": 164.44,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "New WordPress-website",
+                            "id": "518147352918093824",
+                            "uid": "518147352918093824",
+                            "access": "PUBLIC",
+                            "type": "HOURLY",
+                            "ciphertext": "~0197bae53e5dac1244"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Luis G.",
+                            "accessType": "PRIVATE",
+                            "ciphertext": "~01e8e070be4a179a0c"
+                        },
+                        "rate": {
+                            "amount": 16.67
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Excellent job!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "This was a good job... i've enjoied it, the communication skills are basic when you are developing a site in other lenguaje. I hope this contractor hires me again :)"
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2012-02-06T00:00:00.000Z",
+                        "endDate": "2012-02-17T00:00:00.000Z",
+                        "totalCharge": 28.89,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Wordpress Style Sheets",
+                            "id": "518360137302904832",
+                            "uid": "518360137302904832",
+                            "access": "PUBLIC",
+                            "type": "HOURLY",
+                            "ciphertext": "~019c600d0fd47dc873"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Mangat S.",
+                            "accessType": "PRIVATE",
+                            "ciphertext": "~01c4538ffb33b3a9e3"
+                        },
+                        "rate": {
+                            "amount": 8.0
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Great job!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Hi, Employer is very good, co-operative.\nAnd always available whenever we need to clear any query, always pay the best.\nI like to work with him soon.\nThanks"
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2012-01-27T00:00:00.000Z",
+                        "endDate": "2012-02-06T00:00:00.000Z",
+                        "totalCharge": 210.0,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Design of Wordpress-site",
+                            "id": "518181101123670016",
+                            "uid": "518181101123670016",
+                            "access": "PUBLIC",
+                            "type": "FIXED",
+                            "ciphertext": "~011dc975e462eb7289"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Sadman S.",
+                            "accessType": "PRIVATE",
+                            "ciphertext": "~01851bffc5c01c0d7a"
+                        },
+                        "rate": null,
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": null
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": null
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2011-09-09T00:00:00.000Z",
+                        "endDate": "2011-09-23T00:00:00.000Z",
+                        "totalCharge": 116.67,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Simple redesign",
+                            "id": "518184801692479488",
+                            "uid": "518184801692479488",
+                            "access": "PUBLIC",
+                            "type": "HOURLY",
+                            "ciphertext": "~01cfb0bfe045350d94"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Kazi S.",
+                            "accessType": "PRIVATE",
+                            "ciphertext": "~018c67b66e8c519168"
+                        },
+                        "rate": {
+                            "amount": 11.11
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Great job!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Cato Olsen Is a very very good I mean a best employer I ever worked, he made a bonus payment on his won.\nThanks Olsen I will love to working with you anytime.\nThanks"
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2011-09-08T00:00:00.000Z",
+                        "endDate": "2011-09-11T00:00:00.000Z",
+                        "totalCharge": 5.56,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Replace ad on a WP-site",
+                            "id": "518193399183708160",
+                            "uid": "518193399183708160",
+                            "access": "PUBLIC",
+                            "type": "HOURLY",
+                            "ciphertext": "~01880f40ad8e2e4860"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Matthew K.",
+                            "accessType": "PRIVATE",
+                            "ciphertext": "~0139a1c57def3fc395"
+                        },
+                        "rate": {
+                            "amount": 11.11
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Quick and easy...:-)"
+                        },
+                        "feedbackToClient": null
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2011-07-06T00:00:00.000Z",
+                        "endDate": "2011-07-26T00:00:00.000Z",
+                        "totalCharge": 156.11,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Create WordPress-site",
+                            "id": "519047805743665152",
+                            "uid": "519047805743665152",
+                            "access": "PUBLIC",
+                            "type": "HOURLY",
+                            "ciphertext": "~011483a4cb15cd1daa"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Kundan K.",
+                            "accessType": "PUBLIC_INDEX",
+                            "ciphertext": "~01de89f30844b78f3a"
+                        },
+                        "rate": {
+                            "amount": 15.0
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 4.55,
+                            "comment": null
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Thanks Cato, you are really a  good client"
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2011-07-13T00:00:00.000Z",
+                        "endDate": "2011-07-15T00:00:00.000Z",
+                        "totalCharge": 8.89,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Quick & easy sorting job",
+                            "id": "518196305100115968",
+                            "uid": "518196305100115968",
+                            "access": "PUBLIC",
+                            "type": "HOURLY",
+                            "ciphertext": "~0190a47356f3618453"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Riza C.",
+                            "accessType": "PUBLIC_INDEX",
+                            "ciphertext": "~0118cfcb47b80e3d9e"
+                        },
+                        "rate": {
+                            "amount": 3.33
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Great job!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Cato was a really great Client to work with.\nhe always there to guide you. and always gave very detailed instruction.\nPlease work hard for him.\nThank you Cato"
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2011-04-12T00:00:00.000Z",
+                        "endDate": "2011-04-13T00:00:00.000Z",
+                        "totalCharge": 50.0,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Basic editing in Wordpress",
+                            "id": "518203037075476480",
+                            "uid": "518203037075476480",
+                            "access": "PUBLIC",
+                            "type": "HOURLY",
+                            "ciphertext": "~01f90d05672582220e"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Janero Dindo G.",
+                            "accessType": "PUBLIC_INDEX",
+                            "ciphertext": "~016f57e5cd02777847"
+                        },
+                        "rate": {
+                            "amount": 11.11
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Great job as always!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Great to work with as always. Thanks Cato. \n-Janero"
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2010-12-29T00:00:00.000Z",
+                        "endDate": "2010-12-31T00:00:00.000Z",
+                        "totalCharge": 111.11,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Create automatic backup of MySQL-database",
+                            "id": "518178010437521408",
+                            "uid": "518178010437521408",
+                            "access": "PUBLIC",
+                            "type": "HOURLY",
+                            "ciphertext": "~01a4eac6ba4d10f420"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "James M.",
+                            "accessType": "PRIVATE",
+                            "ciphertext": "~0131f24fc3f2fc0a23"
+                        },
+                        "rate": {
+                            "amount": 61.11
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": null
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Cato was very clear on what he needed and was open to my suggestions.  He also had  more work  that he gave at the end of the project  which was a good surprise.  Hope to work with him again.\n\nThanks\nJames"
+                        }
+                    },
+                    {
+                        "isPtcJob": null,
+                        "status": null,
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2010-11-10T00:00:00.000Z",
+                        "endDate": "2010-11-12T00:00:00.000Z",
+                        "totalCharge": 55.55,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Changes to website",
+                            "id": null,
+                            "uid": null,
+                            "access": "PRIVATE",
+                            "type": "HOURLY",
+                            "ciphertext": null
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Ricardo R.",
+                            "accessType": "PUBLIC_INDEX",
+                            "ciphertext": "~0145c52c2aabd6eba8"
+                        },
+                        "rate": {
+                            "amount": 20.0
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Great job!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Very nice working with Cato, straight requirements, fast communicator, very proactive while development takes places and will definitely work for him again in the future.\n\nHighly recommended employer."
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2010-10-14T00:00:00.000Z",
+                        "endDate": "2010-11-10T00:00:00.000Z",
+                        "totalCharge": 100.0,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Design of website",
+                            "id": "518289675225141248",
+                            "uid": "518289675225141248",
+                            "access": "PUBLIC",
+                            "type": "HOURLY",
+                            "ciphertext": "~01aba2762b7cf405ec"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Maryke J.",
+                            "accessType": "PRIVATE",
+                            "ciphertext": "~01a881962baab37af6"
+                        },
+                        "rate": {
+                            "amount": 11.11
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 3.35,
+                            "comment": "Great work - but somewhat hard to get in touch with."
+                        },
+                        "feedbackToClient": null
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2010-09-02T00:00:00.000Z",
+                        "endDate": "2010-09-03T00:00:00.000Z",
+                        "totalCharge": 16.67,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Combine two words into one word multiple times...",
+                            "id": "518136742824570880",
+                            "uid": "518136742824570880",
+                            "access": "PUBLIC_INDEX",
+                            "type": "HOURLY",
+                            "ciphertext": "~01f3b9cd252b64635a"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Jhesthee S.",
+                            "accessType": "PRIVATE",
+                            "ciphertext": "~017c1903d8d577612a"
+                        },
+                        "rate": {
+                            "amount": 5.56
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Excellent job! Super efficient!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": null
+                        }
+                    },
+                    {
+                        "isPtcJob": null,
+                        "status": null,
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2010-08-15T00:00:00.000Z",
+                        "endDate": "2010-08-16T00:00:00.000Z",
+                        "totalCharge": 133.33,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Design of website",
+                            "id": null,
+                            "uid": null,
+                            "access": "PRIVATE",
+                            "type": "HOURLY",
+                            "ciphertext": null
+                        },
+                        "contractorInfo": {
+                            "contractorName": "simarjeet k.",
+                            "accessType": "PRIVATE",
+                            "ciphertext": null
+                        },
+                        "rate": {
+                            "amount": 13.33
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Excellent job!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Cato .. is  great buyer i alwys love to work with him he provides clear instruction . i enjoy working with him \n\nthanks a million \n\nBest Regard's\nSimran"
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2010-06-14T00:00:00.000Z",
+                        "endDate": "2010-06-15T00:00:00.000Z",
+                        "totalCharge": 15.0,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Edit contact form on website",
+                            "id": "518718217678352384",
+                            "uid": "518718217678352384",
+                            "access": "PUBLIC",
+                            "type": "HOURLY",
+                            "ciphertext": "~016e278dc2b46dfbbf"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Susanta B.",
+                            "accessType": "PRIVATE",
+                            "ciphertext": "~0178a2fcb6346f716f"
+                        },
+                        "rate": {
+                            "amount": 11.11
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Great job!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Excellent buyer. Too friendly. Quick work. Hope to work in future project too. Thanks."
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2010-06-12T00:00:00.000Z",
+                        "endDate": "2010-06-15T00:00:00.000Z",
+                        "totalCharge": 17.78,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Recreation of logo",
+                            "id": "518207500364386304",
+                            "uid": "518207500364386304",
+                            "access": "PUBLIC",
+                            "type": "HOURLY",
+                            "ciphertext": "~0134cbec555aaa5a07"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Adam C.",
+                            "accessType": "PRIVATE",
+                            "ciphertext": "~014f8efc0f2b217ad4"
+                        },
+                        "rate": {
+                            "amount": 13.33
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Great job!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "This buyer is an exemplary odesk employer. Being able to help with questions, and clear with his instructions, we were able to create an outstanding product that we can both be proud of. I wish every buyer was as honest and helpful, and I truly want to thank him for this experience.."
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2010-06-11T00:00:00.000Z",
+                        "endDate": "2010-06-12T00:00:00.000Z",
+                        "totalCharge": 16.67,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": ".php-script editing",
+                            "id": "518177201726877696",
+                            "uid": "518177201726877696",
+                            "access": "PUBLIC",
+                            "type": "HOURLY",
+                            "ciphertext": "~01f5c70dee6097040c"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Janero Dindo G.",
+                            "accessType": "PUBLIC_INDEX",
+                            "ciphertext": "~016f57e5cd02777847"
+                        },
+                        "rate": {
+                            "amount": 11.11
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Excellent & Quick!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "It's my pleasure to work again with Cato. Clear instructions and great communication.\nThanks Cato. We'll sure have another work in the future.\n-Janero"
+                        }
+                    },
+                    {
+                        "isPtcJob": null,
+                        "status": null,
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2010-06-10T00:00:00.000Z",
+                        "endDate": "2010-06-12T00:00:00.000Z",
+                        "totalCharge": 200.0,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Redesign of website",
+                            "id": null,
+                            "uid": null,
+                            "access": "PRIVATE",
+                            "type": "HOURLY",
+                            "ciphertext": null
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Cheryl R.",
+                            "accessType": "PRIVATE",
+                            "ciphertext": null
+                        },
+                        "rate": {
+                            "amount": 27.78
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Excellent job!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Cato was very particular about what he wanted and was willing to brainstorm and try out ideas to get the results he wanted.  While this meant revisiting work already done, he made up for it with additional payment, without me asking for it!  A pleasure to work and would do it again!"
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2010-05-31T00:00:00.000Z",
+                        "endDate": "2010-06-02T00:00:00.000Z",
+                        "totalCharge": 10.0,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Super simple edit of website",
+                            "id": "518849276688592896",
+                            "uid": "518849276688592896",
+                            "access": "PUBLIC",
+                            "type": "HOURLY",
+                            "ciphertext": "~01b348701c5a630b0a"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "James D.",
+                            "accessType": "PRIVATE",
+                            "ciphertext": "~013af77c575539b500"
+                        },
+                        "rate": {
+                            "amount": 11.11
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Great job!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Very clear instructions. Great to work for. Thanks"
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2010-05-26T00:00:00.000Z",
+                        "endDate": "2010-05-31T00:00:00.000Z",
+                        "totalCharge": 60.0,
+                        "totalHours": 5.0,
+                        "jobInfo": {
+                            "title": "Create dynamic website-pages",
+                            "id": "518289454107127808",
+                            "uid": "518289454107127808",
+                            "access": "PUBLIC",
+                            "type": "HOURLY",
+                            "ciphertext": "~010aa9ad44ec446c2b"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Shiva Kumar K.",
+                            "accessType": "PRIVATE",
+                            "ciphertext": "~0186ef32e7bc2a5d02"
+                        },
+                        "rate": {
+                            "amount": 12.0
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Good job!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Good Working Experience !!!"
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2010-05-26T00:00:00.000Z",
+                        "endDate": "2010-05-31T00:00:00.000Z",
+                        "totalCharge": 25.0,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Wordpress edits",
+                            "id": "518707334326358016",
+                            "uid": "518707334326358016",
+                            "access": "PUBLIC",
+                            "type": "HOURLY",
+                            "ciphertext": "~01a360df5b1e17afd4"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Asim I.",
+                            "accessType": "PRIVATE",
+                            "ciphertext": "~01351f68b9f093731a"
+                        },
+                        "rate": {
+                            "amount": 10.0
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 4.3,
+                            "comment": "Good job!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 4.3,
+                            "comment": "Excellent Availablilty Presnce By Cato"
+                        }
+                    },
+                    {
+                        "isPtcJob": null,
+                        "status": null,
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2010-01-30T00:00:00.000Z",
+                        "endDate": "2010-02-01T00:00:00.000Z",
+                        "totalCharge": 15.0,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Collect information from various sites",
+                            "id": null,
+                            "uid": null,
+                            "access": "PRIVATE",
+                            "type": "HOURLY",
+                            "ciphertext": null
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Ari A.",
+                            "accessType": "PUBLIC_INDEX",
+                            "ciphertext": "~018a4da65bc110f2bd"
+                        },
+                        "rate": {
+                            "amount": 4.5
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 4.8,
+                            "comment": "Great & efficient!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "It's been a very great time to work with this buyer. Thanks"
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2010-01-30T00:00:00.000Z",
+                        "endDate": "2010-01-31T00:00:00.000Z",
+                        "totalCharge": 16.67,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Formatting in Excel",
+                            "id": "518843404004487168",
+                            "uid": "518843404004487168",
+                            "access": "PUBLIC",
+                            "type": "HOURLY",
+                            "ciphertext": "~01a9f5698391dc73e0"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Helen E.",
+                            "accessType": "PRIVATE",
+                            "ciphertext": "~01cbd517230819487b"
+                        },
+                        "rate": {
+                            "amount": 1.11
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Great & Efficient!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Cato is a great buyer! He gives clear instructions and is prompt in communicating. I look forward to work with him again."
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2009-11-13T00:00:00.000Z",
+                        "endDate": "2009-11-17T00:00:00.000Z",
+                        "totalCharge": 111.11,
+                        "totalHours": 0.0,
+                        "jobInfo": {
+                            "title": "Redesign of simple website",
+                            "id": "519014220371783680",
+                            "uid": "519014220371783680",
+                            "access": "PUBLIC",
+                            "type": "HOURLY",
+                            "ciphertext": "~0102dfe91972dcd0dc"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "harsimran s.",
+                            "accessType": "PUBLIC_INDEX",
+                            "ciphertext": "~019a81ddc642a541e2"
+                        },
+                        "rate": {
+                            "amount": 13.33
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 4.7,
+                            "comment": "Great and easy to work with!"
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Great buyer\n\nRegard's"
+                        }
+                    },
+                    {
+                        "isPtcJob": false,
+                        "status": "CLOSED",
+                        "isEDCReplicated": null,
+                        "isPtcPrivate": false,
+                        "startDate": "2009-10-04T00:00:00.000Z",
+                        "endDate": "2009-11-09T00:00:00.000Z",
+                        "totalCharge": 11.12,
+                        "totalHours": 2.0,
+                        "jobInfo": {
+                            "title": "Convert Stationery from Photoshop to Word 2007-format",
+                            "id": "518250297668005888",
+                            "uid": "518250297668005888",
+                            "access": "PUBLIC",
+                            "type": "HOURLY",
+                            "ciphertext": "~01a81bd43620bee32a"
+                        },
+                        "contractorInfo": {
+                            "contractorName": "Janero Dindo G.",
+                            "accessType": "PUBLIC_INDEX",
+                            "ciphertext": "~016f57e5cd02777847"
+                        },
+                        "rate": {
+                            "amount": 5.56
+                        },
+                        "feedback": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Great job, easy to deal with."
+                        },
+                        "feedbackToClient": {
+                            "feedbackSuppressed": false,
+                            "score": 5.0,
+                            "comment": "Good buyer, doesn't want me to become very generous for this job. :)\nI would like to work with you again Cato.\nThanks,\nJanero"
+                        }
+                    }
+                ]
+            },
+            "currentUserInfo": {
+                "owner": false,
+                "freelancerInfo": {
+                    "profileState": "AUTO_ACCEPTED",
+                    "applied": null,
+                    "devProfileCiphertext": "~018096a48a8e079665",
+                    "hired": null,
+                    "application": null,
+                    "pendingInvite": null,
+                    "contract": null,
+                    "hourlyRate": {
+                        "amount": 25.0
+                    },
+                    "qualificationsMatches": {
+                        "matches": [
+                            {
+                                "clientPreferred": "all",
+                                "clientPreferredLabel": "Any",
+                                "freelancerValue": "IC",
+                                "freelancerValueLabel": "Not Specified",
+                                "qualification": "FreelancerType",
+                                "qualified": true
+                            },
+                            {
+                                "clientPreferred": "0",
+                                "clientPreferredLabel": "At least 0%",
+                                "freelancerValue": "0",
+                                "freelancerValueLabel": "0%",
+                                "qualification": "MinimumJobSuccessScore",
+                                "qualified": true
+                            },
+                            {
+                                "clientPreferred": "0",
+                                "clientPreferredLabel": "Any",
+                                "freelancerValue": "3",
+                                "freelancerValueLabel": "Fluent",
+                                "qualification": "EnglishLevel",
+                                "qualified": true
+                            },
+                            {
+                                "clientPreferred": "0",
+                                "clientPreferredLabel": "At least 0 hours",
+                                "freelancerValue": "0",
+                                "freelancerValueLabel": "0",
+                                "qualification": "HoursBilled",
+                                "qualified": true
+                            },
+                            {
+                                "clientPreferred": "ANY",
+                                "clientPreferredLabel": "Any",
+                                "freelancerValue": "65.00",
+                                "freelancerValueLabel": "65.00",
+                                "qualification": "Earnings",
+                                "qualified": true
+                            },
+                            {
+                                "clientPreferred": "Any",
+                                "clientPreferredLabel": null,
+                                "freelancerValue": "bn, en",
+                                "freelancerValueLabel": "Bengali, English",
+                                "qualification": "Language",
+                                "qualified": true
+                            }
+                        ]
+                    }
+                }
+            },
+            "similarJobs": [],
+            "workLocation": {
+                "onSiteCity": null,
+                "onSiteCountry": null,
+                "onSiteReason": null,
+                "onSiteReasonFlexible": null,
+                "onSiteState": null,
+                "onSiteType": null
+            },
+            "phoneVerificationStatus": {
+                "status": null
+            },
+            "applicantsBidsStats": null,
+            "specializedProfileOccupationId": "1110580748673863680",
+            "applicationContext": {
+                "freelancerAllowed": true,
+                "clientAllowed": true
+            }
+        }
+    }
+}
+```

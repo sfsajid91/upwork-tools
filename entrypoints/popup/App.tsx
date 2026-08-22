@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { browser } from 'wxt/browser';
 import {
   formatDate,
@@ -15,7 +16,6 @@ type ViewState =
   | { kind: 'empty' }
   | { kind: 'error'; message: string }
   | { kind: 'ready'; insights: JobInsights };
-
 function Metric({
   label,
   value,
@@ -26,9 +26,17 @@ function Metric({
   prominent?: boolean;
 }) {
   return (
-    <div className={prominent ? 'metric metric-prominent' : 'metric'}>
-      <span className="metric-label">{label}</span>
-      <strong>{value}</strong>
+    <div className="grid min-w-0 gap-1">
+      <span className="text-[11px] text-[#718096]">{label}</span>
+      <strong
+        className={
+          prominent
+            ? 'break-words text-sm font-semibold text-[#087f5b]'
+            : 'break-words text-sm font-semibold text-[#26364d]'
+        }
+      >
+        {value}
+      </strong>
     </div>
   );
 }
@@ -37,25 +45,44 @@ function AvailableState({ insights }: { insights: JobInsights }) {
   const { job, activity, client } = insights;
   return (
     <>
-      <header className="job-header">
-        <p className="eyebrow">Job Insights</p>
-        <h1>{job.title ?? 'Untitled job'}</h1>
-        <p className="job-meta">
+      <header className="mb-4">
+        <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#526173]">
+          Job Insights
+        </p>
+        <h1 className="mb-2 text-[22px] font-semibold leading-tight text-[#172033]">
+          {job.title ?? 'Untitled job'}
+        </h1>
+        <p className="mb-0 text-xs leading-5 text-[#66758a]">
           {[job.type, job.contractorTier, job.category].filter(Boolean).join(' · ') || 'Upwork job'}
         </p>
       </header>
 
-      <section className="proposal-card" aria-labelledby="proposal-heading">
-        <p id="proposal-heading" className="eyebrow">
+      <section
+        className="mb-3.5 rounded-[14px] border border-[#e2e8f0] bg-[#152d4f] p-[18px] text-white shadow-[0_8px_24px_rgba(29,41,57,0.06)]"
+        aria-labelledby="proposal-heading"
+      >
+        <p
+          id="proposal-heading"
+          className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#b6c7dd]"
+        >
           Exact Proposals
         </p>
-        <strong className="proposal-count">{formatNumber(activity.exactProposals)}</strong>
-        <p className="muted">Applicants reported by the authenticated job response</p>
+        <strong className="mb-1 block text-[42px] font-bold leading-none">
+          {formatNumber(activity.exactProposals)}
+        </strong>
+        <p className="mb-0 text-xs leading-5 text-[#b6c7dd]">
+          Applicants reported by the authenticated job response
+        </p>
       </section>
 
-      <section className="panel" aria-labelledby="activity-heading">
-        <h2 id="activity-heading">Activity</h2>
-        <div className="metrics-grid">
+      <section
+        className="mb-3.5 rounded-[14px] border border-[#e2e8f0] bg-white p-4 shadow-[0_8px_24px_rgba(29,41,57,0.06)]"
+        aria-labelledby="activity-heading"
+      >
+        <h2 className="mb-3.5 text-sm font-semibold text-[#172033]" id="activity-heading">
+          Activity
+        </h2>
+        <div className="grid grid-cols-2 gap-x-3 gap-y-3.5">
           <Metric label="Hired" value={formatNumber(activity.totalHired)} prominent />
           <Metric label="Interview invites" value={formatNumber(activity.invitedToInterview)} />
           <Metric label="Positions" value={formatNumber(activity.positionsToHire)} />
@@ -66,9 +93,14 @@ function AvailableState({ insights }: { insights: JobInsights }) {
         </div>
       </section>
 
-      <section className="panel" aria-labelledby="client-heading">
-        <h2 id="client-heading">Client</h2>
-        <div className="metrics-grid">
+      <section
+        className="mb-3.5 rounded-[14px] border border-[#e2e8f0] bg-white p-4 shadow-[0_8px_24px_rgba(29,41,57,0.06)]"
+        aria-labelledby="client-heading"
+      >
+        <h2 className="mb-3.5 text-sm font-semibold text-[#172033]" id="client-heading">
+          Client
+        </h2>
+        <div className="grid grid-cols-2 gap-x-3 gap-y-3.5">
           <Metric label="Hire rate" value={formatPercent(client.hireRate)} prominent />
           <Metric
             label="Rating"
@@ -93,7 +125,7 @@ function AvailableState({ insights }: { insights: JobInsights }) {
         </div>
       </section>
 
-      <footer className="job-footer">
+      <footer className="flex justify-between gap-3 px-0.5 pt-0.5 text-[11px] text-[#718096]">
         <span>Posted {formatDate(job.postedOn)}</span>
         <span>
           {job.budgetAmount === null
@@ -133,27 +165,39 @@ function App() {
   }, []);
 
   return (
-    <main className="app-shell">
+    <main className="min-h-[520px] w-full p-5">
       {state.kind === 'loading' && (
-        <div className="state-card">
-          <p className="eyebrow">Upwork Tools</p>
-          <h1>Loading insights…</h1>
+        <div className="rounded-[14px] border border-[#e2e8f0] bg-white p-6 shadow-[0_8px_24px_rgba(29,41,57,0.06)]">
+          <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#526173]">
+            Upwork Tools
+          </p>
+          <h1 className="text-[22px] font-semibold leading-tight text-[#172033]">
+            Loading insights…
+          </h1>
         </div>
       )}
       {state.kind === 'empty' && (
-        <div className="state-card">
-          <p className="eyebrow">Upwork Tools</p>
-          <h1>No job insights yet</h1>
-          <p className="muted">
+        <div className="rounded-[14px] border border-[#e2e8f0] bg-white p-6 shadow-[0_8px_24px_rgba(29,41,57,0.06)]">
+          <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#526173]">
+            Upwork Tools
+          </p>
+          <h1 className="mb-2 text-[22px] font-semibold leading-tight text-[#172033]">
+            No job insights yet
+          </h1>
+          <p className="mb-0 text-xs leading-5 text-[#66758a]">
             Open an Upwork job and let its details load, then reopen this popup.
           </p>
         </div>
       )}
       {state.kind === 'error' && (
-        <div className="state-card">
-          <p className="eyebrow">Upwork Tools</p>
-          <h1>Something went wrong</h1>
-          <p className="muted">{state.message}</p>
+        <div className="rounded-[14px] border border-[#e2e8f0] bg-white p-6 shadow-[0_8px_24px_rgba(29,41,57,0.06)]">
+          <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#526173]">
+            Upwork Tools
+          </p>
+          <h1 className="mb-2 text-[22px] font-semibold leading-tight text-[#172033]">
+            Something went wrong
+          </h1>
+          <p className="mb-0 text-xs leading-5 text-[#66758a]">{state.message}</p>
         </div>
       )}
       {state.kind === 'ready' && <AvailableState insights={state.insights} />}

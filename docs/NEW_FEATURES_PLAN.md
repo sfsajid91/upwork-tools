@@ -493,11 +493,11 @@ Do not start portfolio matching, conversion statistics, or watchlist UI before t
   - [x] Keep latest per-tab data in `storage.session`.
   - [x] Put growing records in IndexedDB.
   - [x] Put profile, portfolio, and settings in `storage.local`.
-- [ ] **P1.2 — Build the IndexedDB schema**
-  - [ ] Add versioned database initialization.
-  - [ ] Add `jobs` store and `jobId` key.
-  - [ ] Add append-only `jobSnapshots` store and indexes.
-  - [ ] Add `applications` and `watchlist` stores.
+- [x] **P1.2 — Build the IndexedDB schema**
+  - [x] Add versioned database initialization.
+  - [x] Add `jobs` store and `jobId` key.
+  - [x] Add append-only `jobSnapshots` store and indexes.
+  - [x] Add `applications` and `watchlist` stores.
 - [ ] **P1.3 — Build local-settings storage**
   - [ ] Store profile and skills.
   - [ ] Store portfolio entries.

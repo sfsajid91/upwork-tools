@@ -508,10 +508,10 @@ Do not start portfolio matching, conversion statistics, or watchlist UI before t
   - [x] Capture local `capturedAt`.
   - [x] Deduplicate identical adjacent captures.
   - [x] Never persist raw GraphQL payloads.
-- [ ] **P1.5 — Add retention and clear-data APIs**
-  - [ ] Enforce snapshot retention limits.
-  - [ ] Add clear-history operation.
-  - [ ] Include applications and watchlist in clear-data policy.
+- [x] **P1.5 — Add retention and clear-data APIs**
+  - [x] Enforce snapshot retention limits.
+  - [x] Add clear-history operation.
+  - [x] Include applications and watchlist in clear-data policy.
 - [ ] **P1.6 — Handle storage degradation**
   - [ ] Keep session-only popup behavior when IndexedDB fails.
   - [ ] Avoid blocking host-page message handling.

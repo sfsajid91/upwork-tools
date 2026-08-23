@@ -4,6 +4,10 @@ import type {
   JobSnapshotRecord,
   WatchlistRecord,
 } from './storage';
+import {
+  HISTORY_RETENTION_DAYS,
+  MAX_SNAPSHOTS_PER_JOB,
+} from './storage';
 
 export const DATABASE_NAME = 'upwork-tools';
 export const DATABASE_VERSION = 1;
@@ -18,6 +22,19 @@ export const DATABASE_STORES = {
 export type DatabaseStoreName = (typeof DATABASE_STORES)[keyof typeof DATABASE_STORES];
 
 const ALL_STORES = Object.values(DATABASE_STORES) as DatabaseStoreName[];
+const HISTORY_STORES = [
+  DATABASE_STORES.jobSnapshots,
+  DATABASE_STORES.jobs,
+  DATABASE_STORES.applications,
+  DATABASE_STORES.watchlist,
+] as DatabaseStoreName[];
+
+const DAY_MS = 24 * 60 * 60 * 1_000;
+
+type StoredSnapshot = {
+  record: JobSnapshotRecord;
+  key: IDBValidKey;
+};
 
 type TransactionCallback<T> = (transaction: IDBTransaction) => Promise<T> | T;
 
@@ -126,7 +143,10 @@ function openDatabaseOnce(): Promise<IDBDatabase | null> {
 /** Opens the versioned local database, or null when IndexedDB is unavailable or blocked. */
 export function openDatabase(): Promise<IDBDatabase | null> {
   if (!databasePromise) databasePromise = openDatabaseOnce();
-  return databasePromise;
+  return databasePromise.then((database) => {
+    if (!database) databasePromise = null;
+    return database;
+  });
 }
 
 /** Runs one transaction and degrades to null when IndexedDB cannot be used. */
@@ -206,6 +226,60 @@ export function runTransaction<T>(
     });
   });
 }
+async function enforceHistoryRetentionInTransaction(
+  transaction: IDBTransaction,
+  now: number,
+): Promise<void> {
+  const store = transaction.objectStore(DATABASE_STORES.jobSnapshots);
+  const [records, keys] = await Promise.all([
+    requestResult<JobSnapshotRecord[]>(store.getAll()),
+    requestResult<IDBValidKey[]>(store.getAllKeys()),
+  ]);
+  const cutoff = now - HISTORY_RETENTION_DAYS * DAY_MS;
+  const perJob = new Map<string, StoredSnapshot[]>();
+
+  for (let index = 0; index < records.length; index += 1) {
+    const record = records[index];
+    const key = keys[index];
+    if (!record || key === undefined || !hasJobId(record)) continue;
+    if (Number.isFinite(record.capturedAt) && record.capturedAt < cutoff) {
+      await requestResult(store.delete(key));
+      continue;
+    }
+    const snapshots = perJob.get(record.jobId) ?? [];
+    snapshots.push({ record, key });
+    perJob.set(record.jobId, snapshots);
+  }
+
+  for (const snapshots of perJob.values()) {
+    if (snapshots.length <= MAX_SNAPSHOTS_PER_JOB) continue;
+    snapshots.sort((left, right) => {
+      const leftTime = Number.isFinite(left.record.capturedAt)
+        ? left.record.capturedAt
+        : Number.POSITIVE_INFINITY;
+      const rightTime = Number.isFinite(right.record.capturedAt)
+        ? right.record.capturedAt
+        : Number.POSITIVE_INFINITY;
+      if (leftTime !== rightTime) return rightTime > leftTime ? 1 : -1;
+      const leftKey = typeof left.key === 'number' ? left.key : 0;
+      const rightKey = typeof right.key === 'number' ? right.key : 0;
+      return rightKey - leftKey;
+    });
+    for (const snapshot of snapshots.slice(MAX_SNAPSHOTS_PER_JOB)) {
+      await requestResult(store.delete(snapshot.key));
+    }
+  }
+}
+
+/** Removes snapshots older than 90 days and keeps at most 100 per job. */
+export async function enforceHistoryRetention(now = Date.now()): Promise<boolean> {
+  const result = await runTransaction(DATABASE_STORES.jobSnapshots, 'readwrite', async (transaction) => {
+    await enforceHistoryRetentionInTransaction(transaction, Number.isFinite(now) ? now : Date.now());
+    return true;
+  });
+  return result === true;
+}
+
 
 export async function putJob(
   record: JobRecord | null | undefined,
@@ -232,8 +306,15 @@ export async function putJobSnapshot(
   if (!hasJobId(record)) return null;
   const { id: _ignoredId, ...snapshot } = record;
   void _ignoredId;
-  const result = await runTransaction(DATABASE_STORES.jobSnapshots, 'readwrite', (transaction) =>
-    requestResult<IDBValidKey>(transaction.objectStore(DATABASE_STORES.jobSnapshots).add(snapshot)),
+  const result = await runTransaction(
+    DATABASE_STORES.jobSnapshots,
+    'readwrite',
+    async (transaction) => {
+      const store = transaction.objectStore(DATABASE_STORES.jobSnapshots);
+      const key = await requestResult<IDBValidKey>(store.add(snapshot));
+      await enforceHistoryRetentionInTransaction(transaction, Date.now());
+      return key;
+    },
   );
   return typeof result === 'number' ? result : null;
 }
@@ -267,7 +348,9 @@ export async function appendJobSnapshotIfChanged(
       ) {
         return null;
       }
-      return requestResult<IDBValidKey>(store.add(snapshot));
+      const key = await requestResult<IDBValidKey>(store.add(snapshot));
+      await enforceHistoryRetentionInTransaction(transaction, Date.now());
+      return key;
     },
   );
   return typeof result === 'number' ? result : null;
@@ -332,4 +415,14 @@ export async function clearStores(
     ),
   );
   return result === true;
+}
+
+/** Clears locally persisted history and the job state that refers to it. */
+export function clearHistory(): Promise<boolean> {
+  return clearStores(HISTORY_STORES);
+}
+
+/** Clears every IndexedDB store owned by this extension. */
+export function clearAllLocalData(): Promise<boolean> {
+  return clearStores(ALL_STORES);
 }

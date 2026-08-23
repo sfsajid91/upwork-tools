@@ -478,10 +478,10 @@ Do not start portfolio matching, conversion statistics, or watchlist UI before t
   - [ ] Add per-tab navigation generation or mutation sequencing.
   - [ ] Reject stale STORE messages after navigation starts.
   - [ ] Prevent cleanup from deleting fresh-page data.
-- [ ] **P0.6 — Harden interception**
-  - [ ] Handle rejected fetch inspection promises.
-  - [ ] Remove or constrain URL-less global `JSON.parse` capture.
-  - [ ] Preserve original host-page behavior.
+- [x] **P0.6 — Harden interception**
+  - [x] Handle rejected fetch inspection promises.
+  - [x] Remove or constrain URL-less global `JSON.parse` capture.
+  - [x] Preserve original host-page behavior.
 - [ ] **P0.7 — Add audit regression tests**
   - [ ] Test history source and current-job exclusion.
   - [ ] Test protocol/runtime boundary behavior.

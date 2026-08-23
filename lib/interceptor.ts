@@ -13,6 +13,7 @@ type InterceptedWindow = Window & {
 let previousCapture: { signature: string; capturedAt: number } | null = null;
 
 function isSupportedUrl(value: string): boolean {
+  if (typeof value !== 'string' || value.trim() === '') return false;
   try {
     const url = new URL(value, window.location.href);
     const isUpwork = url.hostname === 'upwork.com' || url.hostname.endsWith('.upwork.com');
@@ -51,9 +52,9 @@ function emitInsights(insights: JobInsights): void {
   window.postMessage(createPageEvent(insights), window.location.origin);
 }
 
-function inspectPayload(payload: unknown, url?: string): void {
+function inspectPayload(payload: unknown, url: string): void {
   try {
-    if (url !== undefined && !isSupportedUrl(url)) return;
+    if (!isSupportedUrl(url)) return;
     const insights = normalizeJobInsights(payload);
     if (insights) emitInsights(insights);
   } catch {
@@ -82,7 +83,11 @@ function installFetchAndResponseHooks(page: InterceptedWindow): void {
       const url = requestUrl(args[0]);
       const result = original.apply(this, args);
       if (url !== null) {
-        void result.then((response) => inspectResponse(url, response));
+        void result
+          .then((response) => inspectResponse(url, response))
+          .catch(() => {
+            // Inspection must never affect the host page.
+          });
       }
       return result;
     };
@@ -117,32 +122,33 @@ function installFetchAndResponseHooks(page: InterceptedWindow): void {
     // Optional Upwork internals are not required for capture.
   }
 
-  JSON.parse = function (...args: Parameters<JSON['parse']>) {
-    const payload = nativeParse.apply(this, args);
-    const text = args[0];
-    if (typeof text === 'string' && TARGET_MARKERS.some((marker) => text.includes(marker))) {
-      inspectPayload(payload);
-    }
-    return payload;
-  };
-
   Response.prototype.json = function (...args) {
-    return nativeJson.call(this, ...args).then((payload) => {
-      inspectPayload(payload, this.url);
-      return payload;
-    });
+    const result = nativeJson.call(this, ...args);
+    void result
+      .then((payload) => {
+        inspectPayload(payload, this.url);
+      })
+      .catch(() => {
+        // Inspection must never affect the host page.
+      });
+    return result;
   };
   Response.prototype.text = function (...args) {
-    return nativeText.call(this, ...args).then((text) => {
-      if (TARGET_MARKERS.some((marker) => text.includes(marker))) {
-        try {
-          inspectPayload(nativeParse(text), this.url);
-        } catch {
-          // Ignore marker-containing non-JSON text.
+    const result = nativeText.call(this, ...args);
+    void result
+      .then((text) => {
+        if (TARGET_MARKERS.some((marker) => text.includes(marker))) {
+          try {
+            inspectPayload(nativeParse(text), this.url);
+          } catch {
+            // Ignore marker-containing non-JSON text.
+          }
         }
-      }
-      return text;
-    });
+      })
+      .catch(() => {
+        // Inspection must never affect the host page.
+      });
+    return result;
   };
 }
 function installXhrHooks(): void {

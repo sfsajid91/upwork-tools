@@ -562,34 +562,34 @@ Do not start portfolio matching, conversion statistics, or watchlist UI before t
   - [ ] Create a settings surface for skills and profile values.
   - [ ] Persist settings in `storage.local`.
   - [ ] Keep captured Upwork rate as the primary source.
-- [ ] **P3.2 — Normalize skill names**
-  - [ ] Normalize case and punctuation.
-  - [ ] Add a small explicit alias map.
-  - [ ] Preserve source labels for display.
-- [ ] **P3.3 — Add personal skill match**
-  - [ ] Compare profile skills with both job skill arrays.
-  - [ ] Display matched/total only when a profile exists.
-  - [ ] Avoid opaque scoring.
+- [x] **P3.2 — Normalize skill names**
+  - [x] Normalize case and punctuation.
+  - [x] Add a small explicit alias map.
+  - [x] Preserve source labels for display.
+- [x] **P3.3 — Add personal skill match**
+  - [x] Compare profile skills with both job skill arrays.
+  - [x] Display matched/total only when a profile exists.
+  - [x] Avoid opaque scoring.
 - [ ] **P3.4 — Expand qualification details**
   - [ ] Preserve requirement labels and freelancer values.
   - [ ] Preserve each qualified boolean.
   - [ ] Add an expandable details section.
-- [ ] **P3.5 — Expand restriction detection**
-  - [ ] Parse real location restrictions.
-  - [ ] Parse language, JSS, hours, earnings, and on-site values.
-  - [ ] Suppress `Any`, zero, false, and empty defaults.
-- [ ] **P3.6 — Add portfolio storage**
-  - [ ] Store title, skills, tags, and URL locally.
-  - [ ] Add create, edit, and remove operations.
-- [ ] **P3.7 — Add portfolio ranking**
-  - [ ] Rank title/tag/skill overlap deterministically.
-  - [ ] Require a strong match.
-  - [ ] Bound displayed results.
-- [ ] **P3.8 — Test personal matching**
-  - [ ] Test aliases and punctuation normalization.
-  - [ ] Test empty profile behavior.
-  - [ ] Test default restriction suppression.
-  - [ ] Test portfolio ranking boundaries.
+- [x] **P3.5 — Expand restriction detection**
+  - [x] Parse real location restrictions.
+  - [x] Parse language, JSS, hours, earnings, and on-site values.
+  - [x] Suppress `Any`, zero, false, and empty defaults.
+- [x] **P3.6 — Add portfolio storage**
+  - [x] Store title, skills, tags, and URL locally.
+  - [x] Add create, edit, and remove operations.
+- [x] **P3.7 — Add portfolio ranking**
+  - [x] Rank title/tag/skill overlap deterministically.
+  - [x] Require a strong match.
+  - [x] Bound displayed results.
+- [x] **P3.8 — Test personal matching**
+  - [x] Test aliases and punctuation normalization.
+  - [x] Test empty profile behavior.
+  - [x] Test default restriction suppression.
+  - [x] Test portfolio ranking boundaries.
 
 ### Phase 4 — Application tracker, conversion stats, and watchlist
 

@@ -489,10 +489,10 @@ Do not start portfolio matching, conversion statistics, or watchlist UI before t
 
 ### Phase 1 — Storage foundation and applicant snapshots
 
-- [ ] **P1.1 — Define storage ownership**
-  - [ ] Keep latest per-tab data in `storage.session`.
-  - [ ] Put growing records in IndexedDB.
-  - [ ] Put profile, portfolio, and settings in `storage.local`.
+- [x] **P1.1 — Define storage ownership**
+  - [x] Keep latest per-tab data in `storage.session`.
+  - [x] Put growing records in IndexedDB.
+  - [x] Put profile, portfolio, and settings in `storage.local`.
 - [ ] **P1.2 — Build the IndexedDB schema**
   - [ ] Add versioned database initialization.
   - [ ] Add `jobs` store and `jobId` key.

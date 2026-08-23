@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useState } from 'react';
 import { browser } from 'wxt/browser';
+import { clearAllLocalData } from '../../lib/database';
 import { createPortfolio, removePortfolio, updatePortfolio } from '../../lib/portfolio';
 import { isPortfolioEntry, isUserProfile, setUserProfile } from '../../lib/settings';
 import type { PortfolioEntry, UserProfile } from '../../lib/storage';
@@ -121,6 +122,8 @@ function OptionsApp() {
   const [portfolioSaving, setPortfolioSaving] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [clearStatus, setClearStatus] = useState<Status>(null);
+  const [clearPending, setClearPending] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -251,6 +254,32 @@ function OptionsApp() {
       setPortfolioSaving(false);
     }
   }
+
+  async function clearLocalData() {
+    if (clearPending || loading || loadFailed) return;
+    if (
+      !window.confirm(
+        'Clear local history, jobs, applications, and watchlist? Your profile, portfolio, and settings will be preserved.',
+      )
+    ) {
+      return;
+    }
+
+    setClearPending(true);
+    setClearStatus(null);
+    try {
+      setClearStatus(
+        (await clearAllLocalData())
+          ? { tone: 'success', message: 'Local history and job data cleared.' }
+          : { tone: 'error', message: 'Local data could not be cleared. Try again.' },
+      );
+    } catch {
+      setClearStatus({ tone: 'error', message: 'Local data could not be cleared. Try again.' });
+    } finally {
+      setClearPending(false);
+    }
+  }
+  const clearDataDisabled = loading || loadFailed || clearPending;
 
   const profileDisabled = loading || loadFailed || profileSaving;
   const portfolioDisabled = loading || loadFailed || portfolioSaving;
@@ -504,6 +533,41 @@ function OptionsApp() {
               </p>
             )}
           </form>
+        </section>
+
+        <section
+          className="rounded-xl border border-red-200 bg-white p-4 shadow-sm dark:border-red-950 dark:bg-slate-900"
+          aria-labelledby="clear-data-heading"
+        >
+          <h2 id="clear-data-heading" className="text-base font-semibold">
+            Clear local data
+          </h2>
+          <p id="clear-data-help" className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Remove local history, jobs, applications, and watchlist data. Your profile, portfolio,
+            and settings are preserved.
+          </p>
+          <button
+            className="mt-3 rounded-md border border-red-300 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950 disabled:cursor-not-allowed disabled:opacity-50"
+            type="button"
+            onClick={() => void clearLocalData()}
+            disabled={clearDataDisabled}
+            aria-describedby="clear-data-help"
+            aria-busy={clearPending}
+          >
+            {clearPending ? 'Clearing local data…' : 'Clear local data'}
+          </button>
+          {clearStatus && (
+            <p
+              className={
+                clearStatus.tone === 'error'
+                  ? 'mt-3 text-sm text-red-700 dark:text-red-300'
+                  : 'mt-3 text-sm text-emerald-700 dark:text-emerald-300'
+              }
+              role={clearStatus.tone === 'error' ? 'alert' : 'status'}
+            >
+              {clearStatus.message}
+            </p>
+          )}
         </section>
       </div>
     </main>

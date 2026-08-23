@@ -282,6 +282,11 @@ function MonitorIcon({ className = 'size-3.5' }: { className?: string }) {
 
 // --- Component Helpers ---
 
+export type WatchlistStatus =
+  | { kind: 'saved' }
+  | { kind: 'not-saved' }
+  | { kind: 'unavailable'; reason: 'missing-id' | 'storage' };
+
 const WARNING_COPY: Record<JobWarning, string> = {
   'position-filled': 'Position already filled',
   'already-hired': 'Client already hired for this job',
@@ -505,12 +510,14 @@ export function EmptyState({
   tone = 'default',
   themeMode,
   onToggleTheme,
+  onRetry,
 }: {
   title: string;
   copy: string;
   tone?: 'default' | 'error';
   themeMode?: ThemeMode;
   onToggleTheme?: () => void;
+  onRetry?: () => void;
 }) {
   return (
     <section className="flex min-h-[460px] flex-col items-center justify-center rounded-2xl border border-slate-200/90 bg-white p-6 text-center shadow-xs dark:border-slate-800/90 dark:bg-slate-900">
@@ -538,12 +545,26 @@ export function EmptyState({
       <h1 className="mb-2 text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
         {title}
       </h1>
-      <p className="mb-6 max-w-[32ch] text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+      <p
+        className="mb-6 max-w-[32ch] text-xs leading-relaxed text-slate-500 dark:text-slate-400"
+        role="status"
+        aria-live="polite"
+      >
         {copy}
       </p>
 
+      {onRetry && (
+        <button
+          type="button"
+          className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white dark:focus-visible:outline-slate-100"
+          onClick={onRetry}
+        >
+          Retry
+        </button>
+      )}
+
       {tone === 'default' && (
-        <div className="w-full rounded-xl border border-slate-100 bg-slate-50 p-3.5 text-left dark:border-slate-800 dark:bg-slate-800/60">
+        <div className="mt-6 w-full rounded-xl border border-slate-100 bg-slate-50 p-3.5 text-left dark:border-slate-800 dark:bg-slate-800/60">
           <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
             How it works
           </div>
@@ -616,15 +637,42 @@ export function LoadingState({
 export function AvailableState({
   insights,
   history,
+  historyFallback = false,
+  watchlistStatus = { kind: 'not-saved' },
+  watchlistBusy = false,
+  onToggleWatchlist,
   themeMode,
   onToggleTheme,
 }: {
   insights: JobInsights;
   history?: JobHistoryResponse | null;
+  historyFallback?: boolean;
+  watchlistStatus?: WatchlistStatus;
+  watchlistBusy?: boolean;
+  onToggleWatchlist?: () => void | Promise<void>;
   themeMode?: ThemeMode;
   onToggleTheme?: () => void;
 }) {
   const { job, activity, client, fit, history: clientHistory } = insights;
+  const jobId = typeof job.id === 'string' && job.id.trim().length > 0 ? job.id.trim() : null;
+  const effectiveWatchlistStatus =
+    jobId === null && watchlistStatus.kind === 'not-saved'
+      ? { kind: 'unavailable' as const, reason: 'missing-id' as const }
+      : watchlistStatus;
+  const canToggleWatchlist =
+    jobId !== null &&
+    effectiveWatchlistStatus.kind !== 'unavailable' &&
+    onToggleWatchlist !== undefined;
+  const watchlistLabel =
+    effectiveWatchlistStatus.kind === 'saved'
+      ? 'Remove job from watchlist'
+      : effectiveWatchlistStatus.kind === 'unavailable'
+        ? 'Watchlist unavailable'
+        : 'Save job to watchlist';
+  const observedApplicationLabel =
+    fit.applicationState === null
+      ? 'Observed application state: Not observed'
+      : `Observed application state: ${formatApplicationState(fit.applicationState)}`;
 
   const location = [client.city, client.country].filter(Boolean).join(', ') || 'Not available';
 
@@ -689,6 +737,69 @@ export function AvailableState({
             {subTitleParts.join(' · ')}
           </p>
         )}
+        {historyFallback && (
+          <p
+            className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-900 dark:border-amber-900/80 dark:bg-amber-950/40 dark:text-amber-200"
+            role="status"
+            aria-live="polite"
+          >
+            Showing session-only insights. Optional history storage was unavailable.
+          </p>
+        )}
+        <section
+          className="mt-2.5 rounded-xl border border-slate-100 bg-slate-50 p-2.5 dark:border-slate-800 dark:bg-slate-800/60"
+          aria-label="Local job controls"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <span className="block text-[10.5px] font-bold text-slate-700 dark:text-slate-200">
+                Watchlist
+              </span>
+              <span
+                className="block text-[10px] text-slate-500 dark:text-slate-400"
+                role="status"
+                aria-live="polite"
+              >
+                {effectiveWatchlistStatus.kind === 'saved'
+                  ? 'Saved locally'
+                  : effectiveWatchlistStatus.kind === 'unavailable'
+                    ? effectiveWatchlistStatus.reason === 'missing-id'
+                      ? 'Unavailable without a job ID'
+                      : 'Local storage unavailable'
+                    : 'Not saved'}
+              </span>
+            </div>
+            <button
+              type="button"
+              className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-[10.5px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+              aria-label={watchlistLabel}
+              title={watchlistLabel}
+              disabled={!canToggleWatchlist || watchlistBusy}
+              onClick={() => void onToggleWatchlist?.()}
+            >
+              <StarIcon className="size-3" />
+              <span>
+                {watchlistBusy
+                  ? 'Saving…'
+                  : effectiveWatchlistStatus.kind === 'saved'
+                    ? 'Saved'
+                    : 'Save'}
+              </span>
+            </button>
+          </div>
+          <div
+            className="mt-2 flex items-center justify-between border-t border-slate-200/70 pt-2 text-[10.5px] dark:border-slate-700/70"
+            role="status"
+            aria-label={observedApplicationLabel}
+          >
+            <span className="font-medium text-slate-500 dark:text-slate-400">
+              Observed application
+            </span>
+            <span className="font-semibold text-slate-700 dark:text-slate-200">
+              {formatApplicationState(fit.applicationState)}
+            </span>
+          </div>
+        </section>
       </header>
 
       {/* Warnings & Restrictions */}

@@ -615,29 +615,29 @@ Do not start portfolio matching, conversion statistics, or watchlist UI before t
   - [x] Store latest metadata and snapshot reference.
   - [x] Remove watchlisted jobs.
   - [x] Update only on natural job captures.
-- [ ] **P4.6 — Add tracker/watchlist UI**
-  - [ ] Add compact controls to the popup.
-  - [ ] Add a watchlist view or options surface.
-  - [ ] Add clear-data integration.
-- [ ] **P4.7 — Test tracker behavior**
-  - [ ] Test observed state transitions.
-  - [ ] Test unknown-state exclusion from metrics.
-  - [ ] Test watchlist isolation and removal.
+- [x] **P4.6 — Add tracker/watchlist UI**
+  - [x] Add compact controls to the popup.
+  - [x] Add a watchlist view or options surface.
+  - [x] Add clear-data integration.
+- [x] **P4.7 — Test tracker behavior**
+  - [x] Test observed state transitions.
+  - [x] Test unknown-state exclusion from metrics.
+  - [x] Test watchlist isolation and removal.
 
 ### Phase 5 — Popup information architecture and release hardening
 
-- [ ] **P5.1 — Rework popup hierarchy**
-  - [ ] Keep competition metrics above the fold.
-  - [ ] Add conditional applicant history and velocity.
-  - [ ] Keep pay, fit, warnings, and history expandable where possible.
-- [ ] **P5.2 — Add refresh and failure actions**
-  - [ ] Add retry for empty/error reads.
-  - [ ] Re-read session data without making network requests.
-  - [ ] Explain session-only fallback when persistent storage fails.
-- [ ] **P5.3 — Add clear-data controls**
-  - [ ] Expose history/application/watchlist clearing.
-  - [ ] Confirm destructive local deletion.
-  - [ ] Preserve unrelated browser data.
+- [x] **P5.1 — Rework popup hierarchy**
+  - [x] Keep competition metrics above the fold.
+  - [x] Add conditional applicant history and velocity.
+  - [x] Keep pay, fit, warnings, and history expandable where possible.
+- [x] **P5.2 — Add refresh and failure actions**
+  - [x] Add retry for empty/error reads.
+  - [x] Re-read session data without making network requests.
+  - [x] Explain session-only fallback when persistent storage fails.
+- [x] **P5.3 — Add clear-data controls**
+  - [x] Expose history/application/watchlist clearing.
+  - [x] Confirm destructive local deletion.
+  - [x] Preserve unrelated browser data.
 - [x] **P5.4 — Replace the starter README**
   - [x] Document install and load-unpacked steps.
   - [x] Document Bun development/build/package commands.

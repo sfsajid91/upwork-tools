@@ -110,6 +110,63 @@ describe('InsightsView components', () => {
     expect(html.includes('Related Previous Jobs')).toBe(true);
     expect(html.includes('Repeat Context')).toBe(true);
   });
+  test('renders disabled watchlist control when the normalized job ID is missing', () => {
+    const insights = normalizeJobInsights(samplePayload());
+    expect(insights).not.toBeNull();
+    if (!insights) throw new Error('insights should not be null');
+    const html = renderToString(
+      <AvailableState
+        insights={{ ...insights, job: { ...insights.job, id: null } }}
+        onToggleWatchlist={() => {}}
+      />,
+    );
+    expect(html.includes('disabled=""')).toBe(true);
+    expect(html.includes('Unavailable without a job ID')).toBe(true);
+    expect(html.includes('Watchlist unavailable')).toBe(true);
+  });
+
+  test('renders saved and removable watchlist status with accessible labels', () => {
+    const insights = normalizeJobInsights(samplePayload());
+    expect(insights).not.toBeNull();
+    if (!insights) throw new Error('insights should not be null');
+    const savedHtml = renderToString(
+      <AvailableState
+        insights={insights}
+        watchlistStatus={{ kind: 'saved' }}
+        onToggleWatchlist={() => {}}
+      />,
+    );
+    expect(savedHtml.includes('Saved locally')).toBe(true);
+    expect(savedHtml.includes('Remove job from watchlist')).toBe(true);
+    expect(savedHtml.includes('Observed application')).toBe(true);
+    expect(savedHtml.includes('Already applied')).toBe(true);
+
+    const removedHtml = renderToString(
+      <AvailableState
+        insights={insights}
+        watchlistStatus={{ kind: 'not-saved' }}
+        onToggleWatchlist={() => {}}
+      />,
+    );
+    expect(removedHtml.includes('Not saved')).toBe(true);
+    expect(removedHtml.includes('Save job to watchlist')).toBe(true);
+  });
+
+  test('renders storage failure fallback without recommendation language', () => {
+    const insights = normalizeJobInsights(samplePayload());
+    expect(insights).not.toBeNull();
+    if (!insights) throw new Error('insights should not be null');
+    const html = renderToString(
+      <AvailableState
+        insights={insights}
+        watchlistStatus={{ kind: 'unavailable', reason: 'storage' }}
+        onToggleWatchlist={() => {}}
+      />,
+    );
+    expect(html.includes('Local storage unavailable')).toBe(true);
+    expect(html.includes('Watchlist unavailable')).toBe(true);
+    expect(html.toLowerCase().includes('recommend')).toBe(false);
+  });
 
   test('renders ThemeToggle in system, light, and dark modes', () => {
     const systemHtml = renderToString(<ThemeToggle mode="system" onToggle={() => {}} />);

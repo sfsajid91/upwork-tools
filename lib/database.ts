@@ -8,6 +8,7 @@ import {
   HISTORY_RETENTION_DAYS,
   MAX_SNAPSHOTS_PER_JOB,
 } from './storage';
+import { mergeApplicationRecords } from './tracker';
 
 export const DATABASE_NAME = 'upwork-tools';
 export const DATABASE_VERSION = 1;
@@ -371,12 +372,37 @@ export async function listJobSnapshots(jobId: string | null | undefined): Promis
   });
 }
 
-export async function putApplication(record: ApplicationRecord | null | undefined): Promise<boolean> {
-  if (!hasJobId(record)) return false;
-  const result = await runTransaction(DATABASE_STORES.applications, 'readwrite', (transaction) =>
-    requestResult(transaction.objectStore(DATABASE_STORES.applications).put(record)),
-  );
-  return result !== null;
+export async function putApplication(
+  record: ApplicationRecord | null | undefined,
+  shouldWrite?: () => boolean,
+): Promise<boolean> {
+  if (!hasJobId(record) || (shouldWrite && !shouldWrite())) return false;
+  const result = await runTransaction(DATABASE_STORES.applications, 'readwrite', async (transaction) => {
+    if (shouldWrite && !shouldWrite()) return false;
+    await requestResult(transaction.objectStore(DATABASE_STORES.applications).put(record));
+    return true;
+  });
+  return result === true;
+}
+
+/**
+ * Merges one observed application capture in the same readwrite transaction
+ * that stores it, preventing concurrent captures from regressing state.
+ */
+export async function mergeApplication(
+  record: ApplicationRecord | null | undefined,
+  shouldWrite?: () => boolean,
+): Promise<boolean> {
+  if (!hasJobId(record) || (shouldWrite && !shouldWrite())) return false;
+  const result = await runTransaction(DATABASE_STORES.applications, 'readwrite', async (transaction) => {
+    if (shouldWrite && !shouldWrite()) return false;
+    const store = transaction.objectStore(DATABASE_STORES.applications);
+    const current = await requestResult<ApplicationRecord | undefined>(store.get(record.jobId));
+    if (shouldWrite && !shouldWrite()) return false;
+    await requestResult(store.put(current ? mergeApplicationRecords(current, record) : record));
+    return true;
+  });
+  return result === true;
 }
 
 export async function getApplication(jobId: string | null | undefined): Promise<ApplicationRecord | null> {

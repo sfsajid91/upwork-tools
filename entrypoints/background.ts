@@ -1,4 +1,10 @@
-import { appendJobSnapshotIfChanged, listJobSnapshots, openDatabase, putJob } from '../lib/database';
+import {
+  appendJobSnapshotIfChanged,
+  listJobSnapshots,
+  mergeApplication,
+  openDatabase,
+  putJob,
+} from '../lib/database';
 import { deriveApplicantMetrics } from '../lib/applicant-metrics';
 import { summarizeJobSnapshots } from '../lib/history';
 import { isJobInsights, type JobInsights } from '../lib/insights';
@@ -10,6 +16,7 @@ import {
   type JobHistoryResponse,
 } from '../lib/protocol';
 import { calculateProposalVelocity } from '../lib/velocity';
+import { createApplicationRecord, transitionApplicationRecord } from '../lib/tracker';
 import type { JobRecord, JobSnapshotRecord } from '../lib/storage';
 const BADGE_COLOR = '#152d4f';
 const CAPTURE_DEDUP_WINDOW_MS = 60_000;
@@ -102,6 +109,25 @@ async function persistJobInsights(
 
   try {
     await putJob(job, () => !state.removed && state.generation === generation);
+  } catch {
+    // IndexedDB failures must not affect session-only capture.
+  }
+  if (state.removed || state.generation !== generation) return;
+
+  try {
+    let application = transitionApplicationRecord(createApplicationRecord(jobId), {
+      type: 'viewed',
+      at: capturedAt,
+    });
+    const observedState = insights.fit.applicationState;
+    if (observedState) {
+      application = transitionApplicationRecord(application, {
+        type: 'observed-state',
+        state: observedState,
+        at: capturedAt,
+      });
+    }
+    await mergeApplication(application, () => !state.removed && state.generation === generation);
   } catch {
     // IndexedDB failures must not affect session-only capture.
   }

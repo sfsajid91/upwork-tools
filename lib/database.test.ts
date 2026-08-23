@@ -6,6 +6,7 @@ import {
   enforceHistoryRetention,
   getApplication,
   getJob,
+  mergeApplication,
   getWatchlist,
   listJobSnapshots,
   openDatabase,
@@ -304,6 +305,48 @@ describe('database clear APIs', () => {
     expect(await listJobSnapshots('job-1')).toEqual([]);
     expect(await getApplication('job-1')).toBeNull();
     expect(await getWatchlist('job-1')).toBeNull();
+  });
+
+  test('merges application captures monotonically and honors write guards', async () => {
+    await putApplication({
+      jobId: 'job-1',
+      state: 'applied',
+      viewedAt: 1,
+      appliedAt: 2,
+      interviewedAt: null,
+      hiredAt: null,
+    });
+
+    expect(
+      await mergeApplication({
+        jobId: 'job-1',
+        state: null,
+        viewedAt: 3,
+        appliedAt: null,
+        interviewedAt: null,
+        hiredAt: null,
+      }),
+    ).toBe(true);
+    expect(await getApplication('job-1')).toMatchObject({
+      state: 'applied',
+      viewedAt: 3,
+      appliedAt: 2,
+    });
+
+    expect(
+      await putApplication(
+        {
+          jobId: 'job-1',
+          state: 'hired',
+          viewedAt: 4,
+          appliedAt: 4,
+          interviewedAt: null,
+          hiredAt: 4,
+        },
+        () => false,
+      ),
+    ).toBe(false);
+    expect((await getApplication('job-1'))?.state).toBe('applied');
   });
 
   test('degrades safely when IndexedDB is unavailable', async () => {

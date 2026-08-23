@@ -597,6 +597,10 @@ Do not start portfolio matching, conversion statistics, or watchlist UI before t
   - [x] Store viewed, applied, interview, and hired timestamps when known.
   - [x] Separate observed states from manual values.
   - [x] Exclude Connect counts under the current boundary.
+- [x] **P4.2 — Record observed transitions**
+  - [x] Record viewed when a normalized capture is received.
+  - [x] Record applied/invited/hired only from reliable response fields.
+  - [x] Never infer applied from viewing.
 - [ ] **P4.3 — Add optional manual tracker actions**
   - [ ] Decide whether bid is manually entered.
   - [ ] Label all manual values.
@@ -606,11 +610,11 @@ Do not start portfolio matching, conversion statistics, or watchlist UI before t
   - [x] Calculate apply-to-interview rate.
   - [x] Calculate interview-to-hire rate.
   - [x] Display denominators and hide zero/unknown rates.
-- [ ] **P4.5 — Add watchlist operations**
-  - [ ] Bookmark captured jobs.
-  - [ ] Store latest metadata and snapshot reference.
-  - [ ] Remove watchlisted jobs.
-  - [ ] Update only on natural job captures.
+- [x] **P4.5 — Add watchlist operations**
+  - [x] Bookmark captured jobs.
+  - [x] Store latest metadata and snapshot reference.
+  - [x] Remove watchlisted jobs.
+  - [x] Update only on natural job captures.
 - [ ] **P4.6 — Add tracker/watchlist UI**
   - [ ] Add compact controls to the popup.
   - [ ] Add a watchlist view or options surface.

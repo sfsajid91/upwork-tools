@@ -1,27 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { ThemeMode } from './storage';
+import { getLegacyTheme, initializeTheme, persistTheme } from './settings';
 
-export type ThemeMode = 'system' | 'light' | 'dark';
-
-const STORAGE_KEY = 'upwork-tools-theme';
+export type { ThemeMode } from './storage';
 
 export function getStoredTheme(): ThemeMode {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === 'light' || stored === 'dark' || stored === 'system') {
-      return stored;
-    }
-  } catch {
-    // Ignore storage access errors
-  }
-  return 'system';
+  return getLegacyTheme();
 }
 
 export function setStoredTheme(mode: ThemeMode): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, mode);
-  } catch {
-    // Ignore storage access errors
-  }
+  void persistTheme(mode);
 }
 
 export function resolveIsDark(mode: ThemeMode, systemPrefersDark: boolean): boolean {
@@ -64,6 +52,18 @@ export function useTheme(): {
     return () => media.removeEventListener('change', onChange);
   }, []);
 
+  const initializationVersion = useRef(0);
+  useEffect(() => {
+    let cancelled = false;
+    const version = initializationVersion.current;
+    void initializeTheme().then((storedMode) => {
+      if (!cancelled && initializationVersion.current === version) setModeState(storedMode);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const isDark = resolveIsDark(mode, systemDark);
 
   useEffect(() => {
@@ -71,6 +71,7 @@ export function useTheme(): {
   }, [isDark]);
 
   const setMode = (newMode: ThemeMode) => {
+    initializationVersion.current += 1;
     setModeState(newMode);
     setStoredTheme(newMode);
   };

@@ -498,11 +498,11 @@ Do not start portfolio matching, conversion statistics, or watchlist UI before t
   - [x] Add `jobs` store and `jobId` key.
   - [x] Add append-only `jobSnapshots` store and indexes.
   - [x] Add `applications` and `watchlist` stores.
-- [ ] **P1.3 — Build local-settings storage**
-  - [ ] Store profile and skills.
-  - [ ] Store portfolio entries.
-  - [ ] Store UI preferences.
-  - [ ] Migrate theme preference from `localStorage`.
+- [x] **P1.3 — Build local-settings storage**
+  - [x] Store profile and skills.
+  - [x] Store portfolio entries.
+  - [x] Store UI preferences.
+  - [x] Migrate theme preference from `localStorage`.
 - [ ] **P1.4 — Persist normalized job captures**
   - [ ] Persist after validated background STORE messages.
   - [ ] Capture local `capturedAt`.

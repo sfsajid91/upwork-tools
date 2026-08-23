@@ -638,27 +638,27 @@ Do not start portfolio matching, conversion statistics, or watchlist UI before t
   - [ ] Expose history/application/watchlist clearing.
   - [ ] Confirm destructive local deletion.
   - [ ] Preserve unrelated browser data.
-- [ ] **P5.4 — Replace the starter README**
-  - [ ] Document install and load-unpacked steps.
-  - [ ] Document Bun development/build/package commands.
-  - [ ] Document privacy, retention, and supported response behavior.
-  - [ ] Document troubleshooting.
-- [ ] **P5.5 — Run automated checks**
-  - [ ] Run `bun run test`.
-  - [ ] Run `bun run compile`.
-  - [ ] Run `bun run lint`.
-  - [ ] Run `bun run format:check`.
-  - [ ] Run `bun run build`.
+- [x] **P5.4 — Replace the starter README**
+  - [x] Document install and load-unpacked steps.
+  - [x] Document Bun development/build/package commands.
+  - [x] Document privacy, retention, and supported response behavior.
+  - [x] Document troubleshooting.
+- [x] **P5.5 — Run automated checks**
+  - [x] Run `bun run test`.
+  - [x] Run `bun run compile`.
+  - [x] Run `bun run lint`.
+  - [x] Run `bun run format:check`.
+  - [x] Run `bun run build`.
 - [ ] **P5.6 — Run manual smoke scenarios**
   - [ ] Capture an authenticated supported job.
   - [ ] Navigate before a response completes.
   - [ ] Open popup before and after capture.
   - [ ] Exercise storage failure fallback.
   - [ ] Exercise clear-data behavior.
-- [ ] **P5.7 — Close documentation loop**
-  - [ ] Update `docs/AUDIT_ISSUES.md` statuses.
-  - [ ] Mark persistent local history as in scope.
-  - [ ] Keep cloud sync, telemetry, polling, and Connect tracking out of scope.
+- [x] **P5.7 — Close documentation loop**
+  - [x] Update `docs/AUDIT_ISSUES.md` statuses.
+  - [x] Mark persistent local history as in scope.
+  - [x] Keep cloud sync, telemetry, polling, and Connect tracking out of scope.
 
 ## Parallel execution map
 

@@ -470,22 +470,22 @@ Do not start portfolio matching, conversion statistics, or watchlist UI before t
   - [x] Pass current job ID into matching.
   - [x] Exclude the current job before title matching.
   - [x] Require strong deterministic matches.
-- [ ] **P0.4 — Fix runtime messaging compatibility**
-  - [ ] Replace the Promise-only listener with `sendResponse`.
-  - [ ] Preserve popup GET and content STORE contracts.
-  - [ ] Verify the Chrome 111 compatibility path.
-- [ ] **P0.5 — Serialize tab lifecycle mutations**
-  - [ ] Add per-tab navigation generation or mutation sequencing.
-  - [ ] Reject stale STORE messages after navigation starts.
-  - [ ] Prevent cleanup from deleting fresh-page data.
+- [x] **P0.4 — Fix runtime messaging compatibility**
+  - [x] Replace the Promise-only listener with `sendResponse`.
+  - [x] Preserve popup GET and content STORE contracts.
+  - [x] Verify the Chrome 111 compatibility path.
+- [x] **P0.5 — Serialize tab lifecycle mutations**
+  - [x] Add per-tab navigation generation or mutation sequencing.
+  - [x] Reject stale STORE messages after navigation starts.
+  - [x] Prevent cleanup from deleting fresh-page data.
 - [x] **P0.6 — Harden interception**
   - [x] Handle rejected fetch inspection promises.
   - [x] Remove or constrain URL-less global `JSON.parse` capture.
   - [x] Preserve original host-page behavior.
-- [ ] **P0.7 — Add audit regression tests**
-  - [ ] Test history source and current-job exclusion.
-  - [ ] Test protocol/runtime boundary behavior.
-  - [ ] Test interceptor failure paths.
+- [x] **P0.7 — Add audit regression tests**
+  - [x] Test history source and current-job exclusion.
+  - [x] Test protocol/runtime boundary behavior.
+  - [x] Test interceptor failure paths.
 
 ### Phase 1 — Storage foundation and applicant snapshots
 
@@ -503,11 +503,11 @@ Do not start portfolio matching, conversion statistics, or watchlist UI before t
   - [x] Store portfolio entries.
   - [x] Store UI preferences.
   - [x] Migrate theme preference from `localStorage`.
-- [ ] **P1.4 — Persist normalized job captures**
-  - [ ] Persist after validated background STORE messages.
-  - [ ] Capture local `capturedAt`.
-  - [ ] Deduplicate identical adjacent captures.
-  - [ ] Never persist raw GraphQL payloads.
+- [x] **P1.4 — Persist normalized job captures**
+  - [x] Persist after validated background STORE messages.
+  - [x] Capture local `capturedAt`.
+  - [x] Deduplicate identical adjacent captures.
+  - [x] Never persist raw GraphQL payloads.
 - [ ] **P1.5 — Add retention and clear-data APIs**
   - [ ] Enforce snapshot retention limits.
   - [ ] Add clear-history operation.

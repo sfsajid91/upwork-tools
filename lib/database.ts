@@ -207,11 +207,15 @@ export function runTransaction<T>(
   });
 }
 
-export async function putJob(record: JobRecord | null | undefined): Promise<boolean> {
+export async function putJob(
+  record: JobRecord | null | undefined,
+  shouldWrite?: () => boolean,
+): Promise<boolean> {
   if (!hasJobId(record)) return false;
-  const result = await runTransaction(DATABASE_STORES.jobs, 'readwrite', (transaction) =>
-    requestResult(transaction.objectStore(DATABASE_STORES.jobs).put(record)),
-  );
+  const result = await runTransaction(DATABASE_STORES.jobs, 'readwrite', (transaction) => {
+    if (shouldWrite && !shouldWrite()) return null;
+    return requestResult(transaction.objectStore(DATABASE_STORES.jobs).put(record));
+  });
   return result !== null;
 }
 
@@ -233,32 +237,39 @@ export async function putJobSnapshot(
   );
   return typeof result === 'number' ? result : null;
 }
- 
+
 /** Appends a snapshot unless its values match the last adjacent capture within the window. */
 export async function appendJobSnapshotIfChanged(
   record: JobSnapshotRecord | null | undefined,
   windowMs = 60_000,
+  shouldWrite?: () => boolean,
 ): Promise<number | null> {
   if (!hasJobId(record)) return null;
   const { id: _ignoredId, ...snapshot } = record;
   void _ignoredId;
-  const result = await runTransaction(DATABASE_STORES.jobSnapshots, 'readwrite', async (transaction) => {
-    const store = transaction.objectStore(DATABASE_STORES.jobSnapshots);
-    const snapshots = await requestResult<JobSnapshotRecord[]>(store.index('jobId').getAll(record.jobId));
-    const previous = snapshots.at(-1);
-    if (
-      previous &&
-      record.capturedAt >= previous.capturedAt &&
-      record.capturedAt - previous.capturedAt <= windowMs &&
-      previous.applicants === record.applicants &&
-      previous.interviewed === record.interviewed &&
-      previous.hired === record.hired &&
-      previous.positions === record.positions
-    ) {
-      return null;
-    }
-    return requestResult<IDBValidKey>(store.add(snapshot));
-  });
+  const result = await runTransaction(
+    DATABASE_STORES.jobSnapshots,
+    'readwrite',
+    async (transaction) => {
+      const store = transaction.objectStore(DATABASE_STORES.jobSnapshots);
+      const snapshots = await requestResult<JobSnapshotRecord[]>(
+        store.index('jobId').getAll(record.jobId),
+      );
+      if (shouldWrite && !shouldWrite()) return null;
+      const previous = snapshots.at(-1);
+      if (
+        previous &&
+        Math.abs(record.capturedAt - previous.capturedAt) <= windowMs &&
+        previous.applicants === record.applicants &&
+        previous.interviewed === record.interviewed &&
+        previous.hired === record.hired &&
+        previous.positions === record.positions
+      ) {
+        return null;
+      }
+      return requestResult<IDBValidKey>(store.add(snapshot));
+    },
+  );
   return typeof result === 'number' ? result : null;
 }
 

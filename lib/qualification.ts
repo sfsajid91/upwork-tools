@@ -86,7 +86,7 @@ function matchesFrom(value: unknown): readonly unknown[] {
   if (!source) return [];
   if (Array.isArray(source.matches)) return source.matches;
 
-  const jobAuthDetails = record(record(source.data)?.jobAuthDetails);
+  const jobAuthDetails = record(source.jobAuthDetails) ?? record(record(source.data)?.jobAuthDetails);
   if (jobAuthDetails) return matchesFrom(jobAuthDetails);
   const freelancerInfo = record(source.freelancerInfo);
   const qualificationsMatches = record(source.qualificationsMatches);
@@ -118,7 +118,6 @@ function detailFrom(value: unknown): QualificationDetail | null {
 
   const freelancerValue = firstText(source.freelancerValue, source.value);
   const freelancerLabel = firstText(source.freelancerValueLabel, source.freelancerLabel);
-  if (freelancerValue === null && freelancerLabel === null) return null;
 
   return {
     requirementName,

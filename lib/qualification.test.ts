@@ -34,6 +34,12 @@ describe('qualification details', () => {
                     freelancerValueLabel: '70%',
                     qualified: false,
                   }),
+                  {
+                    qualification: 'Portfolio',
+                    clientPreferred: 'true',
+                    clientPreferredLabel: 'Portfolio required',
+                    qualified: false,
+                  },
                 ],
               },
             },
@@ -57,10 +63,17 @@ describe('qualification details', () => {
         freelancerLabel: '70%',
         matched: false,
       },
+      {
+        requirementName: 'Portfolio',
+        clientLabel: 'Portfolio required',
+        freelancerValue: null,
+        freelancerLabel: null,
+        matched: false,
+      },
     ]);
     expect(summarizeQualificationMatches(payload)).toEqual({
       matched: 1,
-      total: 2,
+      total: 3,
       details: parseQualificationMatches(payload),
     });
   });

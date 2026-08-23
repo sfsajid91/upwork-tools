@@ -212,6 +212,7 @@ function titleTokens(title: string | null): Set<string> {
 }
 
 function relatedHistory(
+  currentJobId: string | null,
   currentTitle: string | null,
   recentJobs: ClientHistoryEntry[],
 ): ClientHistoryEntry[] {
@@ -219,6 +220,7 @@ function relatedHistory(
   if (currentTokens.size === 0) return [];
   const threshold = currentTokens.size === 1 ? 1 : 2;
   return recentJobs
+    .filter((job) => currentJobId === null || job.id !== currentJobId)
     .filter((job) => {
       const matchingTokens = [...titleTokens(job.title)].filter((token) =>
         currentTokens.has(token),
@@ -284,7 +286,8 @@ export function normalizeJobInsights(payload: unknown): JobInsights | null {
   const extendedBudget = record(valueAt(job, 'extendedBudgetInfo'));
   const freelancerInfo = record(valueAt(details, 'currentUserInfo', 'freelancerInfo'));
   const qualificationMatches = valueAt(freelancerInfo, 'qualificationsMatches', 'matches');
-  const recentJobs = normalizeHistory(valueAt(details, 'workHistory'));
+  const recentJobs = normalizeHistory(valueAt(buyer, 'workHistory'));
+  const currentJobId = nullableString(info?.id);
   const currentTitle = nullableString(info?.title);
   const currentStatus = nullableString(job?.status);
   const exactProposals = nullableNumber(activity?.totalApplicants);
@@ -297,12 +300,12 @@ export function normalizeJobInsights(payload: unknown): JobInsights | null {
   const hasQualificationMatches = Array.isArray(qualificationMatches);
   const history = {
     recentJobs,
-    relatedJobs: relatedHistory(currentTitle, recentJobs),
+    relatedJobs: relatedHistory(currentJobId, currentTitle, recentJobs),
   };
 
   return {
     job: {
-      id: nullableString(info?.id),
+      id: currentJobId,
       title: currentTitle,
       description: nullableString(job?.description),
       status: currentStatus,

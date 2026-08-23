@@ -462,14 +462,14 @@ Do not start portfolio matching, conversion statistics, or watchlist UI before t
   - [ ] Define clear-data behavior.
   - [ ] Keep cloud sync, telemetry, polling, and Connect tracking excluded.
   - [ ] Update `PRODUCT.md`, `PROJECT_CONTEXT.md`, and the scope document.
-- [ ] **P0.2 — Correct history normalization**
-  - [ ] Read `buyer.workHistory`.
-  - [ ] Update fixtures to the documented response shape.
-  - [ ] Add a production-shaped regression test.
-- [ ] **P0.3 — Fix related-history identity**
-  - [ ] Pass current job ID into matching.
-  - [ ] Exclude the current job before title matching.
-  - [ ] Require strong deterministic matches.
+- [x] **P0.2 — Correct history normalization**
+  - [x] Read `buyer.workHistory`.
+  - [x] Update fixtures to the documented response shape.
+  - [x] Add a production-shaped regression test.
+- [x] **P0.3 — Fix related-history identity**
+  - [x] Pass current job ID into matching.
+  - [x] Exclude the current job before title matching.
+  - [x] Require strong deterministic matches.
 - [ ] **P0.4 — Fix runtime messaging compatibility**
   - [ ] Replace the Promise-only listener with `sendResponse`.
   - [ ] Preserve popup GET and content STORE contracts.

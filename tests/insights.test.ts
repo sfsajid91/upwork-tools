@@ -51,6 +51,15 @@ const rawResponse = {
           jobs: { postedCount: 62 },
           avgHourlyJobsRate: { amount: 10.16 },
         },
+        workHistory: [
+          {
+            status: 'CLOSED',
+            startDate: '2026-07-21T00:34:12.125Z',
+            totalCharge: 400,
+            jobInfo: { id: 'history-1', title: 'Premium landing page design', type: 'FIXED' },
+            feedback: { score: 5 },
+          },
+        ],
       },
     },
   },
@@ -63,6 +72,7 @@ describe('job insight normalization', () => {
     expect(insights).not.toBeNull();
     expect(insights?.activity.exactProposals).toBe(0);
     expect(insights?.job.budgetAmount).toBe(0);
+    expect(insights?.history.recentJobs.length).toBe(1);
     expect(insights?.client.hireRate).toBeCloseTo((49 / 62) * 100);
     expect(insights?.job.skills).toEqual(['TypeScript', 'Cloudflare']);
     expect(isJobInsights(insights)).toBe(true);

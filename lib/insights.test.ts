@@ -47,16 +47,16 @@ function payload(overrides: Record<string, unknown> = {}) {
             avgHourlyJobsRate: { amount: 10.16 },
             company: { contractDate: '2009-10-04T00:00:00.000Z' },
           },
+          workHistory: [
+            {
+              status: 'CLOSED',
+              startDate: '2026-07-21T00:34:12.125Z',
+              totalCharge: 400,
+              jobInfo: { id: 'history-1', title: 'Premium landing page design', type: 'FIXED' },
+              feedback: { score: 5 },
+            },
+          ],
         },
-        workHistory: [
-          {
-            status: 'CLOSED',
-            startDate: '2026-07-21T00:34:12.125Z',
-            totalCharge: 400,
-            jobInfo: { id: 'history-1', title: 'Premium landing page design', type: 'FIXED' },
-            feedback: { score: 5 },
-          },
-        ],
         currentUserInfo: {
           freelancerInfo: {
             applied: true,
@@ -86,6 +86,38 @@ describe('normalizeJobInsights', () => {
     expect(insights?.history.recentJobs.length).toBe(1);
     expect(insights?.history.relatedJobs.length).toBe(1);
     expect(insights?.job.restrictions).toEqual(['90%+ JSS', 'English: FLUENT']);
+  });
+
+  test('excludes the current job and weak title matches from related history', () => {
+    const insights = normalizeJobInsights(
+      payload({
+        buyer: {
+          workHistory: [
+            {
+              startDate: '2026-08-20T00:00:00.000Z',
+              jobInfo: { id: 'job-1', title: 'Landing page backend' },
+            },
+            {
+              startDate: '2026-08-19T00:00:00.000Z',
+              jobInfo: { id: 'weak-1', title: 'Backend tooling' },
+            },
+            {
+              startDate: '2026-08-18T00:00:00.000Z',
+              jobInfo: { id: 'strong-1', title: 'Landing page design' },
+            },
+          ],
+        },
+      }),
+    );
+
+    expect(insights?.history.relatedJobs.map((job) => job.id)).toEqual(['strong-1']);
+  });
+
+  test('keeps history empty when buyer workHistory is absent', () => {
+    const insights = normalizeJobInsights(payload({ buyer: {} }));
+
+    expect(insights?.history.recentJobs).toEqual([]);
+    expect(insights?.history.relatedJobs).toEqual([]);
   });
 
   test('preserves zero applicants and does not invent an interview rate', () => {

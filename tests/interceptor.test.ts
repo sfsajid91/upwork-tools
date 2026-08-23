@@ -23,8 +23,6 @@ const payload = {
 const globals = globalThis as unknown as { window?: unknown };
 const hadWindow = 'window' in globalThis;
 const previousWindow = globals.window;
-const nativeResponseJson = Response.prototype.json;
-const nativeResponseText = Response.prototype.text;
 const nativeJsonParse = JSON.parse;
 const nativeResponseJsonDescriptor = Object.getOwnPropertyDescriptor(Response.prototype, 'json');
 const nativeResponseTextDescriptor = Object.getOwnPropertyDescriptor(Response.prototype, 'text');
@@ -96,7 +94,6 @@ beforeEach(() => {
   resolveCapture = undefined;
   fetchBody = JSON.stringify(payload);
 });
-
 
 describe('interceptor inspection', () => {
   test('captures a supported response and ignores an arbitrary JSON.parse', async () => {

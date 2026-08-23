@@ -1,10 +1,5 @@
 import { browser as importedBrowser } from 'wxt/browser';
-import type {
-  PortfolioEntry,
-  UiSettings,
-  UserProfile,
-  ThemeMode,
-} from './storage';
+import type { PortfolioEntry, ThemeMode, UiSettings, UserProfile } from './storage';
 
 export const LEGACY_THEME_KEY = 'upwork-tools-theme';
 export const UI_SETTINGS_KEY = 'uiSettings';
@@ -60,7 +55,8 @@ export function isUiSettings(value: unknown): value is UiSettings {
 
 function getStorageArea(): StorageArea | undefined {
   const globalBrowser = (globalThis as typeof globalThis & { browser?: ExtensionApi }).browser;
-  const extensionBrowser = globalBrowser ?? (importedBrowser as unknown as ExtensionApi | undefined);
+  const extensionBrowser =
+    globalBrowser ?? (importedBrowser as unknown as ExtensionApi | undefined);
   return extensionBrowser?.storage?.local;
 }
 
@@ -144,17 +140,16 @@ export async function setUserProfile(profile: UserProfile): Promise<boolean> {
 
 export async function getPortfolio(): Promise<PortfolioEntry[] | null> {
   const result = await readStoredValue(PORTFOLIO_KEY);
-  return (
-    result.ok &&
+  return result.ok &&
     Array.isArray(result.value) &&
     result.value.every((entry) => isPortfolioEntry(entry))
-  )
     ? result.value
     : null;
 }
 
 export async function setPortfolio(portfolio: PortfolioEntry[]): Promise<boolean> {
-  if (!Array.isArray(portfolio) || !portfolio.every((entry) => isPortfolioEntry(entry))) return false;
+  if (!Array.isArray(portfolio) || !portfolio.every((entry) => isPortfolioEntry(entry)))
+    return false;
   const storage = getStorageArea();
   if (!storage) return false;
   try {
@@ -185,8 +180,14 @@ export async function setUiSettings(settings: UiSettings): Promise<boolean> {
 let themeOperation: Promise<void> = Promise.resolve();
 
 function enqueueThemeOperation<T>(operation: () => Promise<T>): Promise<T> {
-  const result = themeOperation.then(() => operation(), () => operation());
-  themeOperation = result.then(() => undefined, () => undefined);
+  const result = themeOperation.then(
+    () => operation(),
+    () => operation(),
+  );
+  themeOperation = result.then(
+    () => undefined,
+    () => undefined,
+  );
   return result;
 }
 

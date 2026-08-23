@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'bun:test';
+import type { ApplicantSnapshot } from './applicant-metrics';
 import {
   deriveApplicantMetrics,
   firstSeenApplicantDelta,
   latestApplicantCount,
   recentApplicantDelta,
 } from './applicant-metrics';
-import type { ApplicantSnapshot } from './applicant-metrics';
 
 const snapshot = (capturedAt: number, applicants: number | null): ApplicantSnapshot => ({
   capturedAt,

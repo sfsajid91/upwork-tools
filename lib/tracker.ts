@@ -90,7 +90,8 @@ export function transitionApplicationRecord(
     next.viewedAt = laterTimestamp(next.viewedAt, transition.at);
   } else if (transition.type === 'observed-state') {
     next.state = mergeState(next.state, transition.state);
-    if (transition.state === 'applied') next.appliedAt = laterTimestamp(next.appliedAt, transition.at);
+    if (transition.state === 'applied')
+      next.appliedAt = laterTimestamp(next.appliedAt, transition.at);
     if (transition.state === 'hired') next.hiredAt = laterTimestamp(next.hiredAt, transition.at);
   } else if (transition.type === 'interviewed') {
     next.interviewedAt = laterTimestamp(next.interviewedAt, transition.at);

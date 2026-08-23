@@ -41,7 +41,9 @@ function isAny(value: string | null): boolean {
 }
 
 function isDefaultLabel(value: string | null): boolean {
-  return ['false', 'no', 'none', 'no preference', 'not required', 'not specified'].includes(normalized(value));
+  return ['false', 'no', 'none', 'no preference', 'not required', 'not specified'].includes(
+    normalized(value),
+  );
 }
 
 function requirementKey(value: string): string {
@@ -74,9 +76,14 @@ function isMeaninglessClientRequirement(
 ): boolean {
   if (preferred === null && clientLabel === null) return true;
   if (isAny(preferred) || isAny(clientLabel)) return true;
-  if (normalized(preferred) === 'false' || (normalized(preferred) === '0' && isJssRequirement(requirementName))) return true;
+  if (
+    normalized(preferred) === 'false' ||
+    (normalized(preferred) === '0' && isJssRequirement(requirementName))
+  )
+    return true;
   if (isDefaultLabel(clientLabel)) return true;
-  if (isDefaultZeroRequirement(requirementName) && (isZero(preferred) || isZero(clientLabel))) return true;
+  if (isDefaultZeroRequirement(requirementName) && (isZero(preferred) || isZero(clientLabel)))
+    return true;
   return false;
 }
 
@@ -86,7 +93,8 @@ function matchesFrom(value: unknown): readonly unknown[] {
   if (!source) return [];
   if (Array.isArray(source.matches)) return source.matches;
 
-  const jobAuthDetails = record(source.jobAuthDetails) ?? record(record(source.data)?.jobAuthDetails);
+  const jobAuthDetails =
+    record(source.jobAuthDetails) ?? record(record(source.data)?.jobAuthDetails);
   if (jobAuthDetails) return matchesFrom(jobAuthDetails);
   const freelancerInfo = record(source.freelancerInfo);
   const qualificationsMatches = record(source.qualificationsMatches);
@@ -104,7 +112,12 @@ function detailFrom(value: unknown): QualificationDetail | null {
   const source = record(value);
   if (!source || typeof source.qualified !== 'boolean') return null;
 
-  const requirementName = firstText(source.qualification, source.requirementName, source.requirement, source.name);
+  const requirementName = firstText(
+    source.qualification,
+    source.requirementName,
+    source.requirement,
+    source.name,
+  );
   if (!requirementName) return null;
 
   const preferred = firstText(source.clientPreferred, source.clientValue);
@@ -127,7 +140,6 @@ function detailFrom(value: unknown): QualificationDetail | null {
     matched: source.qualified,
   };
 }
-
 
 /** Extracts meaningful qualification records without mutating the source payload. */
 export function parseQualificationMatches(value: unknown): QualificationDetail[] {

@@ -2,7 +2,14 @@
 export type VelocityTimestamp = number | string | Date | null | undefined;
 
 function timestampMs(value: VelocityTimestamp): number | null {
-  const milliseconds = value instanceof Date ? value.getTime() : typeof value === 'number' ? value : typeof value === 'string' ? Date.parse(value) : Number.NaN;
+  const milliseconds =
+    value instanceof Date
+      ? value.getTime()
+      : typeof value === 'number'
+        ? value
+        : typeof value === 'string'
+          ? Date.parse(value)
+          : Number.NaN;
   return Number.isFinite(milliseconds) ? milliseconds : null;
 }
 

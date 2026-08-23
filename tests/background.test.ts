@@ -195,7 +195,6 @@ afterEach(async () => {
   }
 });
 
-
 function store(tabId: number, url: string, payload = insights): Promise<void> {
   return new Promise((resolve) => {
     const returned = listener?.(
@@ -213,15 +212,11 @@ describe('background runtime messaging', () => {
     values.set('job-insights:7', insights);
     let response: unknown;
     const completed = new Promise<void>((resolve) => {
-      const returned = listener?.(
-        { type: GET_JOB_INSIGHTS, tabId: 7 },
-        {},
-        (value) => {
-          response = value;
-          expect(returned).toBe(true);
-          resolve();
-        },
-      );
+      const returned = listener?.({ type: GET_JOB_INSIGHTS, tabId: 7 }, {}, (value) => {
+        response = value;
+        expect(returned).toBe(true);
+        resolve();
+      });
     });
 
     await completed;
@@ -231,15 +226,11 @@ describe('background runtime messaging', () => {
     values.set('job-insights:8', { malformed: true });
     let response: unknown = 'not-called';
     const completed = new Promise<void>((resolve) => {
-      const returned = listener?.(
-        { type: GET_JOB_INSIGHTS, tabId: 8 },
-        {},
-        (value) => {
-          response = value;
-          expect(returned).toBe(true);
-          resolve();
-        },
-      );
+      const returned = listener?.({ type: GET_JOB_INSIGHTS, tabId: 8 }, {}, (value) => {
+        response = value;
+        expect(returned).toBe(true);
+        resolve();
+      });
     });
 
     await completed;
@@ -269,13 +260,10 @@ describe('background runtime messaging', () => {
   test('stale STORE work is discarded after navigation starts', async () => {
     const gate = deferred();
     nextSetGate = gate;
-    const completed = store(
-      101,
-      'https://www.upwork.com/ab/details/job-101',
-    );
+    const completed = store(101, 'https://www.upwork.com/ab/details/job-101');
 
     await gate.started;
-    updatedListener!(101, {
+    updatedListener?.(101, {
       status: 'loading',
       url: 'https://www.upwork.com/ab/details/job-101-new',
     });
@@ -286,7 +274,7 @@ describe('background runtime messaging', () => {
   });
 
   test('STORE received after navigation persists for the fresh generation', async () => {
-    updatedListener!(102, {
+    updatedListener?.(102, {
       status: 'loading',
       url: 'https://www.upwork.com/ab/details/job-102',
     });
@@ -300,13 +288,13 @@ describe('background runtime messaging', () => {
     values.set('job-insights:103', insights);
     const gate = deferred();
     nextRemoveGate = gate;
-    updatedListener!(103, {
+    updatedListener?.(103, {
       status: 'loading',
       url: 'https://www.upwork.com/ab/details/job-103',
     });
     await gate.started;
 
-    updatedListener!(103, {
+    updatedListener?.(103, {
       status: 'loading',
       url: 'https://www.upwork.com/ab/details/job-103-newer',
     });

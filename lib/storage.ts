@@ -42,7 +42,6 @@ export interface WatchlistRecord {
   savedAt: number;
 }
 
-
 /** Small personal profile stored in browser.storage.local. */
 export interface UserProfile {
   hourlyRate: number | null;

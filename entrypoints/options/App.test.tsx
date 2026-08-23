@@ -31,9 +31,25 @@ describe('options surface', () => {
     expect(parseHourlyRate('')).toBeNull();
     expect(parseHourlyRate('0')).toBe(0);
     expect(Number.isNaN(parseHourlyRate('-1'))).toBe(true);
-    expect(validatePortfolioDraft({ title: '', skills: '', tags: '', url: '' })).toContain('title');
-    expect(validatePortfolioDraft({ title: 'Project', skills: '', tags: '', url: 'javascript:alert(1)' })).toContain('http');
-    expect(validatePortfolioDraft({ title: 'Project', skills: '', tags: '', url: 'https://example.test/project' })).toBeNull();
+    expect(
+      validatePortfolioDraft({ title: '', skills: '', tags: '', url: '' })?.includes('title'),
+    ).toBe(true);
+    expect(
+      validatePortfolioDraft({
+        title: 'Project',
+        skills: '',
+        tags: '',
+        url: 'javascript:alert(1)',
+      })?.includes('http'),
+    ).toBe(true);
+    expect(
+      validatePortfolioDraft({
+        title: 'Project',
+        skills: '',
+        tags: '',
+        url: 'https://example.test/project',
+      }),
+    ).toBeNull();
     expect(adjustEditingIndex(null, 0)).toBeNull();
     expect(adjustEditingIndex(2, 1)).toBe(1);
     expect(adjustEditingIndex(1, 2)).toBe(1);
@@ -43,9 +59,25 @@ describe('options surface', () => {
     expect(isOptionsProfile({ hourlyRate: -1, skills: [], preferences: {} })).toBe(false);
     expect(isHttpPortfolioUrl(null)).toBe(true);
     expect(isHttpPortfolioUrl('javascript:alert(1)')).toBe(false);
-    expect(isOptionsPortfolioEntry({ title: 'Project', skills: [], tags: [], url: 'ftp://example.test' })).toBe(false);
+    expect(
+      isOptionsPortfolioEntry({
+        title: 'Project',
+        skills: [],
+        tags: [],
+        url: 'ftp://example.test',
+      }),
+    ).toBe(false);
     expect(isOptionsPortfolioEntry({ title: ' ', skills: [], tags: [], url: null })).toBe(false);
-    expect(isOptionsPortfolioEntry({ title: 'Project', skills: [''], tags: [], url: null })).toBe(false);
-    expect(isOptionsPortfolioEntry({ title: 'Project', skills: [], tags: [], url: 'https://example.test' })).toBe(true);
+    expect(isOptionsPortfolioEntry({ title: 'Project', skills: [''], tags: [], url: null })).toBe(
+      false,
+    );
+    expect(
+      isOptionsPortfolioEntry({
+        title: 'Project',
+        skills: [],
+        tags: [],
+        url: 'https://example.test',
+      }),
+    ).toBe(true);
   });
 });

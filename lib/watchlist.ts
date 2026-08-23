@@ -47,23 +47,31 @@ export async function bookmarkJob(
 ): Promise<boolean> {
   const jobId = normalizedJobId(capture?.job?.id);
   if (!jobId || !isJobInsights(capture)) return false;
-  const result = await runTransaction(DATABASE_STORES.watchlist, 'readwrite', async (transaction) => {
-    const store = transaction.objectStore(DATABASE_STORES.watchlist);
-    const previous = await requestResult<WatchlistRecord | undefined>(store.get(jobId));
-    const record = captureRecord(capture, latestSnapshotId, Date.now(), previous ?? null);
-    return record ? requestResult(store.put(record)).then(() => true) : false;
-  });
+  const result = await runTransaction(
+    DATABASE_STORES.watchlist,
+    'readwrite',
+    async (transaction) => {
+      const store = transaction.objectStore(DATABASE_STORES.watchlist);
+      const previous = await requestResult<WatchlistRecord | undefined>(store.get(jobId));
+      const record = captureRecord(capture, latestSnapshotId, Date.now(), previous ?? null);
+      return record ? requestResult(store.put(record)).then(() => true) : false;
+    },
+  );
   return result === true;
 }
 
 /** Updates an existing bookmark from a caller-provided natural capture. */
 export const updateWatchlistFromCapture = bookmarkJob;
 
-export async function getWatchlistedJob(jobId: string | null | undefined): Promise<WatchlistRecord | null> {
+export async function getWatchlistedJob(
+  jobId: string | null | undefined,
+): Promise<WatchlistRecord | null> {
   const normalized = normalizedJobId(jobId);
   if (!normalized) return null;
   const result = await runTransaction(DATABASE_STORES.watchlist, 'readonly', (transaction) =>
-    requestResult<WatchlistRecord | undefined>(transaction.objectStore(DATABASE_STORES.watchlist).get(normalized)),
+    requestResult<WatchlistRecord | undefined>(
+      transaction.objectStore(DATABASE_STORES.watchlist).get(normalized),
+    ),
   );
   return result ?? null;
 }
@@ -72,7 +80,9 @@ export async function removeWatchlistedJob(jobId: string | null | undefined): Pr
   const normalized = normalizedJobId(jobId);
   if (!normalized) return false;
   const result = await runTransaction(DATABASE_STORES.watchlist, 'readwrite', (transaction) =>
-    requestResult(transaction.objectStore(DATABASE_STORES.watchlist).delete(normalized)).then(() => true),
+    requestResult(transaction.objectStore(DATABASE_STORES.watchlist).delete(normalized)).then(
+      () => true,
+    ),
   );
   return result === true;
 }
@@ -81,7 +91,9 @@ export async function listWatchlistedJobs(): Promise<WatchlistRecord[]> {
   const result = await runTransaction(DATABASE_STORES.watchlist, 'readonly', (transaction) =>
     requestResult<WatchlistRecord[]>(transaction.objectStore(DATABASE_STORES.watchlist).getAll()),
   );
-  return (result ?? []).sort((left, right) => right.savedAt - left.savedAt || left.jobId.localeCompare(right.jobId));
+  return (result ?? []).sort(
+    (left, right) => right.savedAt - left.savedAt || left.jobId.localeCompare(right.jobId),
+  );
 }
 
 /** Clears only the IndexedDB watchlist store through the database clear API. */

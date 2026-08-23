@@ -17,7 +17,11 @@ function validJobId(jobId: unknown): jobId is string {
 function validSnapshot(value: unknown, jobId: string): value is JobSnapshotRecord {
   if (typeof value !== 'object' || value === null) return false;
   const snapshot = value as Partial<JobSnapshotRecord>;
-  return snapshot.jobId === jobId && typeof snapshot.capturedAt === 'number' && Number.isFinite(snapshot.capturedAt);
+  return (
+    snapshot.jobId === jobId &&
+    typeof snapshot.capturedAt === 'number' &&
+    Number.isFinite(snapshot.capturedAt)
+  );
 }
 
 function compareSnapshots(left: JobSnapshotRecord, right: JobSnapshotRecord): number {

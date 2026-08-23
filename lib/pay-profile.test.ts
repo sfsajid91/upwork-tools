@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'bun:test';
+import type { PayProfileHistoryEntry } from './pay-profile';
 import {
   averageRecentFixedPayment,
   deriveClientPayProfile,
   medianRecentFixedPayment,
   validHistoricalHourlyRates,
 } from './pay-profile';
-import type { PayProfileHistoryEntry } from './pay-profile';
 
 const fixed = (amountPaid: number | null): PayProfileHistoryEntry => ({
   id: null,
@@ -25,7 +25,13 @@ describe('client pay profile', () => {
   });
 
   test('ignores missing, invalid, zero, and non-fixed payments', () => {
-    const history = [fixed(null), fixed(0), fixed(-10), fixed(Number.NaN), { ...fixed(80), type: 'HOURLY' }];
+    const history = [
+      fixed(null),
+      fixed(0),
+      fixed(-10),
+      fixed(Number.NaN),
+      { ...fixed(80), type: 'HOURLY' },
+    ];
     expect(medianRecentFixedPayment(history)).toBeNull();
     expect(averageRecentFixedPayment(history)).toBeNull();
   });
@@ -36,11 +42,14 @@ describe('client pay profile', () => {
       { ...fixed(500), type: 'HOURLY', hourlyRate: 50, hours: 0 },
       { ...fixed(600), type: 'FIXED', hourlyRate: 60, hours: 10 },
     ];
-    expect(validHistoricalHourlyRates(history, [25, null, { hourlyRate: 30, hours: 0 }, { hourlyRate: 35, hours: 5 }])).toEqual([
-      40,
-      25,
-      35,
-    ]);
+    expect(
+      validHistoricalHourlyRates(history, [
+        25,
+        null,
+        { hourlyRate: 30, hours: 0 },
+        { hourlyRate: 35, hours: 5 },
+      ]),
+    ).toEqual([40, 25, 35]);
   });
 
   test('returns nullable no-data fields without inventing hourly rates', () => {

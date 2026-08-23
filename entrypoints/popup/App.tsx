@@ -10,6 +10,7 @@ import {
 } from '../../lib/protocol';
 import { useTheme } from '../../lib/theme';
 import { AvailableState, EmptyState, LoadingState } from './InsightsView';
+
 type ViewState =
   | { kind: 'loading' }
   | { kind: 'empty' }

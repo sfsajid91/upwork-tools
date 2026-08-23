@@ -103,18 +103,12 @@ export function isRuntimeMessage(value: unknown): value is RuntimeMessage {
   if (typeof value !== 'object' || value === null) return false;
   const message = value as Record<string, unknown>;
   const validTabId =
-    typeof message.tabId === 'number' &&
-    Number.isInteger(message.tabId) &&
-    message.tabId >= 0;
+    typeof message.tabId === 'number' && Number.isInteger(message.tabId) && message.tabId >= 0;
   if (message.type === STORE_JOB_INSIGHTS) {
     return isJobInsights(message.payload);
   }
   if (message.type === GET_JOB_HISTORY) {
-    return (
-      validTabId &&
-      typeof message.jobId === 'string' &&
-      message.jobId.trim().length > 0
-    );
+    return validTabId && typeof message.jobId === 'string' && message.jobId.trim().length > 0;
   }
   return message.type === GET_JOB_INSIGHTS && validTabId;
 }

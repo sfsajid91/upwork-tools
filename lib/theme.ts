@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import type { ThemeMode } from './storage';
 import { getLegacyTheme, initializeTheme, persistTheme } from './settings';
+import type { ThemeMode } from './storage';
 
 export type { ThemeMode } from './storage';
 

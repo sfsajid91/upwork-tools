@@ -1,13 +1,5 @@
-import type {
-  ApplicationRecord,
-  JobRecord,
-  JobSnapshotRecord,
-  WatchlistRecord,
-} from './storage';
-import {
-  HISTORY_RETENTION_DAYS,
-  MAX_SNAPSHOTS_PER_JOB,
-} from './storage';
+import type { ApplicationRecord, JobRecord, JobSnapshotRecord, WatchlistRecord } from './storage';
+import { HISTORY_RETENTION_DAYS, MAX_SNAPSHOTS_PER_JOB } from './storage';
 import { mergeApplicationRecords } from './tracker';
 
 export const DATABASE_NAME = 'upwork-tools';
@@ -30,6 +22,7 @@ const HISTORY_STORES = [
   DATABASE_STORES.watchlist,
 ] as DatabaseStoreName[];
 
+let databaseFactory: IDBFactory | null = null;
 const DAY_MS = 24 * 60 * 60 * 1_000;
 
 type StoredSnapshot = {
@@ -82,7 +75,8 @@ export function configureDatabaseSchema(
   createStore(database, transaction, DATABASE_STORES.watchlist, { keyPath: 'jobId' });
 
   if (!snapshots) return;
-  if (!snapshots.indexNames.contains('jobId')) snapshots.createIndex('jobId', 'jobId', { unique: false });
+  if (!snapshots.indexNames.contains('jobId'))
+    snapshots.createIndex('jobId', 'jobId', { unique: false });
   if (!snapshots.indexNames.contains('capturedAt')) {
     snapshots.createIndex('capturedAt', 'capturedAt', { unique: false });
   }
@@ -143,6 +137,12 @@ function openDatabaseOnce(): Promise<IDBDatabase | null> {
 
 /** Opens the versioned local database, or null when IndexedDB is unavailable or blocked. */
 export function openDatabase(): Promise<IDBDatabase | null> {
+  const factory = indexedDb();
+  if (!factory) return Promise.resolve(null);
+  if (databaseFactory !== factory) {
+    databaseFactory = factory;
+    databasePromise = null;
+  }
   if (!databasePromise) databasePromise = openDatabaseOnce();
   return databasePromise.then((database) => {
     if (!database) databasePromise = null;
@@ -274,13 +274,19 @@ async function enforceHistoryRetentionInTransaction(
 
 /** Removes snapshots older than 90 days and keeps at most 100 per job. */
 export async function enforceHistoryRetention(now = Date.now()): Promise<boolean> {
-  const result = await runTransaction(DATABASE_STORES.jobSnapshots, 'readwrite', async (transaction) => {
-    await enforceHistoryRetentionInTransaction(transaction, Number.isFinite(now) ? now : Date.now());
-    return true;
-  });
+  const result = await runTransaction(
+    DATABASE_STORES.jobSnapshots,
+    'readwrite',
+    async (transaction) => {
+      await enforceHistoryRetentionInTransaction(
+        transaction,
+        Number.isFinite(now) ? now : Date.now(),
+      );
+      return true;
+    },
+  );
   return result === true;
 }
-
 
 export async function putJob(
   record: JobRecord | null | undefined,
@@ -357,8 +363,9 @@ export async function appendJobSnapshotIfChanged(
   return typeof result === 'number' ? result : null;
 }
 
-
-export async function listJobSnapshots(jobId: string | null | undefined): Promise<JobSnapshotRecord[]> {
+export async function listJobSnapshots(
+  jobId: string | null | undefined,
+): Promise<JobSnapshotRecord[]> {
   if (typeof jobId !== 'string' || jobId.trim().length === 0) return [];
   const snapshots = await runTransaction(DATABASE_STORES.jobSnapshots, 'readonly', (transaction) =>
     requestResult<JobSnapshotRecord[]>(
@@ -377,11 +384,15 @@ export async function putApplication(
   shouldWrite?: () => boolean,
 ): Promise<boolean> {
   if (!hasJobId(record) || (shouldWrite && !shouldWrite())) return false;
-  const result = await runTransaction(DATABASE_STORES.applications, 'readwrite', async (transaction) => {
-    if (shouldWrite && !shouldWrite()) return false;
-    await requestResult(transaction.objectStore(DATABASE_STORES.applications).put(record));
-    return true;
-  });
+  const result = await runTransaction(
+    DATABASE_STORES.applications,
+    'readwrite',
+    async (transaction) => {
+      if (shouldWrite && !shouldWrite()) return false;
+      await requestResult(transaction.objectStore(DATABASE_STORES.applications).put(record));
+      return true;
+    },
+  );
   return result === true;
 }
 
@@ -394,18 +405,24 @@ export async function mergeApplication(
   shouldWrite?: () => boolean,
 ): Promise<boolean> {
   if (!hasJobId(record) || (shouldWrite && !shouldWrite())) return false;
-  const result = await runTransaction(DATABASE_STORES.applications, 'readwrite', async (transaction) => {
-    if (shouldWrite && !shouldWrite()) return false;
-    const store = transaction.objectStore(DATABASE_STORES.applications);
-    const current = await requestResult<ApplicationRecord | undefined>(store.get(record.jobId));
-    if (shouldWrite && !shouldWrite()) return false;
-    await requestResult(store.put(current ? mergeApplicationRecords(current, record) : record));
-    return true;
-  });
+  const result = await runTransaction(
+    DATABASE_STORES.applications,
+    'readwrite',
+    async (transaction) => {
+      if (shouldWrite && !shouldWrite()) return false;
+      const store = transaction.objectStore(DATABASE_STORES.applications);
+      const current = await requestResult<ApplicationRecord | undefined>(store.get(record.jobId));
+      if (shouldWrite && !shouldWrite()) return false;
+      await requestResult(store.put(current ? mergeApplicationRecords(current, record) : record));
+      return true;
+    },
+  );
   return result === true;
 }
 
-export async function getApplication(jobId: string | null | undefined): Promise<ApplicationRecord | null> {
+export async function getApplication(
+  jobId: string | null | undefined,
+): Promise<ApplicationRecord | null> {
   if (typeof jobId !== 'string' || jobId.trim().length === 0) return null;
   return runTransaction(DATABASE_STORES.applications, 'readonly', (transaction) =>
     requestResult<ApplicationRecord | undefined>(
@@ -422,7 +439,9 @@ export async function putWatchlist(record: WatchlistRecord | null | undefined): 
   return result !== null;
 }
 
-export async function getWatchlist(jobId: string | null | undefined): Promise<WatchlistRecord | null> {
+export async function getWatchlist(
+  jobId: string | null | undefined,
+): Promise<WatchlistRecord | null> {
   if (typeof jobId !== 'string' || jobId.trim().length === 0) return null;
   return runTransaction(DATABASE_STORES.watchlist, 'readonly', (transaction) =>
     requestResult<WatchlistRecord | undefined>(
@@ -431,9 +450,7 @@ export async function getWatchlist(jobId: string | null | undefined): Promise<Wa
   ).then((record) => record ?? null);
 }
 
-export async function clearStores(
-  stores: DatabaseStoreName[] = ALL_STORES,
-): Promise<boolean> {
+export async function clearStores(stores: DatabaseStoreName[] = ALL_STORES): Promise<boolean> {
   if (stores.length === 0) return true;
   const result = await runTransaction(stores, 'readwrite', (transaction) =>
     Promise.all(stores.map((store) => requestResult(transaction.objectStore(store).clear()))).then(

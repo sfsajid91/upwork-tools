@@ -1,11 +1,9 @@
 import { describe, expect, test } from 'bun:test';
-import type { JobInsights } from '../lib/insights';
-import { STORE_JOB_INSIGHTS } from '../lib/protocol';
 import {
-  DATABASE_STORES,
   appendJobSnapshotIfChanged,
   clearAllLocalData,
   clearHistory,
+  DATABASE_STORES,
   enforceHistoryRetention,
   getApplication,
   getJob,
@@ -18,6 +16,8 @@ import {
   putWatchlist,
   runTransaction,
 } from '../lib/database';
+import type { JobInsights } from '../lib/insights';
+import { STORE_JOB_INSIGHTS } from '../lib/protocol';
 import type { JobRecord, JobSnapshotRecord, WatchlistRecord } from '../lib/storage';
 
 type RuntimeListener = (
@@ -51,7 +51,6 @@ type TestGlobals = typeof globalThis & {
 };
 
 const testGlobals = globalThis as TestGlobals;
-
 
 const job = {
   jobId: 'job-1',
@@ -128,7 +127,11 @@ function transactionFailureFactory(): IDBFactory {
   } as unknown as IDBFactory;
 }
 
-function restoreGlobal(name: 'indexedDB' | 'browser' | 'defineBackground', had: boolean, previous: unknown) {
+function restoreGlobal(
+  name: 'indexedDB' | 'browser' | 'defineBackground',
+  had: boolean,
+  previous: unknown,
+) {
   if (had) {
     (testGlobals as Record<string, unknown>)[name] = previous;
   } else {
@@ -204,7 +207,7 @@ describe('storage degradation', () => {
     };
 
     try {
-      delete testGlobals.indexedDB;
+      Reflect.deleteProperty(testGlobals, 'indexedDB');
       expect(await openDatabase()).toBeNull();
       await expectSafeDatabaseResults();
 

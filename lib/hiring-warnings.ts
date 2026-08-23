@@ -40,7 +40,8 @@ function hasHistoryAfterIdentityFilter(
   currentJobId: string | null | undefined,
 ): boolean {
   if (!Array.isArray(history)) return false;
-  const identity = typeof currentJobId === 'string' && currentJobId.trim() !== '' ? currentJobId.trim() : null;
+  const identity =
+    typeof currentJobId === 'string' && currentJobId.trim() !== '' ? currentJobId.trim() : null;
   return history.some((entry) => {
     const entryIdentity = typeof entry.id === 'string' ? entry.id.trim() : null;
     return identity === null || entryIdentity !== identity;

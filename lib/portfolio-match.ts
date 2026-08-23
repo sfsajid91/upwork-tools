@@ -34,16 +34,48 @@ const ALIASES: Record<string, string> = {
   workers: 'cloudflare workers',
 };
 
-const STOP_WORDS = new Set(['a', 'an', 'and', 'for', 'in', 'of', 'on', 'the', 'to', 'with', 'developer', 'development', 'project', 'app', 'application']);
+const STOP_WORDS = new Set([
+  'a',
+  'an',
+  'and',
+  'for',
+  'in',
+  'of',
+  'on',
+  'the',
+  'to',
+  'with',
+  'developer',
+  'development',
+  'project',
+  'app',
+  'application',
+]);
 
 function canonical(value: string): string {
-  const cleaned = value.normalize('NFKC').toLocaleLowerCase('en-US').replace(/ς/g, 'σ').replace(/\p{M}/gu, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim().replace(/\s+/g, ' ');
+  const cleaned = value
+    .normalize('NFKC')
+    .toLocaleLowerCase('en-US')
+    .replace(/ς/g, 'σ')
+    .replace(/\p{M}/gu, '')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
   return ALIASES[cleaned] ?? cleaned;
 }
 
 function tokens(value: string | null | undefined): Set<string> {
   if (!value) return new Set();
-  return new Set(value.normalize('NFKC').toLocaleLowerCase('en-US').replace(/ς/g, 'σ').replace(/\p{M}/gu, '').split(/[^\p{L}\p{N}]+/gu).map(canonical).filter((token) => token.length > 1 && !STOP_WORDS.has(token)));
+  return new Set(
+    value
+      .normalize('NFKC')
+      .toLocaleLowerCase('en-US')
+      .replace(/ς/g, 'σ')
+      .replace(/\p{M}/gu, '')
+      .split(/[^\p{L}\p{N}]+/gu)
+      .map(canonical)
+      .filter((token) => token.length > 1 && !STOP_WORDS.has(token)),
+  );
 }
 
 function values(value: readonly string[] | null | undefined): Set<string> {
@@ -68,7 +100,8 @@ export function rankPortfolioMatches(
   entries: readonly PortfolioEntry[] | null | undefined,
   job: PortfolioMatchJob | null | undefined,
 ): PortfolioMatch[] {
-  if (!Array.isArray(entries) || !job || !job.title && !(job.skills?.length) && !(job.tags?.length)) return [];
+  if (!Array.isArray(entries) || !job || (!job.title && !job.skills?.length && !job.tags?.length))
+    return [];
 
   const jobTitle = tokens(job.title);
   const jobSkills = values(job.skills);

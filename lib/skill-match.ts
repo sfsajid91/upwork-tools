@@ -24,6 +24,6 @@ export function matchSkills(input: SkillMatchInput): SkillMatchSummary | null {
   return {
     matched: matched.length,
     total: job.length,
-    matchedSkills: matched.map((skill) => skill.sourceLabels[0]),
+    matchedSkills: matched.map((skill) => skill.sourceLabels[0] ?? skill.name),
   };
 }

@@ -54,7 +54,9 @@ function earningsLabel(value: unknown): string | null {
     positiveNumber(object?.min);
   if (amount === null) return null;
 
-  const currency = object ? meaningfulString(object.currencyCode) ?? meaningfulString(object.currency) : null;
+  const currency = object
+    ? (meaningfulString(object.currencyCode) ?? meaningfulString(object.currency))
+    : null;
   return `${currency ? `${currency} ` : ''}${String(amount)}+ earnings`;
 }
 
@@ -64,7 +66,9 @@ export function restrictionLabels(qualifications: unknown): string[] {
   if (!source) return [];
 
   const restrictions = [
-    ...['countries', 'states', 'regions', 'locations', 'location', 'timezones'].flatMap((key) => labels(source[key])),
+    ...['countries', 'states', 'regions', 'locations', 'location', 'timezones'].flatMap((key) =>
+      labels(source[key]),
+    ),
   ];
 
   const minimumJobSuccessScore = positiveNumber(source.minJobSuccessScore);
@@ -92,4 +96,3 @@ export function restrictionLabels(qualifications: unknown): string[] {
 
 /** Alias emphasizing that this function parses the upstream qualification record. */
 export const parseRestrictions = restrictionLabels;
-

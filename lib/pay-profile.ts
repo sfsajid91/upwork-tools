@@ -14,7 +14,9 @@ export interface HistoricalHourlyRateRecord {
 export interface ClientPayProfileInput {
   client?: Pick<JobInsights['client'], 'totalCharges' | 'averageHourlyRate'> | null;
   history?: readonly PayProfileHistoryEntry[] | null;
-  historicalHourlyRates?: readonly (number | null | undefined | HistoricalHourlyRateRecord)[] | null;
+  historicalHourlyRates?:
+    | readonly (number | null | undefined | HistoricalHourlyRateRecord)[]
+    | null;
 }
 
 export interface ClientPayProfile {
@@ -32,7 +34,10 @@ function positiveFinite(value: unknown): value is number {
 function fixedPayments(history: readonly PayProfileHistoryEntry[] | null | undefined): number[] {
   if (!Array.isArray(history)) return [];
   return history
-    .filter((entry) => entry?.type?.trim().toUpperCase() === 'FIXED' && positiveFinite(entry.amountPaid))
+    .filter(
+      (entry): entry is PayProfileHistoryEntry & { amountPaid: number } =>
+        entry?.type?.trim().toUpperCase() === 'FIXED' && positiveFinite(entry.amountPaid),
+    )
     .map((entry) => entry.amountPaid)
     .sort((left, right) => left - right);
 }
@@ -44,7 +49,11 @@ export function medianRecentFixedPayment(
   const payments = fixedPayments(history);
   if (payments.length === 0) return null;
   const middle = Math.floor(payments.length / 2);
-  return payments.length % 2 === 1 ? payments[middle] : (payments[middle - 1] + payments[middle]) / 2;
+  const upper = payments[middle];
+  if (upper === undefined) return null;
+  if (payments.length % 2 === 1) return upper;
+  const lower = payments[middle - 1];
+  return lower === undefined ? null : (lower + upper) / 2;
 }
 
 /** Returns the average of positive fixed-payment history, or null when unavailable. */
@@ -52,11 +61,17 @@ export function averageRecentFixedPayment(
   history: readonly PayProfileHistoryEntry[] | null | undefined,
 ): number | null {
   const payments = fixedPayments(history);
-  return payments.length === 0 ? null : payments.reduce((sum, payment) => sum + payment, 0) / payments.length;
+  return payments.length === 0
+    ? null
+    : payments.reduce((sum, payment) => sum + payment, 0) / payments.length;
 }
 function validSuppliedHourlyRate(value: unknown, hours: unknown = undefined): value is number {
   if (!positiveFinite(value)) return false;
-  return hours === undefined || hours === null || (typeof hours === 'number' && Number.isFinite(hours) && hours > 0);
+  return (
+    hours === undefined ||
+    hours === null ||
+    (typeof hours === 'number' && Number.isFinite(hours) && hours > 0)
+  );
 }
 
 /**
@@ -65,16 +80,20 @@ function validSuppliedHourlyRate(value: unknown, hours: unknown = undefined): va
  */
 export function validHistoricalHourlyRates(
   history: readonly PayProfileHistoryEntry[] | null | undefined,
-  supplied: readonly (number | null | undefined | HistoricalHourlyRateRecord)[] | null | undefined = null,
+  supplied:
+    | readonly (number | null | undefined | HistoricalHourlyRateRecord)[]
+    | null
+    | undefined = null,
 ): number[] {
   const rates: number[] = [];
   if (Array.isArray(history)) {
     for (const entry of history) {
+      const hourlyRate = entry?.hourlyRate;
       if (
         entry?.type?.trim().toUpperCase() !== 'FIXED' &&
-        validSuppliedHourlyRate(entry?.hourlyRate, entry?.hours)
+        validSuppliedHourlyRate(hourlyRate, entry?.hours)
       ) {
-        rates.push(entry.hourlyRate);
+        rates.push(hourlyRate);
       }
     }
   }
@@ -82,8 +101,9 @@ export function validHistoricalHourlyRates(
     for (const record of supplied) {
       if (typeof record === 'number') {
         if (validSuppliedHourlyRate(record)) rates.push(record);
-      } else if (record && validSuppliedHourlyRate(record.hourlyRate, record.hours)) {
-        rates.push(record.hourlyRate);
+      } else if (record) {
+        const hourlyRate = record.hourlyRate;
+        if (validSuppliedHourlyRate(hourlyRate, record.hours)) rates.push(hourlyRate);
       }
     }
   }
@@ -96,9 +116,11 @@ export function deriveClientPayProfile(input: ClientPayProfileInput = {}): Clien
   const client = input.client;
   const hourlyRates = validHistoricalHourlyRates(history, input.historicalHourlyRates);
   return {
-    totalCharges: typeof client?.totalCharges === 'number' && Number.isFinite(client.totalCharges) ? client.totalCharges : null,
-    averageHourlyRate:
-      positiveFinite(client?.averageHourlyRate) ? client.averageHourlyRate : null,
+    totalCharges:
+      typeof client?.totalCharges === 'number' && Number.isFinite(client.totalCharges)
+        ? client.totalCharges
+        : null,
+    averageHourlyRate: positiveFinite(client?.averageHourlyRate) ? client.averageHourlyRate : null,
     medianRecentFixedPayment: medianRecentFixedPayment(history),
     averageRecentFixedPayment: averageRecentFixedPayment(history),
     historicalHourlyRates: hourlyRates.length > 0 ? hourlyRates : null,

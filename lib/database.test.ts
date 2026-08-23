@@ -6,9 +6,9 @@ import {
   enforceHistoryRetention,
   getApplication,
   getJob,
-  mergeApplication,
   getWatchlist,
   listJobSnapshots,
+  mergeApplication,
   openDatabase,
   putApplication,
   putJob,
@@ -87,10 +87,10 @@ class FakeObjectStore {
   }
 
   add(value: Record<string, unknown>): FakeRequest<IDBValidKey> {
-    return this.transaction.request(() => {
+    return this.transaction.request<IDBValidKey>(() => {
       const key = this.data.autoIncrement
         ? this.data.nextKey++
-        : value[this.data.keyPath];
+        : (value[this.data.keyPath] as IDBValidKey);
       if (this.data.records.has(key)) throw new Error('ConstraintError');
       this.data.records.set(key, { ...value });
       return key;
@@ -98,8 +98,8 @@ class FakeObjectStore {
   }
 
   put(value: Record<string, unknown>): FakeRequest<IDBValidKey> {
-    return this.transaction.request(() => {
-      const key = value[this.data.keyPath];
+    return this.transaction.request<IDBValidKey>(() => {
+      const key = value[this.data.keyPath] as IDBValidKey;
       this.data.records.set(key, { ...value });
       return key;
     });
@@ -113,7 +113,9 @@ class FakeObjectStore {
   }
 
   getAll(): FakeRequest<Record<string, unknown>[]> {
-    return this.transaction.request(() => [...this.data.records.values()].map((value) => ({ ...value })));
+    return this.transaction.request(() =>
+      [...this.data.records.values()].map((value) => ({ ...value })),
+    );
   }
 
   getAllKeys(): FakeRequest<IDBValidKey[]> {
@@ -163,7 +165,10 @@ class FakeDatabase {
   readonly objectStoreNames = { contains: (name: string) => this.stores.has(name) };
   onversionchange: (() => void) | null = null;
 
-  createObjectStore(name: string, options: { keyPath: string; autoIncrement?: boolean }): FakeObjectStore {
+  createObjectStore(
+    name: string,
+    options: { keyPath: string; autoIncrement?: boolean },
+  ): FakeObjectStore {
     const data: StoreData = {
       ...options,
       nextKey: 1,
@@ -190,7 +195,9 @@ class FakeIndexedDB {
     const request = new FakeRequest<FakeDatabase>();
     queueMicrotask(() => {
       request.result = this.database;
-      (request as FakeRequest<FakeDatabase> & { onupgradeneeded?: (event: unknown) => void }).onupgradeneeded?.({
+      (
+        request as FakeRequest<FakeDatabase> & { onupgradeneeded?: (event: unknown) => void }
+      ).onupgradeneeded?.({
         target: request,
       });
       request.onsuccess?.({});
@@ -219,7 +226,7 @@ beforeEach(async () => {
 
 afterAll(async () => {
   const database = await openDatabase();
-  database?.onversionchange?.();
+  database?.close();
 });
 
 describe('database retention', () => {
@@ -296,8 +303,20 @@ describe('database clear APIs', () => {
   test('clearHistory removes jobs, snapshots, applications, and watchlist', async () => {
     await putJob({ jobId: 'job-1', job: {} as never, client: {} as never });
     await putJobSnapshot(snapshot('job-1', Date.now()));
-    await putApplication({ jobId: 'job-1', state: null, viewedAt: null, appliedAt: null, interviewedAt: null, hiredAt: null });
-    await putWatchlist({ jobId: 'job-1', job: {} as never, latestSnapshotId: null, savedAt: Date.now() });
+    await putApplication({
+      jobId: 'job-1',
+      state: null,
+      viewedAt: null,
+      appliedAt: null,
+      interviewedAt: null,
+      hiredAt: null,
+    });
+    await putWatchlist({
+      jobId: 'job-1',
+      job: {} as never,
+      latestSnapshotId: null,
+      savedAt: Date.now(),
+    });
 
     expect(await clearHistory()).toBe(true);
     expect(await clearHistory()).toBe(true);
@@ -351,9 +370,9 @@ describe('database clear APIs', () => {
 
   test('degrades safely when IndexedDB is unavailable', async () => {
     const database = await openDatabase();
-    database?.onversionchange?.();
+    database?.close();
     const original = (globalThis as typeof globalThis & { indexedDB?: IDBFactory }).indexedDB;
-    (globalThis as typeof globalThis & { indexedDB?: IDBFactory }).indexedDB = undefined;
+    Reflect.deleteProperty(globalThis, 'indexedDB');
     expect(await clearHistory()).toBe(false);
     expect(await clearAllLocalData()).toBe(false);
     (globalThis as typeof globalThis & { indexedDB?: IDBFactory }).indexedDB = original;

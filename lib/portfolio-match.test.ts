@@ -16,11 +16,20 @@ describe('portfolio ranking', () => {
       { title: 'Cloudflare API integration', skills: ['TS'], tags: ['API'] },
     );
     expect(result).toHaveLength(1);
-    expect(result[0]).toMatchObject({ titleOverlap: ['api', 'cloudflare'], skillOverlap: ['typescript'], tagOverlap: ['api'] });
+    expect(result[0]).toMatchObject({
+      titleOverlap: ['api', 'cloudflare'],
+      skillOverlap: ['typescript'],
+      tagOverlap: ['api'],
+    });
   });
 
   test('rejects weak matches and empty job/profile input', () => {
-    expect(rankPortfolioMatches([entry('Unrelated site', ['Python'], ['blog'])], { title: 'Cloudflare API', skills: ['TypeScript'] })).toEqual([]);
+    expect(
+      rankPortfolioMatches([entry('Unrelated site', ['Python'], ['blog'])], {
+        title: 'Cloudflare API',
+        skills: ['TypeScript'],
+      }),
+    ).toEqual([]);
     expect(rankPortfolioMatches([], { title: 'Cloudflare API' })).toEqual([]);
     expect(rankPortfolioMatches([entry('Cloudflare API')], null)).toEqual([]);
     expect(rankPortfolioMatches([entry('Cloudflare API')], {})).toEqual([]);
@@ -35,7 +44,10 @@ describe('portfolio ranking', () => {
     expect(result[0]?.titleOverlap).toEqual(['iş', 'react']);
     expect(result[0]?.skillOverlap).toEqual(['javascript']);
     expect(result[0]?.tagOverlap).toEqual(['nodejs']);
-    const typeScript = rankPortfolioMatches([entry('API', ['Type Script'])], { title: 'API', skills: ['TS'] });
+    const typeScript = rankPortfolioMatches([entry('API', ['Type Script'])], {
+      title: 'API',
+      skills: ['TS'],
+    });
     expect(typeScript[0]?.skillOverlap).toEqual(['typescript']);
   });
 

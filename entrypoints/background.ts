@@ -1,3 +1,4 @@
+import { deriveApplicantMetrics } from '../lib/applicant-metrics';
 import {
   appendJobSnapshotIfChanged,
   listJobSnapshots,
@@ -5,19 +6,19 @@ import {
   openDatabase,
   putJob,
 } from '../lib/database';
-import { deriveApplicantMetrics } from '../lib/applicant-metrics';
 import { summarizeJobSnapshots } from '../lib/history';
 import { isJobInsights, type JobInsights } from '../lib/insights';
 import { deriveClientPayProfile } from '../lib/pay-profile';
 import {
   GET_JOB_HISTORY,
   isRuntimeMessage,
-  STORE_JOB_INSIGHTS,
   type JobHistoryResponse,
+  STORE_JOB_INSIGHTS,
 } from '../lib/protocol';
-import { calculateProposalVelocity } from '../lib/velocity';
-import { createApplicationRecord, transitionApplicationRecord } from '../lib/tracker';
 import type { JobRecord, JobSnapshotRecord } from '../lib/storage';
+import { createApplicationRecord, transitionApplicationRecord } from '../lib/tracker';
+import { calculateProposalVelocity } from '../lib/velocity';
+
 const BADGE_COLOR = '#152d4f';
 const CAPTURE_DEDUP_WINDOW_MS = 60_000;
 const storageKey = (tabId: number) => `job-insights:${tabId}`;
@@ -188,7 +189,6 @@ async function readJobHistory(tabId: number, jobId: string): Promise<JobHistoryR
   }
 }
 
-
 export default defineBackground(() => {
   browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (!isRuntimeMessage(message)) return undefined;
@@ -232,10 +232,9 @@ export default defineBackground(() => {
     }
 
     if (message.type === GET_JOB_HISTORY) {
-      void enqueueTabMutation(message.tabId, () => readJobHistory(message.tabId, message.jobId.trim())).then(
-        sendResponse,
-        () => sendResponse(null),
-      );
+      void enqueueTabMutation(message.tabId, () =>
+        readJobHistory(message.tabId, message.jobId.trim()),
+      ).then(sendResponse, () => sendResponse(null));
       return true;
     }
 
@@ -292,4 +291,3 @@ export default defineBackground(() => {
     );
   });
 });
-

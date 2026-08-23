@@ -755,7 +755,6 @@ export function AvailableState({
             <span>Client active {formatRelativeTime(activity.lastBuyerActivity)}</span>
           </div>
         )}
-
       </section>
       {history?.summary && (
         <section
@@ -893,7 +892,10 @@ export function AvailableState({
         >
           <div className="mb-3 flex items-center gap-1.5 border-b border-slate-100 pb-2 dark:border-slate-800">
             <BuildingIcon className="size-3.5 text-slate-500 dark:text-slate-400" />
-            <h2 id="pay-profile-heading" className="text-xs font-bold text-slate-900 dark:text-slate-100">
+            <h2
+              id="pay-profile-heading"
+              className="text-xs font-bold text-slate-900 dark:text-slate-100"
+            >
               Client Pay Profile
             </h2>
           </div>
@@ -919,7 +921,6 @@ export function AvailableState({
           </div>
         </section>
       )}
-
 
       {/* Your Fit & Rate Dynamics */}
       <section
@@ -994,7 +995,11 @@ export function AvailableState({
         defaultOpen={true}
       />
 
-      <HistoryDetails title="Client Hiring History" jobs={clientHistory.recentJobs} defaultOpen={false} />
+      <HistoryDetails
+        title="Client Hiring History"
+        jobs={clientHistory.recentJobs}
+        defaultOpen={false}
+      />
 
       {/* Footer */}
       <footer className="mt-1 flex flex-col gap-1 rounded-xl bg-slate-200/50 p-2.5 text-[10.5px] text-slate-500 dark:bg-slate-900/60 dark:text-slate-400">

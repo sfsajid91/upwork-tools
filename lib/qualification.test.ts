@@ -82,9 +82,24 @@ describe('qualification details', () => {
     const records = [
       match({ clientPreferred: 'ANY', clientPreferredLabel: 'Any' }),
       match({ qualification: '', clientPreferredLabel: 'Fluent' }),
-      match({ qualification: 'MinimumJobSuccessScore', clientPreferred: '0', clientPreferredLabel: 'At least 0%' }),
-      match({ qualification: 'Portfolio', clientPreferred: false, clientPreferredLabel: 'No preference', qualified: false }),
-      match({ qualification: 'Language', clientPreferred: 'en', clientPreferredLabel: '', freelancerValue: 'en', freelancerValueLabel: 'English' }),
+      match({
+        qualification: 'MinimumJobSuccessScore',
+        clientPreferred: '0',
+        clientPreferredLabel: 'At least 0%',
+      }),
+      match({
+        qualification: 'Portfolio',
+        clientPreferred: false,
+        clientPreferredLabel: 'No preference',
+        qualified: false,
+      }),
+      match({
+        qualification: 'Language',
+        clientPreferred: 'en',
+        clientPreferredLabel: '',
+        freelancerValue: 'en',
+        freelancerValueLabel: 'English',
+      }),
     ];
 
     expect(normalizeQualificationMatches(records)).toEqual([]);

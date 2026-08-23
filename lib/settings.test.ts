@@ -69,9 +69,9 @@ function installStorage(initial: Store = {}) {
       failSet = false;
     },
     restore() {
-      if (previousBrowser === undefined) delete root.browser;
+      if (previousBrowser === undefined) Reflect.deleteProperty(root, 'browser');
       else root.browser = previousBrowser;
-      if (previousLocalStorage === undefined) delete root.localStorage;
+      if (previousLocalStorage === undefined) Reflect.deleteProperty(root, 'localStorage');
       else root.localStorage = previousLocalStorage;
     },
   };
@@ -184,7 +184,9 @@ describe('local settings adapter', () => {
     const fixture = installStorage();
     try {
       const profile = { hourlyRate: 0, skills: ['TypeScript'], preferences: {} };
-      const portfolio = [{ title: 'Extension', skills: ['TypeScript'], tags: ['browser'], url: null }];
+      const portfolio = [
+        { title: 'Extension', skills: ['TypeScript'], tags: ['browser'], url: null },
+      ];
       const settings = { theme: 'light' as const, features: { insights: true } };
       expect(await setUserProfile(profile)).toEqual(true);
       expect(await setPortfolio(portfolio)).toEqual(true);
@@ -192,7 +194,9 @@ describe('local settings adapter', () => {
       expect(await getUserProfile()).toEqual(profile);
       expect(await getPortfolio()).toEqual(portfolio);
       expect(await getUiSettings()).toEqual(settings);
-      expect(await setUserProfile({ hourlyRate: Number.NaN, skills: [], preferences: {} })).toEqual(false);
+      expect(await setUserProfile({ hourlyRate: Number.NaN, skills: [], preferences: {} })).toEqual(
+        false,
+      );
     } finally {
       fixture.restore();
     }

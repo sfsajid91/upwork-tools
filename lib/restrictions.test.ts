@@ -61,9 +61,8 @@ describe('restrictionLabels', () => {
   });
 
   test('deduplicates repeated location labels while preserving source order', () => {
-    expect(restrictionLabels({ countries: ['US', 'US'], states: [{ state: 'CA' }, { state: 'CA' }] })).toEqual([
-      'US',
-      'CA',
-    ]);
+    expect(
+      restrictionLabels({ countries: ['US', 'US'], states: [{ state: 'CA' }, { state: 'CA' }] }),
+    ).toEqual(['US', 'CA']);
   });
 });

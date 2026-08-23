@@ -49,7 +49,6 @@ describe('application tracker', () => {
     expect(invitedThenApplied.appliedAt).toBe(4_000);
   });
 
-
   test('records observed interview and hire events', () => {
     const record = transitionApplicationRecord(
       transitionApplicationRecord(createApplicationRecord('job-1'), {
@@ -100,10 +99,10 @@ describe('application tracker', () => {
       { ...createApplicationRecord('job-2'), state: 'withdrawn' as never },
       { ...createApplicationRecord('job-2'), state: 'applied' },
     );
-    const unknownIncoming = mergeApplicationRecords(
-      createApplicationRecord('job-3'),
-      { ...createApplicationRecord('job-3'), state: 'withdrawn' as never },
-    );
+    const unknownIncoming = mergeApplicationRecords(createApplicationRecord('job-3'), {
+      ...createApplicationRecord('job-3'),
+      state: 'withdrawn' as never,
+    });
     const knownIncoming = mergeApplicationRecords(
       { ...createApplicationRecord('job-4'), state: 'applied' },
       { ...createApplicationRecord('job-4'), state: 'withdrawn' as never },

@@ -1,6 +1,7 @@
 import { browser as importedBrowser } from 'wxt/browser';
 import { isPortfolioEntry, setPortfolio } from './settings';
 import type { PortfolioEntry } from './storage';
+
 type PortfolioInput = PortfolioEntry;
 const PORTFOLIO_KEY = 'portfolio';
 
@@ -31,7 +32,9 @@ function validUrl(url: string | null): boolean {
   if (url === null) return true;
   try {
     const parsed = new URL(url);
-    return (parsed.protocol === 'http:' || parsed.protocol === 'https:') && parsed.hostname.length > 0;
+    return (
+      (parsed.protocol === 'http:' || parsed.protocol === 'https:') && parsed.hostname.length > 0
+    );
   } catch {
     return false;
   }
@@ -49,7 +52,11 @@ function validIndex(index: unknown, length: number): index is number {
 export async function listPortfolio(): Promise<PortfolioEntry[]> {
   const result = await readPortfolio();
   return result.ok && result.entries
-    ? result.entries.map((entry) => ({ ...entry, skills: [...entry.skills], tags: [...entry.tags] }))
+    ? result.entries.map((entry) => ({
+        ...entry,
+        skills: [...entry.skills],
+        tags: [...entry.tags],
+      }))
     : [];
 }
 

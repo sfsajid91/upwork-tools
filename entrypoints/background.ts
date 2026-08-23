@@ -1,8 +1,16 @@
-import { appendJobSnapshotIfChanged, putJob } from '../lib/database';
+import { appendJobSnapshotIfChanged, listJobSnapshots, openDatabase, putJob } from '../lib/database';
+import { deriveApplicantMetrics } from '../lib/applicant-metrics';
+import { summarizeJobSnapshots } from '../lib/history';
 import { isJobInsights, type JobInsights } from '../lib/insights';
-import { isRuntimeMessage, STORE_JOB_INSIGHTS } from '../lib/protocol';
+import { deriveClientPayProfile } from '../lib/pay-profile';
+import {
+  GET_JOB_HISTORY,
+  isRuntimeMessage,
+  STORE_JOB_INSIGHTS,
+  type JobHistoryResponse,
+} from '../lib/protocol';
+import { calculateProposalVelocity } from '../lib/velocity';
 import type { JobRecord, JobSnapshotRecord } from '../lib/storage';
-
 const BADGE_COLOR = '#152d4f';
 const CAPTURE_DEDUP_WINDOW_MS = 60_000;
 const storageKey = (tabId: number) => `job-insights:${tabId}`;
@@ -34,13 +42,15 @@ function advanceTabGeneration(tabId: number): number {
   return state.generation;
 }
 
-function enqueueTabMutation(tabId: number, mutation: () => Promise<void>): Promise<void> {
+function enqueueTabMutation<T>(tabId: number, mutation: () => Promise<T>): Promise<T> {
   const state = getTabState(tabId);
   const next = state.pending.then(mutation, mutation);
-  state.pending = next.catch(() => undefined);
+  state.pending = next.then(
+    () => undefined,
+    () => undefined,
+  );
   return next;
 }
-
 
 function isJobDetailsPage(url: string | undefined): boolean {
   if (!url) return false;
@@ -106,6 +116,52 @@ async function persistJobInsights(
     // IndexedDB failures must not affect session-only capture.
   }
 }
+async function readJobHistory(tabId: number, jobId: string): Promise<JobHistoryResponse | null> {
+  try {
+    const database = await openDatabase();
+    if (!database) return null;
+    const snapshots = await listJobSnapshots(jobId);
+    const summary = summarizeJobSnapshots(snapshots, jobId);
+    const stored = await browser.storage.session.get(storageKey(tabId));
+    const storedPayload = stored[storageKey(tabId)];
+    const storedInsights = isJobInsights(storedPayload) ? storedPayload : null;
+    const insights = storedInsights?.job.id?.trim() === jobId ? storedInsights : null;
+    const payProfile = deriveClientPayProfile({
+      client: insights?.client,
+      history: insights?.history.recentJobs,
+    });
+    if (!summary) {
+      return { jobId, summary: null, velocity: null, payProfile };
+    }
+    const metrics = deriveApplicantMetrics(summary.snapshots);
+    const firstSeenApplicants =
+      typeof summary.firstSeen?.applicants === 'number' &&
+      Number.isFinite(summary.firstSeen.applicants) &&
+      summary.firstSeen.applicants >= 0
+        ? summary.firstSeen.applicants
+        : null;
+    return {
+      jobId,
+      summary: {
+        snapshotCount: summary.snapshots.length,
+        latestApplicants: metrics.latestApplicantCount,
+        firstSeenApplicants,
+        firstSeenDelta: metrics.firstSeenDelta,
+        recentDelta: metrics.recentDelta,
+      },
+      velocity: calculateProposalVelocity(
+        summary.previous?.applicants,
+        summary.latest?.applicants,
+        summary.previous?.capturedAt,
+        summary.latest?.capturedAt,
+      ),
+      payProfile,
+    };
+  } catch {
+    return null;
+  }
+}
+
 
 export default defineBackground(() => {
   browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -131,7 +187,7 @@ export default defineBackground(() => {
             try {
               await browser.storage.session.set({ [storageKey(tabId)]: message.payload });
               if (state.removed || state.generation !== generation) return;
-              void persistJobInsights(state, generation, message.payload, capturedAt);
+              await persistJobInsights(state, generation, message.payload, capturedAt);
               await setBadge(
                 tabId,
                 sender.tab?.url,
@@ -146,6 +202,14 @@ export default defineBackground(() => {
         }
         sendResponse();
       })();
+      return true;
+    }
+
+    if (message.type === GET_JOB_HISTORY) {
+      void enqueueTabMutation(message.tabId, () => readJobHistory(message.tabId, message.jobId.trim())).then(
+        sendResponse,
+        () => sendResponse(null),
+      );
       return true;
     }
 

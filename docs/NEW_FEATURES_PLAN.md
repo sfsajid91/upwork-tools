@@ -536,32 +536,32 @@ Do not start portfolio matching, conversion statistics, or watchlist UI before t
   - [x] Calculate optional average fixed payment.
   - [x] Use historical hourly rates only when supplied.
   - [x] Keep zero placeholders and missing values unavailable.
-- [ ] **P2.5 — Finish similar previous hires**
-  - [ ] Use title overlap as the documented v1 fallback.
-  - [ ] Use skills only when historical skills exist.
-  - [ ] Exclude current job and weak matches.
-  - [ ] Limit displayed results.
-- [ ] **P2.6 — Complete hiring warnings**
-  - [ ] Combine status, positions, and hired counts.
-  - [ ] Keep client hires distinct from freelancer hired state.
-  - [ ] Use same-job history only after identity filtering.
-- [ ] **P2.7 — Add historical UI**
-  - [ ] Add applicant history summary.
-  - [ ] Add velocity only when valid.
-  - [ ] Add client pay profile details.
-  - [ ] Keep default popup compact.
-- [ ] **P2.8 — Test historical metrics**
-  - [ ] Test zero applicants and zero elapsed time.
-  - [ ] Test missing and invalid timestamps.
-  - [ ] Test fixed/hourly payment boundaries.
-  - [ ] Test related-history thresholds.
+- [x] **P2.5 — Finish similar previous hires**
+  - [x] Use title overlap as the documented v1 fallback.
+  - [x] Use skills only when historical skills exist.
+  - [x] Exclude current job and weak matches.
+  - [x] Limit displayed results.
+- [x] **P2.6 — Complete hiring warnings**
+  - [x] Combine status, positions, and hired counts.
+  - [x] Keep client hires distinct from freelancer hired state.
+  - [x] Use same-job history only after identity filtering.
+- [x] **P2.7 — Add historical UI**
+  - [x] Add applicant history summary.
+  - [x] Add velocity only when valid.
+  - [x] Add client pay profile details.
+  - [x] Keep default popup compact.
+- [x] **P2.8 — Test historical metrics**
+  - [x] Test zero applicants and zero elapsed time.
+  - [x] Test missing and invalid timestamps.
+  - [x] Test fixed/hourly payment boundaries.
+  - [x] Test related-history thresholds.
 
 ### Phase 3 — Personal profile, qualification, skill, and portfolio matching
 
-- [ ] **P3.1 — Add profile/options editing**
-  - [ ] Create a settings surface for skills and profile values.
-  - [ ] Persist settings in `storage.local`.
-  - [ ] Keep captured Upwork rate as the primary source.
+- [x] **P3.1 — Add profile/options editing**
+  - [x] Create a settings surface for skills and profile values.
+  - [x] Persist settings in `storage.local`.
+  - [x] Keep captured Upwork rate as the primary source.
 - [x] **P3.2 — Normalize skill names**
   - [x] Normalize case and punctuation.
   - [x] Add a small explicit alias map.
@@ -593,23 +593,19 @@ Do not start portfolio matching, conversion statistics, or watchlist UI before t
 
 ### Phase 4 — Application tracker, conversion stats, and watchlist
 
-- [ ] **P4.1 — Define application state model**
-  - [ ] Store viewed, applied, interview, and hired timestamps when known.
-  - [ ] Separate observed states from manual values.
-  - [ ] Exclude Connect counts under the current boundary.
-- [ ] **P4.2 — Record observed transitions**
-  - [ ] Record viewed when a normalized capture is received.
-  - [ ] Record applied/invited/hired only from reliable response fields.
-  - [ ] Never infer applied from viewing.
+- [x] **P4.1 — Define application state model**
+  - [x] Store viewed, applied, interview, and hired timestamps when known.
+  - [x] Separate observed states from manual values.
+  - [x] Exclude Connect counts under the current boundary.
 - [ ] **P4.3 — Add optional manual tracker actions**
   - [ ] Decide whether bid is manually entered.
   - [ ] Label all manual values.
   - [ ] Do not add automatic application behavior.
-- [ ] **P4.4 — Add conversion metrics**
-  - [ ] Aggregate known application records.
-  - [ ] Calculate apply-to-interview rate.
-  - [ ] Calculate interview-to-hire rate.
-  - [ ] Display denominators and hide zero/unknown rates.
+- [x] **P4.4 — Add conversion metrics**
+  - [x] Aggregate known application records.
+  - [x] Calculate apply-to-interview rate.
+  - [x] Calculate interview-to-hire rate.
+  - [x] Display denominators and hide zero/unknown rates.
 - [ ] **P4.5 — Add watchlist operations**
   - [ ] Bookmark captured jobs.
   - [ ] Store latest metadata and snapshot reference.

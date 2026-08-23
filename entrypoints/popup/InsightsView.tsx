@@ -11,6 +11,7 @@ import {
   formatRelativeTime,
 } from '../../lib/format';
 import type { ClientHistoryEntry, JobInsights, JobWarning } from '../../lib/insights';
+import type { JobHistoryResponse } from '../../lib/protocol';
 import type { ThemeMode } from '../../lib/theme';
 
 // --- Vector Icons ---
@@ -614,14 +615,16 @@ export function LoadingState({
 
 export function AvailableState({
   insights,
+  history,
   themeMode,
   onToggleTheme,
 }: {
   insights: JobInsights;
+  history?: JobHistoryResponse | null;
   themeMode?: ThemeMode;
   onToggleTheme?: () => void;
 }) {
-  const { job, activity, client, fit, history } = insights;
+  const { job, activity, client, fit, history: clientHistory } = insights;
 
   const location = [client.city, client.country].filter(Boolean).join(', ') || 'Not available';
 
@@ -752,7 +755,48 @@ export function AvailableState({
             <span>Client active {formatRelativeTime(activity.lastBuyerActivity)}</span>
           </div>
         )}
+
       </section>
+      {history?.summary && (
+        <section
+          className="rounded-2xl border border-slate-200/90 bg-white p-3 shadow-xs dark:border-slate-800/90 dark:bg-slate-900"
+          aria-label="Applicant history"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
+              Applicant History
+            </span>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400">
+              {history.summary.snapshotCount} capture
+              {history.summary.snapshotCount === 1 ? '' : 's'}
+            </span>
+          </div>
+          <div className="mt-2 grid grid-cols-3 gap-2 text-center">
+            {history.summary.firstSeenDelta !== null && (
+              <MetricCell
+                label="Since first"
+                value={`${history.summary.firstSeenDelta > 0 ? '+' : ''}${formatNumber(history.summary.firstSeenDelta)}`}
+              />
+            )}
+            {history.summary.recentDelta !== null && (
+              <MetricCell
+                label="Since prior"
+                value={`${history.summary.recentDelta > 0 ? '+' : ''}${formatNumber(history.summary.recentDelta)}`}
+              />
+            )}
+            {history.velocity !== null && (
+              <MetricCell label="Proposals/hour" value={history.velocity.toFixed(1)} />
+            )}
+            {history.summary.firstSeenDelta === null &&
+              history.summary.recentDelta === null &&
+              history.velocity === null && (
+                <span className="col-span-3 text-[11px] text-slate-500 dark:text-slate-400">
+                  No trend yet
+                </span>
+              )}
+          </div>
+        </section>
+      )}
 
       {/* Client Track Record */}
       <section
@@ -842,6 +886,40 @@ export function AvailableState({
           </div>
         </div>
       </section>
+      {history && (
+        <section
+          className="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-xs dark:border-slate-800/90 dark:bg-slate-900"
+          aria-labelledby="pay-profile-heading"
+        >
+          <div className="mb-3 flex items-center gap-1.5 border-b border-slate-100 pb-2 dark:border-slate-800">
+            <BuildingIcon className="size-3.5 text-slate-500 dark:text-slate-400" />
+            <h2 id="pay-profile-heading" className="text-xs font-bold text-slate-900 dark:text-slate-100">
+              Client Pay Profile
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+            <MetricCell
+              label="Typical Fixed Payment"
+              value={formatMoney(history.payProfile.medianRecentFixedPayment, 'USD')}
+            />
+            <MetricCell
+              label="Average Fixed Payment"
+              value={formatMoney(history.payProfile.averageRecentFixedPayment, 'USD')}
+            />
+            <MetricCell
+              label="Historical Hourly"
+              value={
+                history.payProfile.historicalHourlyRates
+                  ? history.payProfile.historicalHourlyRates
+                      .map((rate) => `${formatMoney(rate, 'USD')}/hr`)
+                      .join(' · ')
+                  : 'Not available'
+              }
+            />
+          </div>
+        </section>
+      )}
+
 
       {/* Your Fit & Rate Dynamics */}
       <section
@@ -911,12 +989,12 @@ export function AvailableState({
       {/* Expandable History Sections */}
       <HistoryDetails
         title="Related Previous Jobs"
-        jobs={history.relatedJobs}
+        jobs={clientHistory.relatedJobs}
         badgeText="Repeat Context"
         defaultOpen={true}
       />
 
-      <HistoryDetails title="Client Hiring History" jobs={history.recentJobs} defaultOpen={false} />
+      <HistoryDetails title="Client Hiring History" jobs={clientHistory.recentJobs} defaultOpen={false} />
 
       {/* Footer */}
       <footer className="mt-1 flex flex-col gap-1 rounded-xl bg-slate-200/50 p-2.5 text-[10.5px] text-slate-500 dark:bg-slate-900/60 dark:text-slate-400">

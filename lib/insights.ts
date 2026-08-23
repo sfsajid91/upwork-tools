@@ -286,7 +286,9 @@ export function normalizeJobInsights(payload: unknown): JobInsights | null {
   const extendedBudget = record(valueAt(job, 'extendedBudgetInfo'));
   const freelancerInfo = record(valueAt(details, 'currentUserInfo', 'freelancerInfo'));
   const qualificationMatches = valueAt(freelancerInfo, 'qualificationsMatches', 'matches');
-  const recentJobs = normalizeHistory(valueAt(buyer, 'workHistory'));
+  const recentJobs = normalizeHistory(
+    valueAt(buyer, 'workHistory') ?? valueAt(details, 'workHistory'),
+  );
   const currentJobId = nullableString(info?.id);
   const currentTitle = nullableString(info?.title);
   const currentStatus = nullableString(job?.status);

@@ -2,15 +2,19 @@ import { useEffect, useState } from 'react';
 import { browser } from 'wxt/browser';
 import type { JobInsights } from '../../lib/insights';
 import { isJobInsights } from '../../lib/insights';
-import { GET_JOB_INSIGHTS } from '../../lib/protocol';
+import {
+  GET_JOB_HISTORY,
+  GET_JOB_INSIGHTS,
+  isJobHistoryResponse,
+  type JobHistoryResponse,
+} from '../../lib/protocol';
 import { useTheme } from '../../lib/theme';
 import { AvailableState, EmptyState, LoadingState } from './InsightsView';
-
 type ViewState =
   | { kind: 'loading' }
   | { kind: 'empty' }
   | { kind: 'error'; message: string }
-  | { kind: 'ready'; insights: JobInsights };
+  | { kind: 'ready'; insights: JobInsights; history: JobHistoryResponse | null };
 
 function App() {
   const { mode, cycleTheme } = useTheme();
@@ -28,7 +32,25 @@ function App() {
           tabId: tab.id,
         });
         if (cancelled) return;
-        setState(isJobInsights(insights) ? { kind: 'ready', insights } : { kind: 'empty' });
+        if (!isJobInsights(insights)) {
+          setState({ kind: 'empty' });
+          return;
+        }
+        setState({ kind: 'ready', insights, history: null });
+        const jobId = typeof insights.job.id === 'string' ? insights.job.id.trim() : '';
+        if (!jobId) return;
+        try {
+          const history = await browser.runtime.sendMessage({
+            type: GET_JOB_HISTORY,
+            tabId: tab.id,
+            jobId,
+          });
+          if (!cancelled && isJobHistoryResponse(history) && history.jobId === jobId) {
+            setState({ kind: 'ready', insights, history });
+          }
+        } catch {
+          // Historical storage is optional; the current snapshot remains available.
+        }
       } catch {
         if (!cancelled) {
           setState({
@@ -67,7 +89,12 @@ function App() {
         />
       )}
       {state.kind === 'ready' && (
-        <AvailableState insights={state.insights} themeMode={mode} onToggleTheme={cycleTheme} />
+        <AvailableState
+          insights={state.insights}
+          history={state.history}
+          themeMode={mode}
+          onToggleTheme={cycleTheme}
+        />
       )}
     </main>
   );

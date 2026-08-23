@@ -10,14 +10,19 @@ const storageKey = (tabId: number) => `job-insights:${tabId}`;
 type TabState = {
   generation: number;
   pending: Promise<void>;
+  removed: boolean;
 };
 
 const tabStates = new Map<number, TabState>();
 
 function getTabState(tabId: number): TabState {
   let state = tabStates.get(tabId);
-  if (!state) {
-    state = { generation: 0, pending: Promise.resolve() };
+  if (!state || state.removed) {
+    state = {
+      generation: 0,
+      pending: state?.removed ? state.pending : Promise.resolve(),
+      removed: false,
+    };
     tabStates.set(tabId, state);
   }
   return state;
@@ -69,7 +74,7 @@ async function persistJobInsights(
   capturedAt: number,
 ): Promise<void> {
   const jobId = typeof insights.job.id === 'string' ? insights.job.id.trim() : '';
-  if (!jobId || state.generation !== generation) return;
+  if (!jobId || state.removed || state.generation !== generation) return;
 
   const job: JobRecord = {
     jobId,
@@ -86,16 +91,16 @@ async function persistJobInsights(
   };
 
   try {
-    await putJob(job, () => state.generation === generation);
+    await putJob(job, () => !state.removed && state.generation === generation);
   } catch {
     // IndexedDB failures must not affect session-only capture.
   }
-  if (state.generation !== generation) return;
+  if (state.removed || state.generation !== generation) return;
   try {
     await appendJobSnapshotIfChanged(
       snapshot,
       CAPTURE_DEDUP_WINDOW_MS,
-      () => state.generation === generation,
+      () => !state.removed && state.generation === generation,
     );
   } catch {
     // IndexedDB failures must not affect session-only capture.
@@ -114,14 +119,18 @@ export default defineBackground(() => {
           return;
         }
         const state = getTabState(tabId);
+        if (state.removed) {
+          sendResponse();
+          return;
+        }
         const generation = state.generation;
         const capturedAt = Date.now();
         try {
           await enqueueTabMutation(tabId, async () => {
-            if (state.generation !== generation) return;
+            if (state.removed || state.generation !== generation) return;
             try {
               await browser.storage.session.set({ [storageKey(tabId)]: message.payload });
-              if (state.generation !== generation) return;
+              if (state.removed || state.generation !== generation) return;
               void persistJobInsights(state, generation, message.payload, capturedAt);
               await setBadge(
                 tabId,
@@ -169,20 +178,23 @@ export default defineBackground(() => {
     }
   });
   browser.tabs.onRemoved.addListener((tabId) => {
+    const state = getTabState(tabId);
     const generation = advanceTabGeneration(tabId);
-    void enqueueTabMutation(tabId, async () => {
-      if (getTabState(tabId).generation !== generation) return;
+    const cleanup = enqueueTabMutation(tabId, async () => {
+      if (!state.removed || state.generation !== generation) return;
       try {
         await browser.storage.session.remove(storageKey(tabId));
       } catch {
         // Session storage failures must not affect tab cleanup.
       }
-      if (getTabState(tabId).generation === generation) {
+      if (state.removed && state.generation === generation) {
         await setBadge(tabId, undefined, '');
       }
-    }).then(
+    });
+    state.removed = true;
+    void cleanup.then(
       () => {
-        if (tabStates.get(tabId)?.generation === generation) {
+        if (tabStates.get(tabId) === state && state.generation === generation) {
           tabStates.delete(tabId);
         }
       },

@@ -50,40 +50,40 @@ flowchart LR
 3. The response is normalized into a nullable `JobInsights` model.
 4. A versioned page event crosses into the isolated content script.
 5. The content script validates the event and sends it to the background worker.
-6. The worker validates the sender tab and stores the latest normalized snapshot in `browser.storage.session`.
+6. The worker validates the sender tab, stores the latest normalized snapshot in `browser.storage.session`, and appends normalized history to IndexedDB when a job ID exists.
 7. The popup requests the active tab's snapshot and renders factual metrics.
 
-Inspection is designed to be non-interfering. The remaining interceptor hardening items are tracked in [`docs/AUDIT_ISSUES.md`](docs/AUDIT_ISSUES.md).
+Inspection is designed to be non-interfering; persistence failures degrade to the session snapshot without affecting Upwork.
 
 ## Privacy and product boundaries
 
-Upwork Tools is intentionally narrow:
+Upwork Tools is intentionally narrow and local-only:
 
-- Reads the user's existing authenticated response; it does not create another Upwork request.
-- Stores only normalized session data for the current browser tab.
-- Keeps tab snapshots isolated; tabs are never merged.
-- Requests tab cleanup when navigation starts or a tab closes; a write/cleanup race is tracked in [`docs/AUDIT_ISSUES.md`](docs/AUDIT_ISSUES.md).
-- Does not send job data to a server.
-- Does not require an account, API key, or backend.
-- Does not modify Upwork's DOM or inject a page overlay.
-- Does not track analytics or telemetry.
-- Does not store raw GraphQL responses or review text.
-- Does not generate AI scores, winning probabilities, client labels, apply/skip recommendations, summaries, or proposals.
-- Does not automate applications or track Connect spending.
+- Captures happen only when the user naturally opens a job and Upwork has already delivered the supported job-details response.
+- The extension never polls, creates duplicate Upwork requests, or changes Upwork's DOM/page UI.
+- `browser.storage.session` holds the latest per-tab snapshot for popup reads.
+- IndexedDB holds normalized persistent job snapshots, applications, and watchlist data; `browser.storage.local` holds small profile, portfolio, preference, and UI settings.
+- Persistent history is retained for exactly 90 days, with a maximum of 100 snapshots per job.
+- One clear-data operation removes this extension's history, applications, and watchlist while preserving unrelated browser storage.
+- Missing or invalid upstream values remain unavailable; valid zeroes remain zeroes. The extension never invents values.
+- No backend, account requirement, cloud sync, cross-device history, analytics, or telemetry.
+- No Connect-spending tracking, automatic applications, or hidden scoring/recommendations.
+- No raw GraphQL responses or review text are persisted.
 
-The planned historical features are documented separately and will remain local, deterministic, and user-clearable if implemented: [`docs/NEW_FEATURES_PLAN.md`](docs/NEW_FEATURES_PLAN.md).
+The historical data boundary is deterministic, bounded, local, and user-clearable. See [`docs/NEW_FEATURES_PLAN.md`](docs/NEW_FEATURES_PLAN.md) for implementation sequencing.
 
 ## Known release blockers
 
-The implementation is functional, but these verified issues must be fixed before
-calling the extension production-ready:
+The implemented storage and audit paths are verified. Remaining release work is
+popup/options integration, visible clear-data controls, tracker/watchlist UI, and
+manual Chromium smoke coverage.
 
 | Area | Current limitation | Tracking |
 | --- | --- | --- |
-| Client history | The documented `buyer.workHistory` path is not yet used by normalization | [`docs/AUDIT_ISSUES.md`](docs/AUDIT_ISSUES.md) |
-| Browser compatibility | The async background message listener does not cover the full configured Chromium floor | [`docs/AUDIT_ISSUES.md`](docs/AUDIT_ISSUES.md) |
-| Navigation safety | Snapshot writes and tab cleanup can race | [`docs/AUDIT_ISSUES.md`](docs/AUDIT_ISSUES.md) |
-| Interception safety | Rejected fetch inspection and URL-less JSON parsing still need hardening | [`docs/AUDIT_ISSUES.md`](docs/AUDIT_ISSUES.md) |
+| Popup integration | Historical metrics and profile matchers are not yet wired into the popup | [`docs/NEW_FEATURES_PLAN.md`](docs/NEW_FEATURES_PLAN.md) |
+| Clear-data UI | Database clear APIs exist; a user-visible confirmation control remains | [`docs/NEW_FEATURES_PLAN.md`](docs/NEW_FEATURES_PLAN.md) |
+| Tracker/watchlist | Application tracker, conversion stats, and watchlist UI remain future work | [`docs/NEW_FEATURES_PLAN.md`](docs/NEW_FEATURES_PLAN.md) |
+| Release verification | Manual Chromium scenarios and production build checks remain | [`docs/NEW_FEATURES_PLAN.md`](docs/NEW_FEATURES_PLAN.md) |
 
 The roadmap and dependency-aware fix order are documented in
 [`docs/NEW_FEATURES_PLAN.md`](docs/NEW_FEATURES_PLAN.md).
@@ -91,7 +91,8 @@ The roadmap and dependency-aware fix order are documented in
 ## Requirements
 
 - [Bun](https://bun.sh/)
-- Chromium 111+ is the configured primary target; verify the pending runtime-messaging compatibility fix before release.
+- Chromium 111+ is the configured primary target.
+
 - Firefox development/build tooling for the Firefox target
 - An authenticated Upwork session with a supported job-details page
 
@@ -234,7 +235,7 @@ Upwork owns the request and page. The extension observes a supported response, c
 
 ### Local by default
 
-The current release uses per-tab session storage. Planned history and profile features must remain local, bounded, and clearable.
+The latest per-tab snapshot uses `browser.storage.session`; normalized history, applications, and watchlist data use bounded, clearable IndexedDB storage. Profile, portfolio, preference, and UI settings use `browser.storage.local`.
 
 ### Compact by default
 
@@ -244,10 +245,10 @@ Exact Proposals leads the popup. Secondary information stays grouped, conditiona
 
 The next feature plan is intentionally phased:
 
-1. Correct audit and contract issues.
-2. Add local IndexedDB foundations and applicant snapshots.
-3. Add proposal velocity, client pay history, and stronger related-job matching.
-4. Add qualification details, personal skill matching, and portfolio matching.
+1. Correct audit and contract issues — complete.
+2. Add local IndexedDB foundations and applicant snapshots — complete.
+3. Add proposal velocity, client pay history, and stronger related-job matching — pure metrics complete; popup integration remains.
+4. Add qualification details, personal skill matching, and portfolio matching — pure helpers complete; options/popup integration remains.
 5. Add observed application tracking, conversion statistics, and a watchlist.
 6. Finish popup/options UX, documentation, and release hardening.
 

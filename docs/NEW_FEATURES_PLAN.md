@@ -70,21 +70,21 @@ task commits and must identify the task commits they combine.
 
 | Feature | Current state | Plan status |
 | --- | --- | --- |
-| Applicant History | Not implemented | Build in Phase 1 |
-| Proposal Velocity | Not implemented | Build in Phase 2 |
+| Applicant History | Implemented in IndexedDB, `lib/history.ts`, and applicant metrics | Preserve; popup integration remains |
+| Proposal Velocity | Implemented in `lib/velocity.ts` with a one-hour minimum | Preserve; popup integration remains |
 | Competition Snapshot | Implemented in `lib/insights.ts` and popup | Preserve |
 | Interview Rate | Implemented | Preserve |
 | Client Hire Rate | Implemented | Preserve |
-| Client Pay Profile | Partial: spend and average hourly rate exist; fixed-payment profile absent; history source is broken | Fix in Phase 2 |
-| Similar Previous Hires | Partial/broken: title matcher exists, but production history path is wrong and current job is not excluded | Fix in Phase 2 |
+| Client Pay Profile | Implemented in `lib/pay-profile.ts`; popup integration remains | Preserve |
+| Similar Previous Hires | Fixed buyer history source, current-job exclusion, and strong title matching | Preserve |
 | Rate Context | Implemented | Preserve |
-| Qualification Match | Implemented as a count; detailed expansion absent | Extend in Phase 3 |
-| Job Restriction Detector | Basic meaningful-default filtering implemented | Extend in Phase 3 |
+| Qualification Match | Detailed pure parser added; expandable popup section remains | Extend UI in Phase 5 |
+| Job Restriction Detector | Pure parser covers meaningful locations, JSS, language, hours, earnings, portfolio, and on-site values | Integrate into model/UI |
 | Client Activity | Implemented as relative time | Preserve; optional classification |
-| Filled / Already Hired Warning | Partial: status and current-user state exist; same-job history is not integrated | Fix in Phase 2 |
+| Filled / Already Hired Warning | Current-user and client signals remain distinct | Preserve; same-job history UI remains |
 | Application State | Applied, invited, and hired states exist | Extend only where response data is reliable |
-| Personal Skill Match | Not implemented | Build in Phase 3 |
-| Portfolio Matcher | Not implemented | Build in Phase 3 |
+| Personal Skill Match | Pure deterministic matcher added; profile/options UI remains | Integrate in Phase 5 |
+| Portfolio Matcher | Local CRUD and bounded pure ranking added; options UI remains | Integrate in Phase 5 |
 | Job/Application Tracker | Not implemented | Build in Phase 4 |
 | Personal Conversion Stats | Not implemented | Build in Phase 4 |
 | Job Watchlist | Not implemented | Build in Phase 4 |
@@ -447,21 +447,21 @@ Do not start portfolio matching, conversion statistics, or watchlist UI before t
 
 ## Open decisions to resolve before implementation
 
-1. **Retention:** default snapshot retention window and maximum snapshots per job.
-2. **Clear data:** whether one clear button removes all history, or whether jobs, applications, portfolio, and watchlist can be cleared separately.
-3. **Manual tracker fields:** whether bid is manually entered; Connect counts remain excluded unless the product boundary changes explicitly.
-4. **Velocity threshold:** keep the proposed one-hour minimum or choose another deterministic threshold.
-5. **Options surface:** use a dedicated WXT options entrypoint for profile and portfolio editing, recommended over a larger popup.
+1. **Retention:** Resolved — retain exactly 90 days and at most 100 snapshots per job.
+2. **Clear data:** Resolved — one extension-local clear operation removes history, applications, and watchlist while preserving unrelated browser storage.
+3. **Manual tracker fields:** Bid and Connect counts remain excluded; manual fields require a future explicit product decision.
+4. **Velocity threshold:** Resolved — require at least one hour between valid snapshots.
+5. **Options surface:** Dedicated WXT options entrypoint remains the recommended integration surface.
 
 ## Task and subtask breakdown
 
 ### Phase 0 — Contract and audit corrections
 
-- [ ] **P0.1 — Update product boundaries**
-  - [ ] Define persistent local history and retention.
-  - [ ] Define clear-data behavior.
-  - [ ] Keep cloud sync, telemetry, polling, and Connect tracking excluded.
-  - [ ] Update `PRODUCT.md`, `PROJECT_CONTEXT.md`, and the scope document.
+- [x] **P0.1 — Update product boundaries**
+  - [x] Define persistent local history and retention.
+  - [x] Define clear-data behavior.
+  - [x] Keep cloud sync, telemetry, polling, and Connect tracking excluded.
+  - [x] Update `PRODUCT.md`, `PROJECT_CONTEXT.md`, and the scope document.
 - [x] **P0.2 — Correct history normalization**
   - [x] Read `buyer.workHistory`.
   - [x] Update fixtures to the documented response shape.
@@ -512,10 +512,10 @@ Do not start portfolio matching, conversion statistics, or watchlist UI before t
   - [x] Enforce snapshot retention limits.
   - [x] Add clear-history operation.
   - [x] Include applications and watchlist in clear-data policy.
-- [ ] **P1.6 — Handle storage degradation**
-  - [ ] Keep session-only popup behavior when IndexedDB fails.
-  - [ ] Avoid blocking host-page message handling.
-  - [ ] Test storage failure behavior.
+- [x] **P1.6 — Handle storage degradation**
+  - [x] Keep session-only popup behavior when IndexedDB fails.
+  - [x] Avoid blocking host-page message handling.
+  - [x] Test storage failure behavior.
 
 ### Phase 2 — Historical competition and client pay insights
 

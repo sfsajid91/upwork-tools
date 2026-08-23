@@ -8,7 +8,7 @@ The extension should:
 
 - show applicant count and supporting client/job signals;
 - avoid duplicate Upwork requests;
-- keep data local to the browser session;
+- keep data local to the browser, with the latest tab snapshot in session storage and bounded persistent history in IndexedDB;
 - never break or modify Upwork's normal behavior; and
 - show the current job for the active browser tab.
 
@@ -40,8 +40,9 @@ The extension should:
    - The isolated script sends an exact runtime message to the background service worker.
    - The service worker validates the message and sender tab ID.
    - It replaces the previous snapshot in `browser.storage.session`.
+   - It appends normalized metadata and competition snapshots to IndexedDB when a normalized job ID exists.
    - Each tab has its own snapshot; jobs are never merged.
-   - Tab data is removed when the tab closes or starts loading a new page.
+   - The latest per-tab session snapshot is removed when the tab closes or starts loading a new page; persistent IndexedDB history is retained.
 
 5. **Render the popup**
    - The React popup asks the background worker for the active tab's snapshot.
@@ -54,9 +55,16 @@ The extension should:
 
 WXT, Manifest V3, TypeScript, React, and Bun. Chromium 111+ is the primary target.
 
+## Persistent local boundary
+
+Captures occur only when the user naturally opens a job and Upwork has already delivered the supported job-details response. There is no polling, duplicate request, or page UI. `browser.storage.session` holds the latest per-tab snapshot for fast popup reads; IndexedDB holds normalized persistent job snapshots, applications, and watchlist data; `browser.storage.local` holds small profile, portfolio, preference, and UI settings. Persistent history is retained for 90 days, with a maximum of 100 snapshots per job. One clear-data operation removes this extension's history, applications, and watchlist while preserving unrelated browser storage. Missing source values are unavailable, never invented.
+
+Cloud sync, telemetry, Connect tracking, automatic applications, backend storage, and cross-device history are explicitly excluded.
+
+
 ## Explicit boundaries
 
-No backend, accounts, analytics, telemetry, cloud sync, persistent job history, automatic applications, Connect spending, duplicate job-details requests, or Upwork DOM/page UI.
+No backend, accounts, analytics, telemetry, cloud sync, polling, duplicate job-details requests, automatic applications, Connect spending/tracking, or Upwork DOM/page UI. Persistent local history is allowed only within the retention and per-job snapshot bounds above; missing source values remain unavailable.
 
 
 Request URL https://www.upwork.com/api/graphql/v1?alias=gql-query-get-auth-job-details-v2

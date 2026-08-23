@@ -1,3 +1,5 @@
+import { type QualificationDetail, summarizeQualificationMatches } from './qualification';
+
 export type ApplicationState = 'applied' | 'invited' | 'hired';
 export type JobWarning = 'position-filled' | 'already-hired' | 'already-applied' | 'client-invited';
 
@@ -59,6 +61,7 @@ export interface JobInsights {
   fit: {
     qualificationsMatched: number | null;
     qualificationsTotal: number | null;
+    qualificationDetails: QualificationDetail[] | null;
     freelancerHourlyRate: number | null;
     rateContext: number | null;
     applicationState: ApplicationState | null;
@@ -286,6 +289,9 @@ export function normalizeJobInsights(payload: unknown): JobInsights | null {
   const extendedBudget = record(valueAt(job, 'extendedBudgetInfo'));
   const freelancerInfo = record(valueAt(details, 'currentUserInfo', 'freelancerInfo'));
   const qualificationMatches = valueAt(freelancerInfo, 'qualificationsMatches', 'matches');
+  const qualificationSummary = Array.isArray(qualificationMatches)
+    ? summarizeQualificationMatches(qualificationMatches)
+    : null;
   const recentJobs = normalizeHistory(
     valueAt(buyer, 'workHistory') ?? valueAt(details, 'workHistory'),
   );
@@ -297,9 +303,6 @@ export function normalizeJobInsights(payload: unknown): JobInsights | null {
   const clientAverageHourlyRate = firstNumber(hourlyRate?.amount);
   const freelancerHourlyRate = nullableNumber(valueAt(freelancerInfo, 'hourlyRate', 'amount'));
   const currentApplicationState = applicationState(freelancerInfo);
-  const matches = Array.isArray(qualificationMatches) ? qualificationMatches : [];
-  const qualifiedMatches = matches.filter((match) => valueAt(match, 'qualified') === true).length;
-  const hasQualificationMatches = Array.isArray(qualificationMatches);
   const history = {
     recentJobs,
     relatedJobs: relatedHistory(currentJobId, currentTitle, recentJobs),
@@ -363,8 +366,9 @@ export function normalizeJobInsights(payload: unknown): JobInsights | null {
       memberSince: nullableString(valueAt(buyerCompany, 'contractDate')),
     },
     fit: {
-      qualificationsMatched: hasQualificationMatches ? qualifiedMatches : null,
-      qualificationsTotal: hasQualificationMatches ? matches.length : null,
+      qualificationsMatched: qualificationSummary?.matched ?? null,
+      qualificationsTotal: qualificationSummary?.total ?? null,
+      qualificationDetails: qualificationSummary?.details ?? null,
       freelancerHourlyRate,
       rateContext:
         freelancerHourlyRate !== null &&
@@ -398,6 +402,18 @@ function isHistoryEntry(value: unknown): value is ClientHistoryEntry {
     ['id', 'title', 'type', 'status', 'startedOn'].every((key) =>
       isNullableStringValue(key, entry),
     ) && ['amountPaid', 'feedbackScore'].every((key) => isNullableNumberValue(key, entry))
+  );
+}
+
+function isQualificationDetail(value: unknown): value is QualificationDetail {
+  const detail = record(value);
+  return (
+    detail !== null &&
+    typeof detail.requirementName === 'string' &&
+    typeof detail.clientLabel === 'string' &&
+    (detail.freelancerValue === null || typeof detail.freelancerValue === 'string') &&
+    (detail.freelancerLabel === null || typeof detail.freelancerLabel === 'string') &&
+    typeof detail.matched === 'boolean'
   );
 }
 
@@ -472,6 +488,9 @@ export function isJobInsights(value: unknown): value is JobInsights {
     ['qualificationsMatched', 'qualificationsTotal', 'freelancerHourlyRate', 'rateContext'].every(
       (key) => isNullableNumberValue(key, fit),
     ) &&
+    (fit.qualificationDetails === null ||
+      (Array.isArray(fit.qualificationDetails) &&
+        fit.qualificationDetails.every(isQualificationDetail))) &&
     (fit.applicationState === null ||
       fit.applicationState === 'applied' ||
       fit.applicationState === 'invited' ||

@@ -570,10 +570,10 @@ Do not start portfolio matching, conversion statistics, or watchlist UI before t
   - [x] Compare profile skills with both job skill arrays.
   - [x] Display matched/total only when a profile exists.
   - [x] Avoid opaque scoring.
-- [ ] **P3.4 — Expand qualification details**
-  - [ ] Preserve requirement labels and freelancer values.
-  - [ ] Preserve each qualified boolean.
-  - [ ] Add an expandable details section.
+- [x] **P3.4 — Expand qualification details**
+  - [x] Preserve requirement labels and freelancer values.
+  - [x] Preserve each qualified boolean.
+  - [x] Add an expandable details section.
 - [x] **P3.5 — Expand restriction detection**
   - [x] Parse real location restrictions.
   - [x] Parse language, JSS, hours, earnings, and on-site values.

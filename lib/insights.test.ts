@@ -62,7 +62,24 @@ function payload(overrides: Record<string, unknown> = {}) {
             applied: true,
             hourlyRate: { amount: 25 },
             qualificationsMatches: {
-              matches: [{ qualified: true }, { qualified: false }],
+              matches: [
+                {
+                  qualification: 'EnglishLevel',
+                  clientPreferred: '3',
+                  clientPreferredLabel: 'Fluent',
+                  freelancerValue: '3',
+                  freelancerValueLabel: 'Fluent',
+                  qualified: true,
+                },
+                {
+                  qualification: 'MinimumJobSuccessScore',
+                  clientPreferred: '90',
+                  clientPreferredLabel: 'At least 90%',
+                  freelancerValue: '70',
+                  freelancerValueLabel: '70%',
+                  qualified: false,
+                },
+              ],
             },
           },
         },
@@ -81,6 +98,22 @@ describe('normalizeJobInsights', () => {
     expect(Math.abs((insights?.client.hireRate ?? 0) - 79.032) < 0.001).toBe(true);
     expect(insights?.fit.qualificationsMatched).toBe(1);
     expect(insights?.fit.qualificationsTotal).toBe(2);
+    expect(insights?.fit.qualificationDetails).toEqual([
+      {
+        requirementName: 'EnglishLevel',
+        clientLabel: 'Fluent',
+        freelancerValue: '3',
+        freelancerLabel: 'Fluent',
+        matched: true,
+      },
+      {
+        requirementName: 'MinimumJobSuccessScore',
+        clientLabel: 'At least 90%',
+        freelancerValue: '70',
+        freelancerLabel: '70%',
+        matched: false,
+      },
+    ]);
     expect(Math.abs((insights?.fit.rateContext ?? 0) - 2.46) < 0.01).toBe(true);
     expect(insights?.warnings).toEqual(['position-filled', 'already-applied']);
     expect(insights?.history.recentJobs.length).toBe(1);

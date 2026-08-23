@@ -206,6 +206,7 @@ const capture = (id: string): JobInsights => ({
   fit: {
     qualificationsMatched: null,
     qualificationsTotal: null,
+    qualificationDetails: null,
     freelancerHourlyRate: null,
     rateContext: null,
     applicationState: null,

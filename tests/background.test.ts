@@ -175,6 +175,7 @@ const insights: JobInsights = {
   fit: {
     qualificationsMatched: null,
     qualificationsTotal: null,
+    qualificationDetails: null,
     freelancerHourlyRate: null,
     rateContext: null,
     applicationState: null,

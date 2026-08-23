@@ -64,7 +64,24 @@ function samplePayload() {
             applied: true,
             hourlyRate: { amount: 25 },
             qualificationsMatches: {
-              matches: [{ qualified: true }, { qualified: false }],
+              matches: [
+                {
+                  qualification: 'EnglishLevel',
+                  clientPreferred: '3',
+                  clientPreferredLabel: 'Fluent',
+                  freelancerValue: '3',
+                  freelancerValueLabel: 'Fluent',
+                  qualified: true,
+                },
+                {
+                  qualification: 'MinimumJobSuccessScore',
+                  clientPreferred: '90',
+                  clientPreferredLabel: 'At least 90%',
+                  freelancerValue: '70',
+                  freelancerValueLabel: '70%',
+                  qualified: false,
+                },
+              ],
             },
           },
         },
@@ -109,7 +126,36 @@ describe('InsightsView components', () => {
     expect(html.includes('Your Fit &amp; Rates')).toBe(true);
     expect(html.includes('Related Previous Jobs')).toBe(true);
     expect(html.includes('Repeat Context')).toBe(true);
+    expect(html.includes('Qualifications Matched')).toBe(true);
+    expect(html.includes('1/2')).toBe(true);
+    expect(html.includes('<details')).toBe(true);
+    expect(html.includes('Qualification details')).toBe(true);
+    expect(html.includes('EnglishLevel')).toBe(true);
+    expect(html.includes('Client:')).toBe(true);
+    expect(html.includes('Freelancer:')).toBe(true);
+    expect(html.includes('Matched')).toBe(true);
+    expect(html.includes('Not matched')).toBe(true);
   });
+
+  test('renders unavailable qualification summary when matches are absent', () => {
+    const payload = samplePayload();
+    const insights = normalizeJobInsights({
+      data: {
+        jobAuthDetails: {
+          ...payload.data.jobAuthDetails,
+          currentUserInfo: {},
+        },
+      },
+    });
+    expect(insights).not.toBeNull();
+    if (!insights) throw new Error('insights should not be null');
+
+    const html = renderToString(<AvailableState insights={insights} />);
+    expect(html.includes('Qualifications Matched')).toBe(true);
+    expect(html.includes('Not available')).toBe(true);
+    expect(html.includes('Qualification details')).toBe(false);
+  });
+
   test('renders disabled watchlist control when the normalized job ID is missing', () => {
     const insights = normalizeJobInsights(samplePayload());
     expect(insights).not.toBeNull();

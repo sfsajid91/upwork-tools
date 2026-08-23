@@ -12,6 +12,7 @@ import {
 } from '../../lib/format';
 import type { ClientHistoryEntry, JobInsights, JobWarning } from '../../lib/insights';
 import type { JobHistoryResponse } from '../../lib/protocol';
+import type { QualificationDetail } from '../../lib/qualification';
 import type { ThemeMode } from '../../lib/theme';
 
 // --- Vector Icons ---
@@ -448,6 +449,56 @@ function HistoryRow({ job }: { job: ClientHistoryEntry }) {
         )}
       </div>
     </li>
+  );
+}
+
+function QualificationDetails({ details }: { details: QualificationDetail[] }) {
+  if (details.length === 0) return null;
+
+  return (
+    <details className="overflow-hidden rounded-xl border border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60">
+      <summary className="flex cursor-pointer list-none items-center justify-between px-2.5 py-2 text-xs font-semibold text-slate-700 select-none hover:bg-slate-100/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-slate-200 dark:hover:bg-slate-700/60">
+        <span>Qualification details</span>
+        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+          {details.length}
+        </span>
+      </summary>
+      <ul className="m-0 list-none border-t border-slate-100 bg-white/70 px-2.5 py-1 dark:border-slate-800 dark:bg-slate-900/50">
+        {details.map((detail) => (
+          <li
+            key={`${detail.requirementName}:${detail.clientLabel}:${detail.freelancerLabel ?? ''}:${detail.matched}`}
+            className="border-b border-slate-100 py-2 last:border-b-0 dark:border-slate-800"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+                {detail.requirementName}
+              </span>
+              <span
+                className={`shrink-0 text-[10px] font-bold ${
+                  detail.matched
+                    ? 'text-emerald-700 dark:text-emerald-400'
+                    : 'text-rose-700 dark:text-rose-400'
+                }`}
+              >
+                {detail.matched ? 'Matched' : 'Not matched'}
+              </span>
+            </div>
+            <div className="mt-1 grid grid-cols-2 gap-x-2 text-[10.5px] leading-snug text-slate-500 dark:text-slate-400">
+              <span>
+                <span className="font-semibold text-slate-600 dark:text-slate-300">Client: </span>
+                {detail.clientLabel}
+              </span>
+              <span>
+                <span className="font-semibold text-slate-600 dark:text-slate-300">
+                  Freelancer:{' '}
+                </span>
+                {detail.freelancerLabel ?? detail.freelancerValue ?? 'Not available'}
+              </span>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </details>
   );
 }
 
@@ -1062,6 +1113,7 @@ export function AvailableState({
               {qualificationSummary ?? 'Not available'}
             </span>
           </div>
+          <QualificationDetails details={fit.qualificationDetails ?? []} />
 
           {/* Rate Comparison Box */}
           <div className="rounded-xl border border-slate-100 bg-slate-50 p-2.5 dark:border-slate-800 dark:bg-slate-800/60">

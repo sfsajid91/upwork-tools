@@ -519,23 +519,23 @@ Do not start portfolio matching, conversion statistics, or watchlist UI before t
 
 ### Phase 2 — Historical competition and client pay insights
 
-- [ ] **P2.1 — Add snapshot queries**
-  - [ ] Query snapshots by job ID and capture time.
-  - [ ] Return latest, first-seen, and recent snapshots.
-- [ ] **P2.2 — Add applicant deltas**
-  - [ ] Calculate first-seen proposal delta.
-  - [ ] Calculate recent proposal delta.
-  - [ ] Hide deltas with insufficient valid data.
-- [ ] **P2.3 — Add proposal velocity**
-  - [ ] Require at least the chosen elapsed-time threshold.
-  - [ ] Reject invalid or out-of-order timestamps.
-  - [ ] Calculate proposals per hour.
-  - [ ] Use factual labels only.
-- [ ] **P2.4 — Add client pay profile**
-  - [ ] Calculate median recent fixed payments.
-  - [ ] Calculate optional average fixed payment.
-  - [ ] Use historical hourly rates only when supplied.
-  - [ ] Keep zero placeholders and missing values unavailable.
+- [x] **P2.1 — Add snapshot queries**
+  - [x] Query snapshots by job ID and capture time.
+  - [x] Return latest, first-seen, and recent snapshots.
+- [x] **P2.2 — Add applicant deltas**
+  - [x] Calculate first-seen proposal delta.
+  - [x] Calculate recent proposal delta.
+  - [x] Hide deltas with insufficient valid data.
+- [x] **P2.3 — Add proposal velocity**
+  - [x] Require at least the chosen elapsed-time threshold.
+  - [x] Reject invalid or out-of-order timestamps.
+  - [x] Calculate proposals per hour.
+  - [x] Use factual labels only.
+- [x] **P2.4 — Add client pay profile**
+  - [x] Calculate median recent fixed payments.
+  - [x] Calculate optional average fixed payment.
+  - [x] Use historical hourly rates only when supplied.
+  - [x] Keep zero placeholders and missing values unavailable.
 - [ ] **P2.5 — Finish similar previous hires**
   - [ ] Use title overlap as the documented v1 fallback.
   - [ ] Use skills only when historical skills exist.

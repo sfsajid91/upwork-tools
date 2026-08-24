@@ -35,6 +35,11 @@ const nativeXhrSend = xhrPrototype
   ? Object.getOwnPropertyDescriptor(xhrPrototype, 'send')
   : undefined;
 const events: unknown[] = [];
+const diagnostics: unknown[][] = [];
+const nativeConsoleInfo = console.info;
+console.info = ((...args: unknown[]) => {
+  diagnostics.push(args);
+}) as typeof console.info;
 let resolveCapture: (() => void) | undefined;
 let fetchBody = JSON.stringify(payload);
 afterAll(() => {
@@ -52,8 +57,9 @@ afterAll(() => {
     if (nativeXhrSend) Object.defineProperty(xhrPrototype, 'send', nativeXhrSend);
     else Reflect.deleteProperty(xhrPrototype, 'send');
   }
+  console.info = nativeConsoleInfo;
   if (hadWindow) globals.window = previousWindow;
-  else delete globals.window;
+  else Reflect.deleteProperty(globals, 'window');
 });
 const fakeWindow = {
   origin: 'https://www.upwork.com',
@@ -109,6 +115,14 @@ describe('interceptor inspection', () => {
     expect(await response.json()).toEqual(expectedBody);
     await captured;
 
+    expect(
+      diagnostics.filter(
+        (args) => typeof args[0] === 'string' && args[0].includes('fetch listening'),
+      ),
+    ).toHaveLength(1);
+    expect(
+      diagnostics.filter((args) => typeof args[0] === 'string' && args[0].includes('job found')),
+    ).toHaveLength(1);
     expect(events).toHaveLength(1);
     expect(isPageEvent(events[0])).toBe(true);
     if (!isPageEvent(events[0])) throw new Error('expected a page event');

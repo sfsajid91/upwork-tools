@@ -34,7 +34,16 @@ function requestUrl(input: unknown): string | null {
   }
 }
 
-function emitInsights(insights: JobInsights): void {
+function safeConsoleInfo(message: string, style: string, metadata?: Record<string, unknown>): void {
+  try {
+    if (metadata) console.info(message, style, metadata);
+    else console.info(message, style);
+  } catch {
+    // Diagnostics must never affect interception or the host page.
+  }
+}
+
+function emitInsights(insights: JobInsights, url: string): void {
   const signature = JSON.stringify([
     insights.job.id,
     insights.job.title,
@@ -50,13 +59,18 @@ function emitInsights(insights: JobInsights): void {
   }
   previousCapture = { signature, capturedAt: now };
   window.postMessage(createPageEvent(insights), window.location.origin);
+  safeConsoleInfo('%c[upwork-tools] job found', 'color: #16a34a; font-weight: 600', {
+    id: insights.job.id,
+    title: insights.job.title,
+    url,
+  });
 }
 
 function inspectPayload(payload: unknown, url: string): void {
   try {
     if (!isSupportedUrl(url)) return;
     const insights = normalizeJobInsights(payload);
-    if (insights) emitInsights(insights);
+    if (insights) emitInsights(insights, url);
   } catch {
     // Inspection must never affect the host page.
   }
@@ -97,6 +111,7 @@ function installFetchAndResponseHooks(page: InterceptedWindow): void {
   };
 
   page.fetch = wrapFetch(page.fetch);
+  safeConsoleInfo('%c[upwork-tools] fetch listening', 'color: #2563eb; font-weight: 600');
 
   try {
     const descriptor = Object.getOwnPropertyDescriptor(page, '_authOrigFetch');

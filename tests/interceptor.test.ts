@@ -63,7 +63,7 @@ afterAll(() => {
 });
 const fakeWindow = {
   origin: 'https://www.upwork.com',
-  location: { href: 'https://www.upwork.com/jobs/' },
+  location: { href: 'https://www.upwork.com/nx/find-work/' },
   fetch: async (input: unknown) => {
     if (String(input) === rejectedUrl) throw new Error('network failure');
     const response = new Response(fetchBody);
@@ -99,6 +99,7 @@ beforeEach(() => {
   events.length = 0;
   resolveCapture = undefined;
   fetchBody = JSON.stringify(payload);
+  fakeWindow.location.href = 'https://www.upwork.com/nx/find-work/';
 });
 
 describe('interceptor inspection', () => {
@@ -123,6 +124,22 @@ describe('interceptor inspection', () => {
     expect(
       diagnostics.filter((args) => typeof args[0] === 'string' && args[0].includes('job found')),
     ).toHaveLength(1);
+    expect(events).toHaveLength(1);
+    expect(isPageEvent(events[0])).toBe(true);
+    if (!isPageEvent(events[0])) throw new Error('expected a page event');
+    expect(events[0].payload.job.id).toBe(captureId);
+  });
+
+  test('captures marker JSON parsed on a supported job page', async () => {
+    fakeWindow.location.href = 'https://www.upwork.com/ab/details/job-interceptor';
+    const captureId = `job-parse-${crypto.randomUUID()}`;
+    const captured = waitForCapture();
+
+    expect(() =>
+      JSON.parse(JSON.stringify(payload).replace('job-interceptor', captureId)),
+    ).not.toThrow();
+    await captured;
+
     expect(events).toHaveLength(1);
     expect(isPageEvent(events[0])).toBe(true);
     if (!isPageEvent(events[0])) throw new Error('expected a page event');

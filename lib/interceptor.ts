@@ -1,5 +1,6 @@
 import { type JobInsights, normalizeJobInsights } from './insights';
-import { createPageEvent } from './protocol';
+import { jobIdFromPageUrl, normalizeJobId } from './job-page';
+import { createPageEvent, isPageReplayRequest } from './protocol';
 
 const JOB_DETAILS_ALIAS = 'gql-query-get-auth-job-details-v2';
 const INSTALL_FLAG = '__UPWORK_TOOLS_INTERCEPTOR__';
@@ -10,7 +11,14 @@ type InterceptedWindow = Window & {
   _authOrigFetch?: unknown;
 };
 
+type LatestCapture = {
+  jobId: string;
+  insights: JobInsights;
+  capturedAt: number;
+};
+
 let previousCapture: { signature: string; capturedAt: number } | null = null;
+let latestCapture: LatestCapture | null = null;
 
 function isSupportedUrl(value: string): boolean {
   if (typeof value !== 'string' || value.trim() === '') return false;
@@ -21,6 +29,9 @@ function isSupportedUrl(value: string): boolean {
   } catch {
     return false;
   }
+}
+function isSupportedPageContext(): boolean {
+  return jobIdFromPageUrl(window.location.href) !== null;
 }
 
 function requestUrl(input: unknown): string | null {
@@ -44,11 +55,7 @@ function safeConsoleInfo(message: string, style: string, metadata?: Record<strin
 }
 
 function emitInsights(insights: JobInsights, url: string): void {
-  const signature = JSON.stringify([
-    insights.job.id,
-    insights.job.title,
-    insights.activity.exactProposals,
-  ]);
+  const signature = JSON.stringify(insights);
   const now = Date.now();
   if (
     previousCapture &&
@@ -58,6 +65,8 @@ function emitInsights(insights: JobInsights, url: string): void {
     return;
   }
   previousCapture = { signature, capturedAt: now };
+  const jobId = normalizeJobId(insights.job.id);
+  if (jobId) latestCapture = { jobId, insights, capturedAt: now };
   window.postMessage(createPageEvent(insights), window.location.origin);
   safeConsoleInfo('%c[upwork-tools] job found', 'color: #16a34a; font-weight: 600', {
     id: insights.job.id,
@@ -66,19 +75,83 @@ function emitInsights(insights: JobInsights, url: string): void {
   });
 }
 
-function inspectPayload(payload: unknown, url: string): void {
+function installReplayListener(): void {
   try {
-    if (!isSupportedUrl(url)) return;
+    window.addEventListener('message', (event: MessageEvent<unknown>) => {
+      try {
+        if (
+          event.source !== window ||
+          event.origin !== window.location.origin ||
+          !isPageReplayRequest(event.data) ||
+          !latestCapture ||
+          jobIdFromPageUrl(window.location.href) !== latestCapture.jobId
+        ) {
+          return;
+        }
+        window.postMessage(
+          createPageEvent(latestCapture.insights, {
+            requestId: event.data.requestId,
+            capturedAt: latestCapture.capturedAt,
+          }),
+          window.location.origin,
+        );
+      } catch {
+        // Replay must never affect the host page.
+      }
+    });
+  } catch {
+    // Replay is optional when the page event API is unavailable.
+  }
+}
+
+function inspectPayload(payload: unknown, url: string | null): void {
+  try {
+    if (url === null ? !isSupportedPageContext() : !isSupportedUrl(url)) return;
     const insights = normalizeJobInsights(payload);
-    if (insights) emitInsights(insights, url);
+    if (insights) emitInsights(insights, url ?? window.location.href);
   } catch {
     // Inspection must never affect the host page.
   }
 }
 
+/**
+ * Installs an inspection hook as an accessor so later page-side reassignment is
+ * transparently re-wrapped: capture survives tampering while the page keeps
+ * running whatever function it installs.
+ */
+function defendInspectionHook(
+  owner: object,
+  key: string,
+  wrapValue: (current: unknown) => unknown,
+): void {
+  let current: unknown;
+  try {
+    current = Reflect.get(owner, key);
+    const descriptor = Object.getOwnPropertyDescriptor(owner, key);
+    current = wrapValue(current);
+    if (descriptor && !descriptor.configurable) {
+      (owner as Record<string, unknown>)[key] = current;
+      return;
+    }
+    Object.defineProperty(owner, key, {
+      configurable: true,
+      enumerable: descriptor?.enumerable ?? true,
+      get: () => current,
+      set: (value: unknown) => {
+        current = value === current ? value : wrapValue(value);
+      },
+    });
+  } catch {
+    try {
+      (owner as Record<string, unknown>)[key] = current;
+    } catch {
+      // Inspection must never affect the host page.
+    }
+  }
+}
+
 function installFetchAndResponseHooks(page: InterceptedWindow): void {
   const nativeJson = Response.prototype.json;
-  const nativeText = Response.prototype.text;
   const nativeParse = JSON.parse;
 
   const inspectResponse = async (url: string, response: Response): Promise<void> => {
@@ -110,7 +183,11 @@ function installFetchAndResponseHooks(page: InterceptedWindow): void {
     return wrapped;
   };
 
-  page.fetch = wrapFetch(page.fetch);
+  defendInspectionHook(page, 'fetch', (current) =>
+    typeof current === 'function' && !wrappedFetches.has(current as typeof window.fetch)
+      ? wrapFetch(current as typeof window.fetch)
+      : current,
+  );
   safeConsoleInfo('%c[upwork-tools] fetch listening', 'color: #2563eb; font-weight: 600');
 
   try {
@@ -137,84 +214,108 @@ function installFetchAndResponseHooks(page: InterceptedWindow): void {
     // Optional Upwork internals are not required for capture.
   }
 
-  Response.prototype.json = function (...args) {
-    const result = nativeJson.call(this, ...args);
-    void result
-      .then((payload) => {
-        inspectPayload(payload, this.url);
-      })
-      .catch(() => {
-        // Inspection must never affect the host page.
-      });
-    return result;
-  };
-  Response.prototype.text = function (...args) {
-    const result = nativeText.call(this, ...args);
-    void result
-      .then((text) => {
-        if (TARGET_MARKERS.some((marker) => text.includes(marker))) {
-          try {
-            inspectPayload(nativeParse(text), this.url);
-          } catch {
-            // Ignore marker-containing non-JSON text.
+  const wrapJsonParse =
+    (original: typeof JSON.parse): typeof JSON.parse =>
+    (...args) => {
+      const payload = original.apply(JSON, args);
+      const text = args[0];
+      if (
+        typeof text === 'string' &&
+        TARGET_MARKERS.some((marker) => text.includes(marker)) &&
+        isSupportedPageContext()
+      ) {
+        inspectPayload(payload, null);
+      }
+      return payload;
+    };
+  defendInspectionHook(JSON, 'parse', (current) =>
+    typeof current === 'function' ? wrapJsonParse(current as typeof JSON.parse) : current,
+  );
+
+  const wrapResponseJson = (original: Response['json']): Response['json'] =>
+    function (this: Response, ...args) {
+      const result = original.apply(this, args);
+      void result
+        .then((payload) => {
+          inspectPayload(payload, this.url);
+        })
+        .catch(() => {
+          // Inspection must never affect the host page.
+        });
+      return result;
+    };
+  defendInspectionHook(Response.prototype, 'json', (current) =>
+    typeof current === 'function' ? wrapResponseJson(current as Response['json']) : current,
+  );
+
+  const wrapResponseText = (original: Response['text']): Response['text'] =>
+    function (this: Response, ...args) {
+      const result = original.apply(this, args);
+      void result
+        .then(async (text) => {
+          if (TARGET_MARKERS.some((marker) => text.includes(marker))) {
+            try {
+              inspectPayload(nativeParse(text), this.url);
+            } catch {
+              // Ignore marker-containing non-JSON text.
+            }
           }
-        }
-      })
-      .catch(() => {
-        // Inspection must never affect the host page.
-      });
-    return result;
-  };
+        })
+        .catch(() => {
+          // Inspection must never affect the host page.
+        });
+      return result;
+    };
+  defendInspectionHook(Response.prototype, 'text', (current) =>
+    typeof current === 'function' ? wrapResponseText(current as Response['text']) : current,
+  );
 }
 function installXhrHooks(): void {
   const urls = new WeakMap<XMLHttpRequest, string>();
-  const originalOpen = XMLHttpRequest.prototype.open as unknown as (
-    this: XMLHttpRequest,
-    method: string,
-    url: string | URL,
-    async?: boolean,
-    username?: string | null,
-    password?: string | null,
-  ) => void;
-  const originalSend = XMLHttpRequest.prototype.send;
-
-  XMLHttpRequest.prototype.open = function (
-    this: XMLHttpRequest,
-    method: string,
-    url: string | URL,
-    async: boolean = true,
-    username?: string | null,
-    password?: string | null,
-  ) {
-    urls.set(this, String(url));
-    originalOpen.call(this, method, url, async, username, password);
-  } as typeof XMLHttpRequest.prototype.open;
-
-  XMLHttpRequest.prototype.send = function (...args: Parameters<XMLHttpRequest['send']>) {
-    this.addEventListener(
-      'load',
-      () => {
-        try {
-          const url = urls.get(this) ?? this.responseURL;
-          if (!isSupportedUrl(url)) return;
-          const payload =
-            this.responseType === 'json' ? this.response : JSON.parse(this.responseText);
-          inspectPayload(payload, url);
-        } catch {
-          // Inspection must never affect the host page.
-        }
-      },
-      { once: true },
-    );
-    return originalSend.apply(this, args);
-  };
+  defendInspectionHook(XMLHttpRequest.prototype, 'open', (current) => {
+    if (typeof current !== 'function') return current;
+    const original = current as unknown as (
+      this: XMLHttpRequest,
+      method: string,
+      url: string | URL,
+      async?: boolean,
+      username?: string | null,
+      password?: string | null,
+    ) => void;
+    return function (this: XMLHttpRequest, ...args: Parameters<typeof original>) {
+      urls.set(this, String(args[1]));
+      original.apply(this, args);
+    } as typeof XMLHttpRequest.prototype.open;
+  });
+  defendInspectionHook(XMLHttpRequest.prototype, 'send', (current) => {
+    if (typeof current !== 'function') return current;
+    const original = current as unknown as XMLHttpRequest['send'];
+    return function (this: XMLHttpRequest, ...args: Parameters<XMLHttpRequest['send']>) {
+      this.addEventListener(
+        'load',
+        () => {
+          try {
+            const url = urls.get(this) ?? this.responseURL;
+            if (!isSupportedUrl(url)) return;
+            const payload =
+              this.responseType === 'json' ? this.response : JSON.parse(this.responseText);
+            inspectPayload(payload, url);
+          } catch {
+            // Inspection must never affect the host page.
+          }
+        },
+        { once: true },
+      );
+      return original.apply(this, args);
+    } as typeof XMLHttpRequest.prototype.send;
+  });
 }
 
 export function installInterceptors(): void {
   const page = window as InterceptedWindow;
   if (page[INSTALL_FLAG]) return;
   page[INSTALL_FLAG] = true;
-
+  installReplayListener();
   try {
     installFetchAndResponseHooks(page);
   } catch {

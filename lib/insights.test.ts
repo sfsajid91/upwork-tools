@@ -146,6 +146,38 @@ describe('normalizeJobInsights', () => {
     expect(insights?.history.relatedJobs.map((job) => job.id)).toEqual(['strong-1']);
   });
 
+  test('orders history deterministically when start dates are invalid', () => {
+    const insights = normalizeJobInsights(
+      payload({
+        buyer: {
+          workHistory: [
+            {
+              status: 'CLOSED',
+              startDate: 'not-a-date',
+              jobInfo: { id: 'invalid-1', title: 'Broken date gig', type: 'FIXED' },
+            },
+            {
+              status: 'CLOSED',
+              startDate: '2026-01-10T00:00:00.000Z',
+              jobInfo: { id: 'old-1', title: 'Older landing page', type: 'FIXED' },
+            },
+            {
+              status: 'CLOSED',
+              startDate: '2026-08-01T00:00:00.000Z',
+              jobInfo: { id: 'new-1', title: 'Newer landing page', type: 'FIXED' },
+            },
+          ],
+        },
+      }),
+    );
+
+    expect(insights?.history.recentJobs.map((job) => job.id)).toEqual([
+      'new-1',
+      'old-1',
+      'invalid-1',
+    ]);
+  });
+
   test('keeps history empty when buyer workHistory is absent', () => {
     const insights = normalizeJobInsights(payload({ buyer: {} }));
 

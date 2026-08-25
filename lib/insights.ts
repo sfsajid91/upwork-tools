@@ -164,6 +164,12 @@ function restrictionLabels(qualifications: RecordValue | null): string[] {
   return uniqueStrings(restrictions);
 }
 
+function historyTimestamp(value: string | null): number {
+  if (!value) return 0;
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
 function normalizeHistory(value: unknown): ClientHistoryEntry[] {
   if (!Array.isArray(value)) return [];
   return value
@@ -184,11 +190,7 @@ function normalizeHistory(value: unknown): ClientHistoryEntry[] {
         },
       ];
     })
-    .sort((left, right) => {
-      const leftTime = left.startedOn ? Date.parse(left.startedOn) : 0;
-      const rightTime = right.startedOn ? Date.parse(right.startedOn) : 0;
-      return rightTime - leftTime;
-    })
+    .sort((left, right) => historyTimestamp(right.startedOn) - historyTimestamp(left.startedOn))
     .slice(0, 5);
 }
 
@@ -295,7 +297,14 @@ export function normalizeJobInsights(payload: unknown): JobInsights | null {
   const recentJobs = normalizeHistory(
     valueAt(buyer, 'workHistory') ?? valueAt(details, 'workHistory'),
   );
-  const currentJobId = nullableString(info?.id);
+  const currentJobId = firstString(
+    info?.ciphertext,
+    job?.ciphertext,
+    info?.uid,
+    job?.uid,
+    info?.id,
+    job?.id,
+  );
   const currentTitle = nullableString(info?.title);
   const currentStatus = nullableString(job?.status);
   const exactProposals = nullableNumber(activity?.totalApplicants);

@@ -1,15 +1,24 @@
-import type { ApplicationRecord, JobRecord, JobSnapshotRecord, WatchlistRecord } from './storage';
+import type {
+  ApplicationRecord,
+  JobRecord,
+  JobSnapshotRecord,
+  LatestJobCaptureRecord,
+  WatchlistRecord,
+} from './storage';
 import { HISTORY_RETENTION_DAYS, MAX_SNAPSHOTS_PER_JOB } from './storage';
+import { isJobInsights } from './insights';
+import { normalizeJobId } from './job-page';
 import { mergeApplicationRecords } from './tracker';
 
 export const DATABASE_NAME = 'upwork-tools';
-export const DATABASE_VERSION = 1;
+export const DATABASE_VERSION = 2;
 
 export const DATABASE_STORES = {
   jobs: 'jobs',
   jobSnapshots: 'jobSnapshots',
   applications: 'applications',
   watchlist: 'watchlist',
+  latestCaptures: 'latestCaptures',
 } as const;
 
 export type DatabaseStoreName = (typeof DATABASE_STORES)[keyof typeof DATABASE_STORES];
@@ -20,6 +29,7 @@ const HISTORY_STORES = [
   DATABASE_STORES.jobs,
   DATABASE_STORES.applications,
   DATABASE_STORES.watchlist,
+  DATABASE_STORES.latestCaptures,
 ] as DatabaseStoreName[];
 
 let databaseFactory: IDBFactory | null = null;
@@ -73,6 +83,7 @@ export function configureDatabaseSchema(
   });
   createStore(database, transaction, DATABASE_STORES.applications, { keyPath: 'jobId' });
   createStore(database, transaction, DATABASE_STORES.watchlist, { keyPath: 'jobId' });
+  createStore(database, transaction, DATABASE_STORES.latestCaptures, { keyPath: 'jobId' });
 
   if (!snapshots) return;
   if (!snapshots.indexNames.contains('jobId'))
@@ -272,16 +283,91 @@ async function enforceHistoryRetentionInTransaction(
   }
 }
 
-/** Removes snapshots older than 90 days and keeps at most 100 per job. */
-export async function enforceHistoryRetention(now = Date.now()): Promise<boolean> {
+function isLatestJobCaptureRecord(value: unknown): value is LatestJobCaptureRecord {
+  if (typeof value !== 'object' || value === null) return false;
+  const record = value as Record<string, unknown>;
+  const insights = record.insights;
+  return (
+    normalizeJobId(typeof record.jobId === 'string' ? record.jobId : null) === record.jobId &&
+    normalizeJobId(insights && isJobInsights(insights) ? insights.job.id : null) === record.jobId &&
+    typeof record.capturedAt === 'number' &&
+    Number.isFinite(record.capturedAt) &&
+    record.capturedAt >= 0 &&
+    isJobInsights(insights)
+  );
+}
+
+async function enforceLatestCaptureRetentionInTransaction(
+  transaction: IDBTransaction,
+  now: number,
+): Promise<void> {
+  const store = transaction.objectStore(DATABASE_STORES.latestCaptures);
+  const [records, keys] = await Promise.all([
+    requestResult<LatestJobCaptureRecord[]>(store.getAll()),
+    requestResult<IDBValidKey[]>(store.getAllKeys()),
+  ]);
+  const cutoff = now - HISTORY_RETENTION_DAYS * DAY_MS;
+  for (let index = 0; index < records.length; index += 1) {
+    const record = records[index];
+    const key = keys[index];
+    if (key !== undefined && (!isLatestJobCaptureRecord(record) || record.capturedAt < cutoff)) {
+      await requestResult(store.delete(key));
+    }
+  }
+}
+
+export async function putLatestJobCapture(
+  record: LatestJobCaptureRecord | null | undefined,
+): Promise<boolean> {
+  if (
+    typeof record !== 'object' ||
+    record === null ||
+    !isJobInsights(record.insights) ||
+    typeof record.capturedAt !== 'number' ||
+    !Number.isFinite(record.capturedAt) ||
+    record.capturedAt < 0
+  ) {
+    return false;
+  }
+  const jobId = normalizeJobId(record.jobId);
+  if (!jobId || normalizeJobId(record.insights.job.id) !== jobId) return false;
   const result = await runTransaction(
-    DATABASE_STORES.jobSnapshots,
+    DATABASE_STORES.latestCaptures,
     'readwrite',
     async (transaction) => {
-      await enforceHistoryRetentionInTransaction(
-        transaction,
-        Number.isFinite(now) ? now : Date.now(),
+      await requestResult(
+        transaction.objectStore(DATABASE_STORES.latestCaptures).put({ ...record, jobId }),
       );
+      await enforceLatestCaptureRetentionInTransaction(transaction, Date.now());
+      return true;
+    },
+  );
+  return result === true;
+}
+
+export async function getLatestJobCapture(
+  jobId: string | null | undefined,
+): Promise<LatestJobCaptureRecord | null> {
+  const normalizedJobId = normalizeJobId(jobId);
+  if (!normalizedJobId) return null;
+  const record = await runTransaction(DATABASE_STORES.latestCaptures, 'readonly', (transaction) =>
+    requestResult<LatestJobCaptureRecord | undefined>(
+      transaction.objectStore(DATABASE_STORES.latestCaptures).get(normalizedJobId),
+    ),
+  );
+  const cutoff = Date.now() - HISTORY_RETENTION_DAYS * DAY_MS;
+  return record && isLatestJobCaptureRecord(record) && record.capturedAt >= cutoff ? record : null;
+}
+
+/** Removes records older than 90 days and keeps at most 100 snapshots per job. */
+export async function enforceHistoryRetention(now = Date.now()): Promise<boolean> {
+  const result = await runTransaction(
+    [DATABASE_STORES.jobSnapshots, DATABASE_STORES.latestCaptures],
+    'readwrite',
+    async (transaction) => {
+      const retentionNow = Number.isFinite(now) ? now : Date.now();
+      await enforceHistoryRetentionInTransaction(transaction, retentionNow);
+      await enforceLatestCaptureRetentionInTransaction(transaction, retentionNow);
       return true;
     },
   );

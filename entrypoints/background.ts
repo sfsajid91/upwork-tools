@@ -1,17 +1,21 @@
 import { deriveApplicantMetrics } from '../lib/applicant-metrics';
 import {
   appendJobSnapshotIfChanged,
+  getLatestJobCapture,
   listJobSnapshots,
   mergeApplication,
   openDatabase,
   putJob,
+  putLatestJobCapture,
 } from '../lib/database';
 import { summarizeJobSnapshots } from '../lib/history';
 import { isJobInsights, type JobInsights } from '../lib/insights';
+import { jobIdFromPageUrl, normalizeJobId, isJobPage } from '../lib/job-page';
 import { deriveClientPayProfile } from '../lib/pay-profile';
 import {
   GET_JOB_HISTORY,
   isRuntimeMessage,
+  REQUEST_JOB_INSIGHTS_REPLAY,
   type JobHistoryResponse,
   STORE_JOB_INSIGHTS,
 } from '../lib/protocol';
@@ -22,11 +26,17 @@ import { calculateProposalVelocity } from '../lib/velocity';
 const BADGE_COLOR = '#152d4f';
 const CAPTURE_DEDUP_WINDOW_MS = 60_000;
 const storageKey = (tabId: number) => `job-insights:${tabId}`;
+const metadataKey = (tabId: number) => `${storageKey(tabId)}:metadata`;
 
 type TabState = {
   generation: number;
   pending: Promise<void>;
   removed: boolean;
+};
+
+type TabCaptureMetadata = {
+  jobId: string;
+  capturedAt: number;
 };
 
 const tabStates = new Map<number, TabState>();
@@ -59,18 +69,20 @@ function enqueueTabMutation<T>(tabId: number, mutation: () => Promise<T>): Promi
   );
   return next;
 }
+function isValidCaptureMetadata(value: unknown): value is TabCaptureMetadata {
+  if (typeof value !== 'object' || value === null) return false;
+  const metadata = value as Record<string, unknown>;
+  return (
+    typeof metadata.jobId === 'string' &&
+    normalizeJobId(metadata.jobId) === metadata.jobId &&
+    typeof metadata.capturedAt === 'number' &&
+    Number.isFinite(metadata.capturedAt) &&
+    metadata.capturedAt >= 0
+  );
+}
 
 function isJobDetailsPage(url: string | undefined): boolean {
-  if (!url) return false;
-  try {
-    const parsed = new URL(url);
-    return (
-      (parsed.hostname === 'upwork.com' || parsed.hostname.endsWith('.upwork.com')) &&
-      /(?:^|\/)details\/[^/]+/.test(parsed.pathname)
-    );
-  } catch {
-    return false;
-  }
+  return isJobPage(url);
 }
 
 async function setBadge(tabId: number, url: string | undefined, text: string): Promise<void> {
@@ -90,8 +102,9 @@ async function persistJobInsights(
   generation: number,
   insights: JobInsights,
   capturedAt: number,
+  persistLatestCapture = true,
 ): Promise<void> {
-  const jobId = typeof insights.job.id === 'string' ? insights.job.id.trim() : '';
+  const jobId = normalizeJobId(insights.job.id);
   if (!jobId || state.removed || state.generation !== generation) return;
 
   const job: JobRecord = {
@@ -114,6 +127,13 @@ async function persistJobInsights(
     // IndexedDB failures must not affect session-only capture.
   }
   if (state.removed || state.generation !== generation) return;
+  if (persistLatestCapture && !state.removed && state.generation === generation) {
+    try {
+      await putLatestJobCapture({ jobId, capturedAt, insights });
+    } catch {
+      // IndexedDB failures must not affect session-only capture.
+    }
+  }
 
   try {
     let application = transitionApplicationRecord(createApplicationRecord(jobId), {
@@ -136,6 +156,7 @@ async function persistJobInsights(
   try {
     await appendJobSnapshotIfChanged(
       snapshot,
+
       CAPTURE_DEDUP_WINDOW_MS,
       () => !state.removed && state.generation === generation,
     );
@@ -143,22 +164,51 @@ async function persistJobInsights(
     // IndexedDB failures must not affect session-only capture.
   }
 }
+async function currentTabJobId(tabId: number): Promise<string | null> {
+  try {
+    const tab = await browser.tabs.get(tabId);
+    return jobIdFromPageUrl(tab.url);
+  } catch {
+    return null;
+  }
+}
+
+async function readVerifiedSession(
+  tabId: number,
+  currentJobId: string,
+): Promise<JobInsights | null> {
+  try {
+    const stored = await browser.storage.session.get([storageKey(tabId), metadataKey(tabId)]);
+    const payload = stored[storageKey(tabId)];
+    const metadata = stored[metadataKey(tabId)];
+    if (
+      !isJobInsights(payload) ||
+      !isValidCaptureMetadata(metadata) ||
+      metadata.jobId !== currentJobId ||
+      normalizeJobId(payload.job.id) !== currentJobId
+    ) {
+      return null;
+    }
+    return payload;
+  } catch {
+    return null;
+  }
+}
 async function readJobHistory(tabId: number, jobId: string): Promise<JobHistoryResponse | null> {
   try {
+    const normalizedJobId = normalizeJobId(jobId);
+    if (!normalizedJobId || (await currentTabJobId(tabId)) !== normalizedJobId) return null;
     const database = await openDatabase();
     if (!database) return null;
-    const snapshots = await listJobSnapshots(jobId);
-    const summary = summarizeJobSnapshots(snapshots, jobId);
-    const stored = await browser.storage.session.get(storageKey(tabId));
-    const storedPayload = stored[storageKey(tabId)];
-    const storedInsights = isJobInsights(storedPayload) ? storedPayload : null;
-    const insights = storedInsights?.job.id?.trim() === jobId ? storedInsights : null;
+    const snapshots = await listJobSnapshots(normalizedJobId);
+    const summary = summarizeJobSnapshots(snapshots, normalizedJobId);
+    const insights = await readVerifiedSession(tabId, normalizedJobId);
     const payProfile = deriveClientPayProfile({
       client: insights?.client,
       history: insights?.history.recentJobs,
     });
     if (!summary) {
-      return { jobId, summary: null, velocity: null, payProfile };
+      return { jobId: normalizedJobId, summary: null, velocity: null, payProfile };
     }
     const metrics = deriveApplicantMetrics(summary.snapshots);
     const firstSeenApplicants =
@@ -168,7 +218,7 @@ async function readJobHistory(tabId: number, jobId: string): Promise<JobHistoryR
         ? summary.firstSeen.applicants
         : null;
     return {
-      jobId,
+      jobId: normalizedJobId,
       summary: {
         snapshotCount: summary.snapshots.length,
         latestApplicants: metrics.latestApplicantCount,
@@ -189,9 +239,52 @@ async function readJobHistory(tabId: number, jobId: string): Promise<JobHistoryR
   }
 }
 
+async function readJobInsights(tabId: number): Promise<JobInsights | null> {
+  let currentUrl: string | undefined;
+  let currentJobId: string | null = null;
+  try {
+    const tab = await browser.tabs.get(tabId);
+    currentUrl = tab.url;
+    currentJobId = jobIdFromPageUrl(tab.url);
+  } catch {
+    return null;
+  }
+  if (!currentJobId) return null;
+
+  let insights = await readVerifiedSession(tabId, currentJobId);
+  if (insights) return insights;
+
+  try {
+    await browser.tabs.sendMessage(tabId, {
+      type: REQUEST_JOB_INSIGHTS_REPLAY,
+      tabId,
+      requestId: crypto.randomUUID(),
+    });
+  } catch {
+    // The content script may be absent or the tab may have navigated.
+  }
+
+  insights = await readVerifiedSession(tabId, currentJobId);
+  if (insights) return insights;
+
+  const capture = await getLatestJobCapture(currentJobId);
+  if (!capture || normalizeJobId(capture.insights.job.id) !== currentJobId) return null;
+  try {
+    await browser.storage.session.set({
+      [storageKey(tabId)]: capture.insights,
+      [metadataKey(tabId)]: { jobId: currentJobId, capturedAt: capture.capturedAt },
+    });
+    await setBadge(tabId, currentUrl, String(capture.insights.activity.exactProposals ?? ''));
+    return capture.insights;
+  } catch {
+    return null;
+  }
+}
+
 export default defineBackground(() => {
   browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (!isRuntimeMessage(message)) return undefined;
+    if (message.type === REQUEST_JOB_INSIGHTS_REPLAY) return undefined;
 
     if (message.type === STORE_JOB_INSIGHTS) {
       void (async () => {
@@ -206,14 +299,32 @@ export default defineBackground(() => {
           return;
         }
         const generation = state.generation;
-        const capturedAt = Date.now();
+        const capturedAt = message.replay?.capturedAt ?? Date.now();
+        const payloadJobId = normalizeJobId(message.payload.job.id);
+        const currentJobId = jobIdFromPageUrl(sender.tab?.url);
+        const identityConflict =
+          payloadJobId !== null && currentJobId !== null && payloadJobId !== currentJobId;
         try {
           await enqueueTabMutation(tabId, async () => {
             if (state.removed || state.generation !== generation) return;
+            const metadata =
+              payloadJobId && !identityConflict ? { jobId: payloadJobId, capturedAt } : undefined;
             try {
-              await browser.storage.session.set({ [storageKey(tabId)]: message.payload });
+              await browser.storage.session.set({
+                [storageKey(tabId)]: message.payload,
+                ...(metadata ? { [metadataKey(tabId)]: metadata } : {}),
+              });
+              if (!metadata) await browser.storage.session.remove(metadataKey(tabId));
               if (state.removed || state.generation !== generation) return;
-              await persistJobInsights(state, generation, message.payload, capturedAt);
+              if (!message.replay) {
+                await persistJobInsights(
+                  state,
+                  generation,
+                  message.payload,
+                  capturedAt,
+                  !identityConflict,
+                );
+              }
               await setBadge(
                 tabId,
                 sender.tab?.url,
@@ -233,20 +344,12 @@ export default defineBackground(() => {
 
     if (message.type === GET_JOB_HISTORY) {
       void enqueueTabMutation(message.tabId, () =>
-        readJobHistory(message.tabId, message.jobId.trim()),
+        readJobHistory(message.tabId, message.jobId),
       ).then(sendResponse, () => sendResponse(null));
       return true;
     }
 
-    void (async () => {
-      try {
-        const stored = await browser.storage.session.get(storageKey(message.tabId));
-        const payload = stored[storageKey(message.tabId)];
-        sendResponse(isJobInsights(payload) ? payload : null);
-      } catch {
-        sendResponse(null);
-      }
-    })();
+    void readJobInsights(message.tabId).then(sendResponse, () => sendResponse(null));
     return true;
   });
 
@@ -255,14 +358,7 @@ export default defineBackground(() => {
       const generation = advanceTabGeneration(tabId);
       void enqueueTabMutation(tabId, async () => {
         if (getTabState(tabId).generation !== generation) return;
-        try {
-          await browser.storage.session.remove(storageKey(tabId));
-        } catch {
-          // Session storage failures must not affect navigation.
-        }
-        if (getTabState(tabId).generation === generation) {
-          await setBadge(tabId, changeInfo.url, '');
-        }
+        await setBadge(tabId, changeInfo.url, '');
       }).catch(() => undefined);
     }
   });
@@ -272,9 +368,9 @@ export default defineBackground(() => {
     const cleanup = enqueueTabMutation(tabId, async () => {
       if (!state.removed || state.generation !== generation) return;
       try {
-        await browser.storage.session.remove(storageKey(tabId));
+        await browser.storage.session.remove([storageKey(tabId), metadataKey(tabId)]);
       } catch {
-        // Session storage failures must not affect tab cleanup.
+        // Session storage must not affect tab cleanup.
       }
       if (state.removed && state.generation === generation) {
         await setBadge(tabId, undefined, '');

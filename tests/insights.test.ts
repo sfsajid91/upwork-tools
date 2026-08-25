@@ -78,6 +78,23 @@ describe('job insight normalization', () => {
     expect(isJobInsights(insights)).toBe(true);
   });
 
+  test('uses the public ciphertext as the current job identity', () => {
+    const response = structuredClone(rawResponse) as {
+      data: { jobAuthDetails: { opening: { job: { info: Record<string, unknown> } } } };
+    };
+    response.data.jobAuthDetails.opening.job.info.ciphertext = '~public-job-id';
+    expect(normalizeJobInsights(response)?.job.id).toBe('~public-job-id');
+  });
+
+  test('uses UID when the main job ID field is absent', () => {
+    const response = structuredClone(rawResponse) as {
+      data: { jobAuthDetails: { opening: { job: { info: Record<string, unknown> } } } };
+    };
+    delete response.data.jobAuthDetails.opening.job.info.id;
+    response.data.jobAuthDetails.opening.job.info.uid = '~job-uid';
+    expect(normalizeJobInsights(response)?.job.id).toBe('~job-uid');
+  });
+
   test('returns null for an unrelated response', () => {
     expect(normalizeJobInsights({ data: { viewer: {} } })).toBeNull();
   });

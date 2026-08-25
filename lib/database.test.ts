@@ -6,6 +6,7 @@ import {
   enforceHistoryRetention,
   getApplication,
   getJob,
+  getLatestJobCapture,
   getWatchlist,
   listJobSnapshots,
   mergeApplication,
@@ -13,8 +14,10 @@ import {
   putApplication,
   putJob,
   putJobSnapshot,
+  putLatestJobCapture,
   putWatchlist,
 } from './database';
+import { normalizeJobInsights, type JobInsights } from './insights';
 import type { JobSnapshotRecord } from './storage';
 
 class FakeRequest<T = unknown> {
@@ -220,6 +223,16 @@ const snapshot = (jobId: string, capturedAt: number, applicants = 1): JobSnapsho
   capturedAt,
 });
 
+const latestInsights = normalizeJobInsights({
+  data: {
+    jobAuthDetails: {
+      opening: {
+        job: { info: { id: 'job-latest' }, clientActivity: {} },
+      },
+    },
+  },
+}) as JobInsights;
+
 beforeEach(async () => {
   expect(await clearAllLocalData()).toBe(true);
 });
@@ -297,6 +310,52 @@ describe('database retention', () => {
     ).toBeNull();
     expect(callbackCalls).toBe(2);
   });
+  test('writes and reads the latest complete capture by normalized job ID', async () => {
+    const record = {
+      jobId: '~job-latest',
+      capturedAt: Date.now(),
+      insights: latestInsights,
+    };
+    expect(await putLatestJobCapture(record)).toBe(true);
+    expect(await getLatestJobCapture('~job-latest')).toEqual({
+      ...record,
+      jobId: 'job-latest',
+    });
+  });
+
+  test('rejects invalid latest captures and expires old records', async () => {
+    expect(
+      await putLatestJobCapture({
+        jobId: '',
+        capturedAt: Date.now(),
+        insights: latestInsights,
+      }),
+    ).toBe(false);
+    expect(
+      await putLatestJobCapture({
+        jobId: 'job-latest',
+        capturedAt: Number.NaN,
+        insights: latestInsights,
+      }),
+    ).toBe(false);
+    expect(
+      await putLatestJobCapture({
+        jobId: 'job-other',
+        capturedAt: Date.now(),
+        insights: latestInsights,
+      }),
+    ).toBe(false);
+
+    const old = Date.now() - 90 * day - 1;
+    expect(
+      await putLatestJobCapture({
+        jobId: 'job-latest',
+        capturedAt: old,
+        insights: latestInsights,
+      }),
+    ).toBe(true);
+    expect(await getLatestJobCapture('job-latest')).toBeNull();
+  });
 });
 
 describe('database clear APIs', () => {
@@ -317,10 +376,16 @@ describe('database clear APIs', () => {
       latestSnapshotId: null,
       savedAt: Date.now(),
     });
+    await putLatestJobCapture({
+      jobId: 'job-latest',
+      capturedAt: Date.now(),
+      insights: latestInsights,
+    });
 
     expect(await clearHistory()).toBe(true);
     expect(await clearHistory()).toBe(true);
     expect(await getJob('job-1')).toBeNull();
+    expect(await getLatestJobCapture('job-latest')).toBeNull();
     expect(await listJobSnapshots('job-1')).toEqual([]);
     expect(await getApplication('job-1')).toBeNull();
     expect(await getWatchlist('job-1')).toBeNull();

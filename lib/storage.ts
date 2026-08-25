@@ -16,6 +16,12 @@ export interface JobSnapshotRecord {
   positions: number | null;
   capturedAt: number;
 }
+/** Latest complete normalized capture retained by normalized job ID. */
+export interface LatestJobCaptureRecord {
+  jobId: string;
+  capturedAt: number;
+  insights: JobInsights;
+}
 
 /** Normalized job metadata retained alongside historical snapshots. */
 export interface JobRecord {

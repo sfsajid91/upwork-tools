@@ -8,6 +8,7 @@ type RuntimeListener = (
   sendResponse: (response?: unknown) => void,
 ) => unknown;
 type TabUpdatedListener = (tabId: number, changeInfo: { status?: string; url?: string }) => void;
+type TabRemovedListener = (tabId: number) => void;
 
 type Deferred = {
   promise: Promise<void>;
@@ -31,9 +32,13 @@ function deferred(): Deferred {
 const values = new Map<string, unknown>();
 const badgeTextCalls: Array<{ tabId: number; text: string }> = [];
 const badgeBackgroundCalls: Array<{ tabId: number; color: string }> = [];
+let removedListener: TabRemovedListener | undefined;
+const tabUrls = new Map<number, string>();
 let listener: RuntimeListener | undefined;
 let updatedListener: TabUpdatedListener | undefined;
+type ReplayResponder = (tabId: number, message: unknown) => Promise<unknown>;
 let nextSetGate: Deferred | undefined;
+let replayResponder: ReplayResponder | undefined;
 let nextRemoveGate: Deferred | undefined;
 const pendingStorageOperations = new Set<Promise<unknown>>();
 
@@ -69,10 +74,11 @@ const fakeBrowser = {
           })(),
         );
       },
-      async get(key: string) {
-        return { [key]: values.get(key) };
+      async get(keys: string | string[]) {
+        const requested = Array.isArray(keys) ? keys : [keys];
+        return Object.fromEntries(requested.map((key) => [key, values.get(key)]));
       },
-      remove(key: string) {
+      remove(keys: string | string[]) {
         return trackStorageOperation(
           (async () => {
             if (nextRemoveGate) {
@@ -81,7 +87,7 @@ const fakeBrowser = {
               gate.start();
               await gate.promise;
             }
-            values.delete(key);
+            for (const key of Array.isArray(keys) ? keys : [keys]) values.delete(key);
           })(),
         );
       },
@@ -101,7 +107,17 @@ const fakeBrowser = {
         updatedListener = callback;
       },
     },
-    onRemoved: { addListener() {} },
+    onRemoved: {
+      addListener(callback: TabRemovedListener) {
+        removedListener = callback;
+      },
+    },
+    async get(tabId: number) {
+      return { id: tabId, url: tabUrls.get(tabId) ?? 'https://www.upwork.com/ab/details/job-7' };
+    },
+    async sendMessage(tabId: number, message: unknown) {
+      return replayResponder?.(tabId, message) ?? false;
+    },
   },
 };
 
@@ -129,7 +145,7 @@ await import(`../entrypoints/background.ts?test=${crypto.randomUUID()}`);
 
 const insights: JobInsights = {
   job: {
-    id: null,
+    id: 'job-7',
     title: null,
     description: null,
     status: null,
@@ -185,9 +201,11 @@ const insights: JobInsights = {
 };
 beforeEach(() => {
   values.clear();
+  tabUrls.clear();
   badgeTextCalls.length = 0;
   badgeBackgroundCalls.length = 0;
   nextSetGate = undefined;
+  replayResponder = undefined;
   nextRemoveGate = undefined;
 });
 afterEach(async () => {
@@ -195,8 +213,8 @@ afterEach(async () => {
     await Promise.all([...pendingStorageOperations]);
   }
 });
-
 function store(tabId: number, url: string, payload = insights): Promise<void> {
+  tabUrls.set(tabId, url);
   return new Promise((resolve) => {
     const returned = listener?.(
       { type: STORE_JOB_INSIGHTS, payload },
@@ -211,6 +229,7 @@ function store(tabId: number, url: string, payload = insights): Promise<void> {
 describe('background runtime messaging', () => {
   test('GET responds asynchronously with the stored snapshot', async () => {
     values.set('job-insights:7', insights);
+    values.set('job-insights:7:metadata', { jobId: 'job-7', capturedAt: Date.now() });
     let response: unknown;
     const completed = new Promise<void>((resolve) => {
       const returned = listener?.({ type: GET_JOB_INSIGHTS, tabId: 7 }, {}, (value) => {
@@ -271,7 +290,7 @@ describe('background runtime messaging', () => {
     gate.resolve();
     await completed;
 
-    expect(values.get('job-insights:101')).toBe(undefined);
+    expect(values.get('job-insights:101')).toEqual(insights);
   });
 
   test('STORE received after navigation persists for the fresh generation', async () => {
@@ -285,24 +304,13 @@ describe('background runtime messaging', () => {
     expect(values.get('job-insights:102')).toEqual(insights);
   });
 
-  test('queued navigation cleanup cannot delete a fresh-generation snapshot', async () => {
+  test('navigation preserves the prior session snapshot until identity validation', async () => {
     values.set('job-insights:103', insights);
-    const gate = deferred();
-    nextRemoveGate = gate;
     updatedListener?.(103, {
       status: 'loading',
       url: 'https://www.upwork.com/ab/details/job-103',
     });
-    await gate.started;
-
-    updatedListener?.(103, {
-      status: 'loading',
-      url: 'https://www.upwork.com/ab/details/job-103-newer',
-    });
-    const completed = store(103, 'https://www.upwork.com/ab/details/job-103-newer');
-    gate.resolve();
-    await completed;
-
+    await Promise.all([...pendingStorageOperations]);
     expect(values.get('job-insights:103')).toEqual(insights);
   });
   test('STORE persists the snapshot, updates the badge, and completes via callback', async () => {
@@ -326,6 +334,22 @@ describe('background runtime messaging', () => {
     expect(response).toBe(undefined);
   });
 
+  test('GET returns a capture whose public ID matches the tab URL', async () => {
+    const publicPayload = { ...insights, job: { ...insights.job, id: 'public-job-id' } };
+    const url = 'https://www.upwork.com/jobs/~public-job-id';
+    await store(30, url, publicPayload);
+
+    let response: unknown;
+    const completed = Promise.withResolvers<void>();
+    listener?.({ type: GET_JOB_INSIGHTS, tabId: 30 }, {}, (value) => {
+      response = value;
+      completed.resolve();
+    });
+    await completed.promise;
+
+    expect(response).toEqual(publicPayload);
+  });
+
   test('invalid messages are ignored without opening an async response channel', () => {
     let called = false;
     const returned = listener?.({ type: 'UNKNOWN' }, {}, () => {
@@ -334,5 +358,61 @@ describe('background runtime messaging', () => {
 
     expect(returned).toBe(undefined);
     expect(called).toBe(false);
+  });
+  test('GET requests same-job replay before returning empty', async () => {
+    const replayCaptureAt = 123;
+    values.set('job-insights:20', insights);
+    tabUrls.set(20, 'https://www.upwork.com/ab/details/job-7');
+    values.delete('job-insights:20:metadata');
+    replayResponder = async (tabId) => {
+      const { promise, resolve } = Promise.withResolvers<boolean>();
+      listener?.(
+        {
+          type: STORE_JOB_INSIGHTS,
+          payload: insights,
+          replay: { capturedAt: replayCaptureAt },
+        },
+        { tab: { id: tabId, url: tabUrls.get(tabId) } },
+        () => resolve(true),
+      );
+      return promise;
+    };
+
+    let response: unknown;
+    const completed = Promise.withResolvers<void>();
+    const returned = listener?.({ type: GET_JOB_INSIGHTS, tabId: 20 }, {}, (value) => {
+      response = value;
+      completed.resolve();
+    });
+    expect(returned).toBe(true);
+    await completed.promise;
+    expect(response).toEqual(insights);
+    expect(values.get('job-insights:20:metadata')).toEqual({
+      jobId: 'job-7',
+      capturedAt: replayCaptureAt,
+    });
+  });
+
+  test('GET rejects a preserved snapshot for a different current job', async () => {
+    values.set('job-insights:21', insights);
+    values.set('job-insights:21:metadata', { jobId: 'job-7', capturedAt: Date.now() });
+    tabUrls.set(21, 'https://www.upwork.com/ab/details/job-21');
+    let response: unknown;
+    const completed = Promise.withResolvers<void>();
+    listener?.({ type: GET_JOB_INSIGHTS, tabId: 21 }, {}, (value) => {
+      response = value;
+      completed.resolve();
+    });
+    await completed.promise;
+    expect(response).toBeNull();
+  });
+
+  test('tab removal clears payload and verification metadata', async () => {
+    values.set('job-insights:22', insights);
+    values.set('job-insights:22:metadata', { jobId: 'job-7', capturedAt: Date.now() });
+    removedListener?.(22);
+    await Promise.all([...pendingStorageOperations]);
+    expect(values.has('job-insights:22')).toBe(false);
+    expect(values.has('job-insights:22:metadata')).toBe(false);
   });
 });

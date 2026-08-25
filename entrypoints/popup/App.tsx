@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { browser } from 'wxt/browser';
 import type { JobInsights } from '../../lib/insights';
 import { isJobInsights } from '../../lib/insights';
+import { normalizeJobId } from '../../lib/job-page';
 import {
   GET_JOB_HISTORY,
   GET_JOB_INSIGHTS,
@@ -35,12 +36,8 @@ type PopupReadDependencies = {
 
 const READ_ERROR_MESSAGE =
   'The extension could not read this tab. Reopen the popup after the job details finish loading.';
-
 function normalizedJobId(insights: JobInsights): string | null {
-  const value = insights.job.id;
-  if (typeof value !== 'string') return null;
-  const jobId = value.trim();
-  return jobId || null;
+  return normalizeJobId(insights.job.id);
 }
 
 export async function readWatchlistStatus(insights: JobInsights): Promise<WatchlistStatus> {
@@ -72,7 +69,7 @@ export async function readPopupInsights({
     const insights = await sendMessage({ type: GET_JOB_INSIGHTS, tabId: tab.id });
     if (!isJobInsights(insights)) return { kind: 'empty' };
 
-    const jobId = typeof insights.job.id === 'string' ? insights.job.id.trim() : '';
+    const jobId = normalizedJobId(insights) ?? '';
     const sessionReady = {
       kind: 'ready' as const,
       insights,

@@ -30,9 +30,9 @@
     "semantic_hash": "46ba5ab63fe1d2e7aa192df0fd234076"
   },
   "entrypoints/background.ts": {
-    "mtime": 1787572091.653828,
-    "seen": 1787572165.4811463,
-    "ast_hash": "ba78fd092b7bf7f2d52762b505a5731e",
+    "mtime": 1787763832.3085592,
+    "seen": 1787763957.982809,
+    "ast_hash": "0518fbcc1505fdf227e0e39a89dc7894",
     "semantic_hash": ""
   },
   "entrypoints/interceptor.content.ts": {
@@ -114,9 +114,9 @@
     "semantic_hash": "a05ce82d055fe98272d57dd42686e9ce"
   },
   "tests/background.test.ts": {
-    "mtime": 1787580725.9666572,
-    "seen": 1787580808.9920452,
-    "ast_hash": "0ac96f900c60474d7ae8ed7bd5340efc",
+    "mtime": 1787763858.3236628,
+    "seen": 1787763957.9831128,
+    "ast_hash": "3dc520a8329d892c442de5309e40f751",
     "semantic_hash": ""
   },
   "tests/skills.test.ts": {

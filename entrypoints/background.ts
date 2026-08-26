@@ -194,6 +194,43 @@ async function readVerifiedSession(
     return null;
   }
 }
+async function restoreBadge(tabId: number, url?: string): Promise<void> {
+  let currentUrl = url;
+  if (!currentUrl) {
+    try {
+      currentUrl = (await browser.tabs.get(tabId)).url;
+    } catch {
+      await setBadge(tabId, undefined, '');
+      return;
+    }
+  }
+
+  const jobId = jobIdFromPageUrl(currentUrl);
+  if (!jobId) {
+    await setBadge(tabId, currentUrl, '');
+    return;
+  }
+
+  const insights = await readVerifiedSession(tabId, jobId);
+  if (insights) {
+    await setBadge(tabId, currentUrl, String(insights.activity.exactProposals ?? ''));
+    return;
+  }
+
+  try {
+    const capture = await getLatestJobCapture(jobId);
+    const hasMatchingCapture =
+      capture !== null && normalizeJobId(capture.insights.job.id) === jobId;
+    await setBadge(
+      tabId,
+      currentUrl,
+      hasMatchingCapture ? String(capture.insights.activity.exactProposals ?? '') : '',
+    );
+  } catch {
+    await setBadge(tabId, currentUrl, '');
+  }
+}
+
 async function readJobHistory(tabId: number, jobId: string): Promise<JobHistoryResponse | null> {
   try {
     const normalizedJobId = normalizeJobId(jobId);
@@ -358,7 +395,7 @@ export default defineBackground(() => {
       const generation = advanceTabGeneration(tabId);
       void enqueueTabMutation(tabId, async () => {
         if (getTabState(tabId).generation !== generation) return;
-        await setBadge(tabId, changeInfo.url, '');
+        await restoreBadge(tabId, changeInfo.url);
       }).catch(() => undefined);
     }
   });

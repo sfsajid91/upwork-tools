@@ -32,6 +32,7 @@ function deferred(): Deferred {
 const values = new Map<string, unknown>();
 const badgeTextCalls: Array<{ tabId: number; text: string }> = [];
 const badgeBackgroundCalls: Array<{ tabId: number; color: string }> = [];
+let resolveBadgeTextApplied: (() => void) | undefined;
 let removedListener: TabRemovedListener | undefined;
 const tabUrls = new Map<number, string>();
 let listener: RuntimeListener | undefined;
@@ -96,6 +97,8 @@ const fakeBrowser = {
   action: {
     async setBadgeText(details: { tabId: number; text: string }) {
       badgeTextCalls.push(details);
+      resolveBadgeTextApplied?.();
+      resolveBadgeTextApplied = undefined;
     },
     async setBadgeBackgroundColor(details: { tabId: number; color: string }) {
       badgeBackgroundCalls.push(details);
@@ -312,6 +315,20 @@ describe('background runtime messaging', () => {
     });
     await Promise.all([...pendingStorageOperations]);
     expect(values.get('job-insights:103')).toEqual(insights);
+  });
+  test('loading the same job restores its badge from the session snapshot', async () => {
+    const tabId = 104;
+    const url = 'https://www.upwork.com/ab/details/job-7';
+    const badgeApplied = Promise.withResolvers<void>();
+    resolveBadgeTextApplied = badgeApplied.resolve;
+    values.set(`job-insights:${tabId}`, insights);
+    values.set(`job-insights:${tabId}:metadata`, { jobId: 'job-7', capturedAt: Date.now() });
+    tabUrls.set(tabId, url);
+
+    updatedListener?.(tabId, { status: 'loading', url });
+    await badgeApplied.promise;
+
+    expect(badgeTextCalls.at(-1)).toEqual({ tabId, text: '4' });
   });
   test('STORE persists the snapshot, updates the badge, and completes via callback', async () => {
     let response: unknown = 'not-called';

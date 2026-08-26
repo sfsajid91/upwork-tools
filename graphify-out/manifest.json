@@ -1014,10 +1014,10 @@
     "semantic_hash": "277fcfd789e8d8ea438e4697af88fa8d"
   },
   "README.md": {
-    "mtime": 1787553692.3519468,
-    "seen": 1787569339.716457,
-    "ast_hash": "082ace9f2cfb2234c3e128c0ab65848b",
-    "semantic_hash": "082ace9f2cfb2234c3e128c0ab65848b"
+    "mtime": 1787765331.764795,
+    "seen": 1787765405.824263,
+    "ast_hash": "c6ed72119cf323170b776ff0148fef24",
+    "semantic_hash": ""
   },
   "PRODUCT.md": {
     "mtime": 1787553692.3509085,
@@ -1371,6 +1371,18 @@
     "mtime": 1787593043.343448,
     "seen": 1787593303.3329504,
     "ast_hash": "1c753ea8bfddbc7c4fd8ce6a88f1e8b7",
+    "semantic_hash": ""
+  },
+  "docs/architecture.md": {
+    "mtime": 1787765196.1789784,
+    "seen": 1787765304.859887,
+    "ast_hash": "5dfd3ff75901fb949c5aaa1bb096b5b3",
+    "semantic_hash": ""
+  },
+  "images/upwork-tools.webp": {
+    "mtime": 1787764807.7970645,
+    "seen": 1787765304.8599043,
+    "ast_hash": "abb2df1136cd7c663c2741980cae2dad",
     "semantic_hash": ""
   }
 }

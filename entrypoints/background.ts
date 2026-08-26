@@ -21,6 +21,7 @@ import {
 } from '../lib/protocol';
 import type { JobRecord, JobSnapshotRecord } from '../lib/storage';
 import { createApplicationRecord, transitionApplicationRecord } from '../lib/tracker';
+import { updateWatchlistFromCapture } from '../lib/watchlist';
 import { calculateProposalVelocity } from '../lib/velocity';
 
 const BADGE_COLOR = '#152d4f';
@@ -151,11 +152,15 @@ async function persistJobInsights(
   }
   if (state.removed || state.generation !== generation) return;
   try {
-    await appendJobSnapshotIfChanged(
+    const latestSnapshotId = await appendJobSnapshotIfChanged(
       snapshot,
-
       CAPTURE_DEDUP_WINDOW_MS,
       () => !state.removed && state.generation === generation,
+    );
+    if (state.removed || state.generation !== generation) return;
+    await updateWatchlistFromCapture(
+      insights,
+      typeof latestSnapshotId === 'number' ? latestSnapshotId : undefined,
     );
   } catch {
     // IndexedDB failures must not affect session-only capture.
@@ -387,6 +392,11 @@ export default defineBackground(() => {
       const generation = advanceTabGeneration(tabId);
       void enqueueTabMutation(tabId, async () => {
         if (getTabState(tabId).generation !== generation) return;
+        try {
+          await browser.storage.session.remove([storageKey(tabId), metadataKey(tabId)]);
+        } catch {
+          // Session storage must not affect navigation cleanup.
+        }
         await restoreBadge(tabId, changeInfo.url);
       }).catch(() => undefined);
     }

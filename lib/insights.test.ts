@@ -175,6 +175,69 @@ describe('normalizeJobInsights', () => {
 
     expect(insights?.history.relatedJobs.map((job) => job.id)).toEqual(['strong-1']);
   });
+  test('excludes current history when public and internal IDs differ', () => {
+    const insights = normalizeJobInsights(
+      payload({
+        opening: {
+          job: {
+            status: 'OPEN',
+            info: {
+              ciphertext: '~current-public',
+              id: 'current-internal',
+              title: 'Landing page backend',
+            },
+          },
+          qualifications: {},
+        },
+        buyer: {
+          workHistory: [
+            {
+              startDate: '2026-08-20T00:00:00.000Z',
+              jobInfo: {
+                ciphertext: '~current-public',
+                id: 'current-internal',
+                title: 'Landing page backend',
+              },
+            },
+            {
+              startDate: '2026-08-19T00:00:00.000Z',
+              jobInfo: {
+                ciphertext: '~other-public',
+                id: 'other-internal',
+                title: 'Landing page backend API',
+              },
+            },
+          ],
+        },
+      }),
+    );
+
+    expect(insights?.history.relatedJobs.map((job) => job.id)).toEqual(['~other-public']);
+  });
+
+  test('preserves explicit hourly history fields for pay metrics', () => {
+    const insights = normalizeJobInsights(
+      payload({
+        buyer: {
+          workHistory: [
+            {
+              status: 'CLOSED',
+              startDate: '2026-08-20T00:00:00.000Z',
+              totalHours: 5,
+              rate: { amount: 12 },
+              jobInfo: { id: 'hourly-1', title: 'Hourly API work', type: 'HOURLY' },
+            },
+          ],
+        },
+      }),
+    );
+
+    expect(insights?.history.recentJobs[0]).toMatchObject({
+      id: 'hourly-1',
+      hours: 5,
+      hourlyRate: 12,
+    });
+  });
 
   test('orders history deterministically when start dates are invalid', () => {
     const insights = normalizeJobInsights(

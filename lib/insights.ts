@@ -13,6 +13,8 @@ export interface ClientHistoryEntry {
   feedbackScore: number | null;
   status: string | null;
   startedOn: string | null;
+  hours?: number | null;
+  hourlyRate?: number | null;
 }
 
 export interface JobInsights {
@@ -143,10 +145,12 @@ function normalizeHistory(value: unknown): ClientHistoryEntry[] {
       const feedback = record(entryObject.feedback);
       return [
         {
-          id: firstString(jobInfo.id, jobInfo.uid),
+          id: firstString(jobInfo.ciphertext, jobInfo.id, jobInfo.uid),
           title: nullableString(jobInfo.title),
           type: nullableString(jobInfo.type),
           amountPaid: nullableNumber(entryObject.totalCharge),
+          hourlyRate: nullableNumber(valueAt(entryObject, 'rate', 'amount')),
+          hours: nullableNumber(entryObject.totalHours),
           feedbackScore: nullableNumber(feedback?.score),
           status: nullableString(entryObject.status),
           startedOn: nullableString(entryObject.startDate),

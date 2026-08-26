@@ -55,8 +55,26 @@ export async function bookmarkJob(
   return result === true;
 }
 
-/** Updates an existing bookmark from a caller-provided natural capture. */
-export const updateWatchlistFromCapture = bookmarkJob;
+/** Updates an existing bookmark from a naturally captured, normalized job. */
+export async function updateWatchlistFromCapture(
+  capture: Capture | null | undefined,
+  latestSnapshotId?: number | null,
+): Promise<boolean> {
+  const jobId = normalizeJobId(capture?.job?.id);
+  if (!jobId || !isJobInsights(capture)) return false;
+  const result = await runTransaction(
+    DATABASE_STORES.watchlist,
+    'readwrite',
+    async (transaction) => {
+      const store = transaction.objectStore(DATABASE_STORES.watchlist);
+      const previous = await requestResult<WatchlistRecord | undefined>(store.get(jobId));
+      if (!previous) return false;
+      const record = captureRecord(capture, latestSnapshotId, Date.now(), previous);
+      return record ? requestResult(store.put(record)).then(() => true) : false;
+    },
+  );
+  return result === true;
+}
 
 export async function getWatchlistedJob(
   jobId: string | null | undefined,

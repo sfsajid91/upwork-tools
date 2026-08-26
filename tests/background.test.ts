@@ -294,7 +294,7 @@ describe('background runtime messaging', () => {
     gate.resolve();
     await completed;
 
-    expect(values.get('job-insights:101')).toEqual(payload);
+    expect(values.has('job-insights:101')).toBe(false);
   });
 
   test('STORE received after navigation persists for the fresh generation', async () => {
@@ -309,16 +309,18 @@ describe('background runtime messaging', () => {
     expect(values.get('job-insights:102')).toEqual(payload);
   });
 
-  test('navigation preserves the prior session snapshot until identity validation', async () => {
+  test('navigation clears the prior session snapshot before restoring state', async () => {
     values.set('job-insights:103', insights);
+    values.set('job-insights:103:metadata', { jobId: 'job-7', capturedAt: Date.now() });
     updatedListener?.(103, {
       status: 'loading',
       url: 'https://www.upwork.com/ab/details/job-103',
     });
     await Promise.all([...pendingStorageOperations]);
-    expect(values.get('job-insights:103')).toEqual(insights);
+    expect(values.has('job-insights:103')).toBe(false);
+    expect(values.has('job-insights:103:metadata')).toBe(false);
   });
-  test('loading the same job restores its badge from the session snapshot', async () => {
+  test('loading a job clears its session snapshot before restoring its badge', async () => {
     const tabId = 104;
     const url = 'https://www.upwork.com/ab/details/job-7';
     const badgeApplied = Promise.withResolvers<void>();
@@ -330,7 +332,9 @@ describe('background runtime messaging', () => {
     updatedListener?.(tabId, { status: 'loading', url });
     await badgeApplied.promise;
 
-    expect(badgeTextCalls.at(-1)).toEqual({ tabId, text: '4' });
+    expect(values.has(`job-insights:${tabId}`)).toBe(false);
+    expect(values.has(`job-insights:${tabId}:metadata`)).toBe(false);
+    expect(badgeTextCalls.at(-1)).toEqual({ tabId, text: '' });
   });
   test('STORE persists the snapshot, updates the badge, and completes via callback', async () => {
     let response: unknown = 'not-called';

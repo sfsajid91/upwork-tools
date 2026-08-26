@@ -149,10 +149,9 @@ the tab ID:
 - `job-insights:{tabId}` — latest normalized `JobInsights` snapshot;
 - `job-insights:{tabId}:metadata` — normalized job ID and capture timestamp.
 
-Session data is not a cross-tab cache. The worker rejects data that does not
-match the active tab's current job. Tab removal deletes the tab's session keys;
-navigation generations prevent stale writes and current-job validation prevents
-stale reads.
+Session data is not a cross-tab cache. The worker clears both session keys when
+navigation starts or a tab is removed. Navigation generations prevent stale
+writes, and current-job validation prevents stale reads while a new page loads.
 
 ### IndexedDB
 

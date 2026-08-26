@@ -156,6 +156,7 @@ const {
   getWatchlistedJob,
   listWatchlistedJobs,
   removeWatchlistedJob,
+  updateWatchlistFromCapture,
 } = await import('../lib/watchlist');
 
 const capture = (id: string): JobInsights => ({
@@ -248,6 +249,24 @@ describe('watchlist persistence', () => {
     expect(await removeWatchlistedJob('~job-c')).toBe(true);
     expect(await getWatchlistedJob('job-c')).toBeNull();
     expect(await listWatchlistedJobs()).toEqual([]);
+  });
+  test('refreshes existing bookmarks without creating new ones', async () => {
+    const original = capture('job-refresh');
+    expect(await bookmarkJob(original)).toBe(true);
+
+    const updated = {
+      ...original,
+      job: { ...original.job, title: 'Updated title' },
+    };
+    expect(await updateWatchlistFromCapture(updated, 7)).toBe(true);
+    expect(await getWatchlistedJob('job-refresh')).toMatchObject({
+      jobId: 'job-refresh',
+      job: { title: 'Updated title' },
+      latestSnapshotId: 7,
+    });
+
+    expect(await updateWatchlistFromCapture(capture('not-saved'))).toBe(false);
+    expect(await getWatchlistedJob('not-saved')).toBeNull();
   });
 
   test('clearWatchlist clears bookmarks without clearing another local store', async () => {

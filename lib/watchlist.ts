@@ -1,14 +1,9 @@
 import { clearStores, DATABASE_STORES, runTransaction } from './database';
 import { isJobInsights, type JobInsights } from './insights';
+import { normalizeJobId } from './job-page';
 import type { WatchlistRecord } from './storage';
 
 type Capture = JobInsights;
-
-function normalizedJobId(value: unknown): string | null {
-  if (typeof value !== 'string') return null;
-  const jobId = value.trim();
-  return jobId.length > 0 ? jobId : null;
-}
 
 function snapshotReference(value: number | null | undefined): number | null | undefined {
   if (value === undefined) return undefined;
@@ -29,7 +24,7 @@ function captureRecord(
   previous: WatchlistRecord | null,
 ): WatchlistRecord | null {
   if (!isJobInsights(capture)) return null;
-  const jobId = normalizedJobId(capture.job.id);
+  const jobId = normalizeJobId(capture.job.id);
   if (!jobId) return null;
   const snapshotId = snapshotReference(latestSnapshotId);
   return {
@@ -45,7 +40,7 @@ export async function bookmarkJob(
   capture: Capture | null | undefined,
   latestSnapshotId?: number | null,
 ): Promise<boolean> {
-  const jobId = normalizedJobId(capture?.job?.id);
+  const jobId = normalizeJobId(capture?.job?.id);
   if (!jobId || !isJobInsights(capture)) return false;
   const result = await runTransaction(
     DATABASE_STORES.watchlist,
@@ -66,7 +61,7 @@ export const updateWatchlistFromCapture = bookmarkJob;
 export async function getWatchlistedJob(
   jobId: string | null | undefined,
 ): Promise<WatchlistRecord | null> {
-  const normalized = normalizedJobId(jobId);
+  const normalized = normalizeJobId(jobId);
   if (!normalized) return null;
   const result = await runTransaction(DATABASE_STORES.watchlist, 'readonly', (transaction) =>
     requestResult<WatchlistRecord | undefined>(
@@ -77,7 +72,7 @@ export async function getWatchlistedJob(
 }
 
 export async function removeWatchlistedJob(jobId: string | null | undefined): Promise<boolean> {
-  const normalized = normalizedJobId(jobId);
+  const normalized = normalizeJobId(jobId);
   if (!normalized) return false;
   const result = await runTransaction(DATABASE_STORES.watchlist, 'readwrite', (transaction) =>
     requestResult(transaction.objectStore(DATABASE_STORES.watchlist).delete(normalized)).then(

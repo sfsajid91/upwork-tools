@@ -1,4 +1,6 @@
 import { type QualificationDetail, summarizeQualificationMatches } from './qualification';
+import { deriveHiringWarnings } from './hiring-warnings';
+import { restrictionLabels } from './restrictions';
 
 export type ApplicationState = 'applied' | 'invited' | 'hired';
 export type JobWarning = 'position-filled' | 'already-hired' | 'already-applied' | 'client-invited';
@@ -125,45 +127,6 @@ function skillNames(value: unknown): string[] {
   });
 }
 
-function uniqueStrings(values: string[]): string[] {
-  return [...new Set(values)];
-}
-
-function labels(value: unknown): string[] {
-  if (typeof value === 'string') return value.length > 0 ? [value] : [];
-  if (!Array.isArray(value)) return [];
-  return value.flatMap((item) => {
-    if (typeof item === 'string') return item.length > 0 ? [item] : [];
-    return [
-      firstString(
-        valueAt(item, 'name'),
-        valueAt(item, 'label'),
-        valueAt(item, 'value'),
-        valueAt(item, 'country'),
-        valueAt(item, 'state'),
-      ),
-    ].filter((label): label is string => label !== null);
-  });
-}
-
-function restrictionLabels(qualifications: RecordValue | null): string[] {
-  if (!qualifications) return [];
-  const restrictions = [
-    ...labels(qualifications.countries).map((value) => value),
-    ...labels(qualifications.states).map((value) => value),
-    ...labels(qualifications.timezones).map((value) => value),
-  ];
-  const minimumJobSuccessScore = nullableNumber(qualifications.minJobSuccessScore);
-  if (minimumJobSuccessScore !== null && minimumJobSuccessScore > 0) {
-    restrictions.push(`${minimumJobSuccessScore}%+ JSS`);
-  }
-  const englishSkill = nullableString(qualifications.prefEnglishSkill);
-  if (englishSkill && englishSkill !== 'ANY') restrictions.push(`English: ${englishSkill}`);
-  if (qualifications.shouldHavePortfolio === true) restrictions.push('Portfolio required');
-  if (qualifications.readyToStartToday === true) restrictions.push('Ready to start today');
-  return uniqueStrings(restrictions);
-}
-
 function historyTimestamp(value: string | null): number {
   if (!value) return 0;
   const parsed = Date.parse(value);
@@ -258,18 +221,6 @@ function applicationState(freelancerInfo: RecordValue | null): ApplicationState 
   return null;
 }
 
-function warningLabels(
-  status: string | null,
-  currentApplicationState: ApplicationState | null,
-): JobWarning[] {
-  const warnings: JobWarning[] = [];
-  if (status?.toUpperCase() === 'FILLED') warnings.push('position-filled');
-  if (currentApplicationState === 'hired') warnings.push('already-hired');
-  if (currentApplicationState === 'applied') warnings.push('already-applied');
-  if (currentApplicationState === 'invited') warnings.push('client-invited');
-  return warnings;
-}
-
 export function normalizeJobInsights(payload: unknown): JobInsights | null {
   const payloadObject = record(payload);
   const data = record(payloadObject?.data);
@@ -309,9 +260,22 @@ export function normalizeJobInsights(payload: unknown): JobInsights | null {
   const currentStatus = nullableString(job?.status);
   const exactProposals = nullableNumber(activity?.totalApplicants);
   const interviewed = nullableNumber(activity?.totalInvitedToInterview);
+  const totalHired = nullableNumber(activity?.totalHired);
+  const positionsToHire = nullableNumber(activity?.numberOfPositionsToHire);
   const clientAverageHourlyRate = firstNumber(hourlyRate?.amount);
   const freelancerHourlyRate = nullableNumber(valueAt(freelancerInfo, 'hourlyRate', 'amount'));
   const currentApplicationState = applicationState(freelancerInfo);
+  const hiringWarnings = deriveHiringWarnings({
+    status: currentStatus,
+    totalHired,
+    positionsToHire,
+    applicationState: currentApplicationState,
+  });
+  const warnings: JobWarning[] = [];
+  if (hiringWarnings.positionFilled) warnings.push('position-filled');
+  if (hiringWarnings.currentUserHired) warnings.push('already-hired');
+  if (hiringWarnings.currentUserApplied) warnings.push('already-applied');
+  if (hiringWarnings.currentUserInvited) warnings.push('client-invited');
   const history = {
     recentJobs,
     relatedJobs: relatedHistory(currentJobId, currentTitle, recentJobs),
@@ -346,8 +310,8 @@ export function normalizeJobInsights(payload: unknown): JobInsights | null {
         exactProposals !== null && exactProposals > 0 && interviewed !== null
           ? (interviewed / exactProposals) * 100
           : null,
-      totalHired: nullableNumber(activity?.totalHired),
-      positionsToHire: nullableNumber(activity?.numberOfPositionsToHire),
+      totalHired,
+      positionsToHire,
       lastBuyerActivity: nullableString(activity?.lastBuyerActivity),
     },
     client: {
@@ -388,7 +352,7 @@ export function normalizeJobInsights(payload: unknown): JobInsights | null {
       applicationState: currentApplicationState,
     },
     history,
-    warnings: warningLabels(currentStatus, currentApplicationState),
+    warnings,
   };
 }
 

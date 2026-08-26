@@ -282,8 +282,9 @@ describe('background runtime messaging', () => {
 
   test('stale STORE work is discarded after navigation starts', async () => {
     const gate = deferred();
+    const payload = { ...insights, job: { ...insights.job, id: 'job-101' } };
     nextSetGate = gate;
-    const completed = store(101, 'https://www.upwork.com/ab/details/job-101');
+    const completed = store(101, 'https://www.upwork.com/ab/details/job-101', payload);
 
     await gate.started;
     updatedListener?.(101, {
@@ -293,18 +294,19 @@ describe('background runtime messaging', () => {
     gate.resolve();
     await completed;
 
-    expect(values.get('job-insights:101')).toEqual(insights);
+    expect(values.get('job-insights:101')).toEqual(payload);
   });
 
   test('STORE received after navigation persists for the fresh generation', async () => {
+    const payload = { ...insights, job: { ...insights.job, id: 'job-102' } };
     updatedListener?.(102, {
       status: 'loading',
       url: 'https://www.upwork.com/ab/details/job-102',
     });
 
-    await store(102, 'https://www.upwork.com/ab/details/job-102');
+    await store(102, 'https://www.upwork.com/ab/details/job-102', payload);
 
-    expect(values.get('job-insights:102')).toEqual(insights);
+    expect(values.get('job-insights:102')).toEqual(payload);
   });
 
   test('navigation preserves the prior session snapshot until identity validation', async () => {
@@ -349,6 +351,40 @@ describe('background runtime messaging', () => {
     expect(badgeTextCalls.at(-1)).toEqual({ tabId: 7, text: '4' });
     expect(badgeBackgroundCalls.at(-1)).toEqual({ tabId: 7, color: '#152d4f' });
     expect(response).toBe(undefined);
+  });
+  test('skips identity-conflicting captures and badge updates', async () => {
+    const payload = { ...insights, job: { ...insights.job, id: 'job-a' } };
+    const completed = store(31, 'https://www.upwork.com/ab/details/job-b', payload);
+
+    await completed;
+
+    expect(values.has('job-insights:31')).toBe(false);
+    expect(values.has('job-insights:31:metadata')).toBe(false);
+    expect(badgeTextCalls).toEqual([]);
+  });
+
+  test('keeps a null-ID capture readable for the current tab', async () => {
+    const payload = { ...insights, job: { ...insights.job, id: null } };
+    const url = 'https://www.upwork.com/ab/details/job-32';
+
+    await store(32, url, payload);
+
+    expect(values.get('job-insights:32')).toEqual(payload);
+    const metadata = values.get('job-insights:32:metadata') as
+      | { jobId?: unknown; capturedAt?: unknown }
+      | undefined;
+    expect(metadata?.jobId).toBe('job-32');
+    expect(typeof metadata?.capturedAt).toBe('number');
+
+    let response: unknown;
+    const completed = Promise.withResolvers<void>();
+    listener?.({ type: GET_JOB_INSIGHTS, tabId: 32 }, {}, (value) => {
+      response = value;
+      completed.resolve();
+    });
+    await completed.promise;
+
+    expect(response).toEqual(payload);
   });
 
   test('GET returns a capture whose public ID matches the tab URL', async () => {

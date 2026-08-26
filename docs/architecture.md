@@ -206,6 +206,12 @@ For a ready job with an ID, the popup also requests `GET_JOB_HISTORY`. The worke
 returns applicant history summary, proposal velocity, and client pay profile.
 History is optional: if it cannot be read, the popup keeps the current session
 snapshot and explains that it is session-only.
+After the snapshot and optional history are read, the popup loads validated
+`userProfile` and `portfolio` values from `browser.storage.local`. It derives a
+nullable skill-match summary and bounded portfolio matches locally. A captured
+Upwork hourly rate remains primary; the configured fallback is used only when the
+capture has no freelancer rate. Settings failures leave the core snapshot
+available without personalization.
 
 `InsightsView.tsx` renders the product hierarchy:
 
@@ -215,9 +221,10 @@ snapshot and explains that it is session-only.
 4. applicant history when multiple captures support a trend;
 5. client track record;
 6. client pay profile when history is available;
-7. qualification details and personal rate context;
-8. expandable related previous jobs and client hiring history;
-9. posting date, budget, and local-capture provenance.
+7. qualification details, profile skill match, and personal rate context;
+8. matching portfolio work when deterministic overlap exists;
+9. expandable related previous jobs and client hiring history;
+10. posting date, budget, and local-capture provenance.
 
 The formatter layer (`lib/format.ts`) turns nullable values into stable display
 strings such as `Not available`; it does not fill missing data.
@@ -233,6 +240,8 @@ values, then exposes:
 - explicit success and error states when browser storage is unavailable.
 
 The options page does not send profile or portfolio data to Upwork or a server.
+The popup consumes these local values only for deterministic display; it never
+sends profile, portfolio, or matching data to Upwork or a server.
 
 ## Failure and security boundaries
 

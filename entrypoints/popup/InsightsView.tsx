@@ -12,6 +12,8 @@ import {
 } from '../../lib/format';
 import type { ClientHistoryEntry, JobInsights, JobWarning } from '../../lib/insights';
 import type { JobHistoryResponse } from '../../lib/protocol';
+import type { PortfolioMatch } from '../../lib/portfolio-match';
+import type { SkillMatchSummary } from '../../lib/skill-match';
 import type { QualificationDetail } from '../../lib/qualification';
 import type { ThemeMode } from '../../lib/theme';
 
@@ -287,6 +289,16 @@ export type WatchlistStatus =
   | { kind: 'saved' }
   | { kind: 'not-saved' }
   | { kind: 'unavailable'; reason: 'missing-id' | 'storage' };
+export interface PopupPersonalization {
+  fallbackHourlyRate: number | null;
+  skillMatch: SkillMatchSummary | null;
+  portfolioMatches: PortfolioMatch[];
+}
+const EMPTY_POPUP_PERSONALIZATION: PopupPersonalization = {
+  fallbackHourlyRate: null,
+  skillMatch: null,
+  portfolioMatches: [],
+};
 
 const WARNING_COPY: Record<JobWarning, string> = {
   'position-filled': 'Position already filled',
@@ -502,6 +514,43 @@ function QualificationDetails({ details }: { details: QualificationDetail[] }) {
   );
 }
 
+function PortfolioMatches({ matches }: { matches: PortfolioMatch[] }) {
+  if (matches.length === 0) return null;
+
+  return (
+    <details className="overflow-hidden rounded-xl border border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60">
+      <summary className="flex cursor-pointer list-none items-center justify-between px-2.5 py-2 text-xs font-semibold text-slate-700 select-none hover:bg-slate-100/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-slate-200 dark:hover:bg-slate-700/60">
+        <span>Matching portfolio work</span>
+        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+          {matches.length}
+        </span>
+      </summary>
+      <ul className="m-0 list-none border-t border-slate-100 bg-white/70 px-2.5 py-1 dark:border-slate-800 dark:bg-slate-900/50">
+        {matches.map((match) => {
+          const overlapLabels = [
+            ...match.titleOverlap.map((label) => `Title: ${label}`),
+            ...match.skillOverlap.map((label) => `Skill: ${label}`),
+            ...match.tagOverlap.map((label) => `Tag: ${label}`),
+          ];
+          return (
+            <li
+              key={`${match.title}:${match.url ?? ''}:${match.titleOverlap.join(',')}:${match.skillOverlap.join(',')}:${match.tagOverlap.join(',')}`}
+              className="border-b border-slate-100 py-2 last:border-b-0 dark:border-slate-800"
+            >
+              <span className="block text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+                {match.title}
+              </span>
+              <span className="mt-0.5 block text-[10.5px] text-slate-500 dark:text-slate-400">
+                {overlapLabels.join(' · ')}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </details>
+  );
+}
+
 function HistoryDetails({
   title,
   jobs,
@@ -688,6 +737,7 @@ export function LoadingState({
 export function AvailableState({
   insights,
   history,
+  personalization = EMPTY_POPUP_PERSONALIZATION,
   historyFallback = false,
   watchlistStatus = { kind: 'not-saved' },
   watchlistBusy = false,
@@ -697,6 +747,7 @@ export function AvailableState({
 }: {
   insights: JobInsights;
   history?: JobHistoryResponse | null;
+  personalization?: PopupPersonalization;
   historyFallback?: boolean;
   watchlistStatus?: WatchlistStatus;
   watchlistBusy?: boolean;
@@ -705,6 +756,10 @@ export function AvailableState({
   onToggleTheme?: () => void;
 }) {
   const { job, activity, client, fit, history: clientHistory } = insights;
+  const effectiveFreelancerHourlyRate =
+    fit.freelancerHourlyRate ?? personalization.fallbackHourlyRate;
+  const usesFallbackHourlyRate =
+    fit.freelancerHourlyRate === null && personalization.fallbackHourlyRate !== null;
   const jobId = typeof job.id === 'string' && job.id.trim().length > 0 ? job.id.trim() : null;
   const effectiveWatchlistStatus =
     jobId === null && watchlistStatus.kind === 'not-saved'
@@ -1114,6 +1169,19 @@ export function AvailableState({
             </span>
           </div>
           <QualificationDetails details={fit.qualificationDetails ?? []} />
+          {personalization.skillMatch && (
+            <div className="rounded-xl border border-slate-100 bg-slate-50 p-2.5 dark:border-slate-800 dark:bg-slate-800/60">
+              <MetricCell
+                label="Profile skill match"
+                value={`${personalization.skillMatch.matched}/${personalization.skillMatch.total}`}
+              />
+              {personalization.skillMatch.matchedSkills.length > 0 && (
+                <p className="mt-1 text-[10.5px] text-slate-500 dark:text-slate-400">
+                  Matched: {personalization.skillMatch.matchedSkills.join(' · ')}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Rate Comparison Box */}
           <div className="rounded-xl border border-slate-100 bg-slate-50 p-2.5 dark:border-slate-800 dark:bg-slate-800/60">
@@ -1123,8 +1191,13 @@ export function AvailableState({
                   Your Hourly Rate
                 </span>
                 <span className="text-xs font-bold tabular-nums text-slate-900 dark:text-slate-100">
-                  {formatMoney(fit.freelancerHourlyRate, 'USD')}
+                  {formatMoney(effectiveFreelancerHourlyRate, 'USD')}
                 </span>
+                {usesFallbackHourlyRate && (
+                  <span className="mt-0.5 block text-[10px] text-slate-500 dark:text-slate-400">
+                    Local fallback
+                  </span>
+                )}
               </div>
               <div>
                 <span className="block text-[10.5px] font-medium text-slate-500 dark:text-slate-400">
@@ -1147,6 +1220,7 @@ export function AvailableState({
               </div>
             )}
           </div>
+          <PortfolioMatches matches={personalization.portfolioMatches} />
         </div>
       </section>
 

@@ -120,6 +120,36 @@ describe('normalizeJobInsights', () => {
     expect(insights?.history.relatedJobs.length).toBe(1);
     expect(insights?.job.restrictions).toEqual(['90%+ JSS', 'English: FLUENT']);
   });
+  test('normalizes expanded restrictions and count-based hiring warnings', () => {
+    const insights = normalizeJobInsights(
+      payload({
+        opening: {
+          job: {
+            status: 'OPEN',
+            info: { id: 'job-open', title: 'Restricted open job' },
+            clientActivity: {
+              totalHired: 2,
+              numberOfPositionsToHire: 2,
+            },
+          },
+          qualifications: {
+            locations: [{ label: 'New York' }],
+            minOdeskHours: 100,
+            earnings: { amount: 1_000, currencyCode: 'USD' },
+            onSiteType: 'REQUIRED',
+          },
+        },
+      }),
+    );
+
+    expect(insights?.job.restrictions).toEqual([
+      'New York',
+      '100+ hours',
+      'USD 1000+ earnings',
+      'On-site: REQUIRED',
+    ]);
+    expect(insights?.warnings).toEqual(['position-filled', 'already-applied']);
+  });
 
   test('excludes the current job and weak title matches from related history', () => {
     const insights = normalizeJobInsights(

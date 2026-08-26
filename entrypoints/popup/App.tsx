@@ -3,6 +3,7 @@ import { browser } from 'wxt/browser';
 import type { JobInsights } from '../../lib/insights';
 import { isJobInsights } from '../../lib/insights';
 import { normalizeJobId } from '../../lib/job-page';
+import { rankPortfolioMatches } from '../../lib/portfolio-match';
 import {
   GET_JOB_HISTORY,
   GET_JOB_INSIGHTS,
@@ -10,9 +11,17 @@ import {
   type JobHistoryResponse,
   type RuntimeMessage,
 } from '../../lib/protocol';
+import { getPortfolio, getUserProfile } from '../../lib/settings';
+import { matchSkills } from '../../lib/skill-match';
 import { useTheme } from '../../lib/theme';
 import { bookmarkWatchlist, getWatchlistJob, removeWatchlist } from '../../lib/watchlist';
-import { AvailableState, EmptyState, LoadingState, type WatchlistStatus } from './InsightsView';
+import {
+  AvailableState,
+  EmptyState,
+  LoadingState,
+  type PopupPersonalization,
+  type WatchlistStatus,
+} from './InsightsView';
 
 type ViewState =
   | { kind: 'loading' }
@@ -22,6 +31,7 @@ type ViewState =
       kind: 'ready';
       insights: JobInsights;
       history: JobHistoryResponse | null;
+      personalization: PopupPersonalization;
       historyFallback?: boolean;
       watchlistStatus: WatchlistStatus;
       watchlistBusy?: boolean;
@@ -36,6 +46,33 @@ type PopupReadDependencies = {
 
 const READ_ERROR_MESSAGE =
   'The extension could not read this tab. Reopen the popup after the job details finish loading.';
+const EMPTY_PERSONALIZATION: PopupPersonalization = {
+  fallbackHourlyRate: null,
+  skillMatch: null,
+  portfolioMatches: [],
+};
+
+export async function readPopupPersonalization(
+  insights: JobInsights,
+): Promise<PopupPersonalization> {
+  try {
+    const [profile, portfolio] = await Promise.all([getUserProfile(), getPortfolio()]);
+    return {
+      fallbackHourlyRate: profile?.hourlyRate ?? null,
+      skillMatch: matchSkills({
+        profileSkills: profile?.skills ?? null,
+        ontologySkills: insights.job.skills,
+        additionalSkills: [],
+      }),
+      portfolioMatches: rankPortfolioMatches(portfolio, {
+        title: insights.job.title,
+        skills: insights.job.skills,
+      }),
+    };
+  } catch {
+    return EMPTY_PERSONALIZATION;
+  }
+}
 function normalizedJobId(insights: JobInsights): string | null {
   return normalizeJobId(insights.job.id);
 }
@@ -70,10 +107,12 @@ export async function readPopupInsights({
     if (!isJobInsights(insights)) return { kind: 'empty' };
 
     const jobId = normalizedJobId(insights) ?? '';
+    const personalization = await readPopupPersonalization(insights);
     const sessionReady = {
       kind: 'ready' as const,
       insights,
       history: null,
+      personalization,
       watchlistStatus: { kind: 'unavailable' as const, reason: 'storage' as const },
     };
     onInsightsReady?.(sessionReady);
@@ -199,6 +238,7 @@ function App() {
       {state.kind === 'ready' && (
         <AvailableState
           insights={state.insights}
+          personalization={state.personalization}
           history={state.history}
           historyFallback={state.historyFallback}
           watchlistStatus={state.watchlistStatus}

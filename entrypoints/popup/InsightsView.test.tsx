@@ -136,6 +136,41 @@ describe('InsightsView components', () => {
     expect(html.includes('Matched')).toBe(true);
     expect(html.includes('Not matched')).toBe(true);
   });
+  test('renders local personalization and fallback rate context', () => {
+    const insights = normalizeJobInsights(samplePayload());
+    expect(insights).not.toBeNull();
+    if (!insights) throw new Error('insights should not be null');
+
+    const html = renderToString(
+      <AvailableState
+        insights={{
+          ...insights,
+          fit: { ...insights.fit, freelancerHourlyRate: null, rateContext: null },
+        }}
+        personalization={{
+          fallbackHourlyRate: 42,
+          skillMatch: { matched: 1, total: 2, matchedSkills: ['React'] },
+          portfolioMatches: [
+            {
+              title: 'Cloudflare project',
+              skills: ['TypeScript'],
+              tags: [],
+              url: null,
+              titleOverlap: ['cloudflare'],
+              skillOverlap: ['typescript'],
+              tagOverlap: [],
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(html.includes('Profile skill match')).toBe(true);
+    expect(html.includes('Matched:') && html.includes('React')).toBe(true);
+    expect(html.includes('Local fallback')).toBe(true);
+    expect(html.includes('Matching portfolio work')).toBe(true);
+    expect(html.includes('Title: cloudflare')).toBe(true);
+  });
 
   test('renders unavailable qualification summary when matches are absent', () => {
     const payload = samplePayload();

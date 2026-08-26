@@ -240,6 +240,15 @@ describe('watchlist persistence', () => {
     expect(await getWatchlistedJob('job-a')).toBeNull();
     expect((await listWatchlistedJobs()).map(({ jobId }) => jobId)).toEqual(['job-b']);
   });
+  test('normalizes tilde-prefixed public IDs for every operation', async () => {
+    expect(await bookmarkJob(capture('~job-c'))).toBe(true);
+    expect((await listWatchlistedJobs()).map(({ jobId }) => jobId)).toEqual(['job-c']);
+    expect((await getWatchlistedJob('~job-c'))?.job.id).toBe('job-c');
+
+    expect(await removeWatchlistedJob('~job-c')).toBe(true);
+    expect(await getWatchlistedJob('job-c')).toBeNull();
+    expect(await listWatchlistedJobs()).toEqual([]);
+  });
 
   test('clearWatchlist clears bookmarks without clearing another local store', async () => {
     const retainedJob: JobRecord = {

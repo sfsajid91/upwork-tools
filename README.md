@@ -43,8 +43,7 @@ popup—without polling, duplicate requests, page overlays, or a backend.
 ### Local workflow
 
 - Save a job to a local watchlist
-- Track applicant snapshots over time, including change and proposal velocity when enough observations exist
-- Store a local profile and portfolio for deterministic matching support
+- Use local profile and portfolio data for deterministic skill and portfolio matching.
 - Switch between system, light, and dark themes
 - Clear locally stored job, history, application, and watchlist data from Settings
 

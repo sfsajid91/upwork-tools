@@ -102,7 +102,6 @@ async function persistJobInsights(
   generation: number,
   insights: JobInsights,
   capturedAt: number,
-  persistLatestCapture = true,
 ): Promise<void> {
   const jobId = normalizeJobId(insights.job.id);
   if (!jobId || state.removed || state.generation !== generation) return;
@@ -127,12 +126,10 @@ async function persistJobInsights(
     // IndexedDB failures must not affect session-only capture.
   }
   if (state.removed || state.generation !== generation) return;
-  if (persistLatestCapture && !state.removed && state.generation === generation) {
-    try {
-      await putLatestJobCapture({ jobId, capturedAt, insights });
-    } catch {
-      // IndexedDB failures must not affect session-only capture.
-    }
+  try {
+    await putLatestJobCapture({ jobId, capturedAt, insights });
+  } catch {
+    // IndexedDB failures must not affect session-only capture.
   }
 
   try {
@@ -184,11 +181,12 @@ async function readVerifiedSession(
     if (
       !isJobInsights(payload) ||
       !isValidCaptureMetadata(metadata) ||
-      metadata.jobId !== currentJobId ||
-      normalizeJobId(payload.job.id) !== currentJobId
+      metadata.jobId !== currentJobId
     ) {
       return null;
     }
+    const payloadJobId = normalizeJobId(payload.job.id);
+    if (payloadJobId !== null && payloadJobId !== currentJobId) return null;
     return payload;
   } catch {
     return null;
@@ -343,9 +341,9 @@ export default defineBackground(() => {
           payloadJobId !== null && currentJobId !== null && payloadJobId !== currentJobId;
         try {
           await enqueueTabMutation(tabId, async () => {
-            if (state.removed || state.generation !== generation) return;
-            const metadata =
-              payloadJobId && !identityConflict ? { jobId: payloadJobId, capturedAt } : undefined;
+            if (state.removed || state.generation !== generation || identityConflict) return;
+            const metadataJobId = payloadJobId ?? currentJobId;
+            const metadata = metadataJobId ? { jobId: metadataJobId, capturedAt } : undefined;
             try {
               await browser.storage.session.set({
                 [storageKey(tabId)]: message.payload,
@@ -354,13 +352,7 @@ export default defineBackground(() => {
               if (!metadata) await browser.storage.session.remove(metadataKey(tabId));
               if (state.removed || state.generation !== generation) return;
               if (!message.replay) {
-                await persistJobInsights(
-                  state,
-                  generation,
-                  message.payload,
-                  capturedAt,
-                  !identityConflict,
-                );
+                await persistJobInsights(state, generation, message.payload, capturedAt);
               }
               await setBadge(
                 tabId,

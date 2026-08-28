@@ -105,7 +105,7 @@ export function rankPortfolioMatches(
 
   const jobTitle = tokens(job.title);
   const jobSkills = values(job.skills);
-  const jobTags = values(job.tags);
+  const jobTags = new Set([...jobTitle, ...jobSkills, ...values(job.tags)]);
   return entries
     .map((entry, index) => {
       if (!entry || typeof entry.title !== 'string') return null;

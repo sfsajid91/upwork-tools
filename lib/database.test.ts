@@ -8,6 +8,7 @@ import {
   getJob,
   getLatestJobCapture,
   getWatchlist,
+  listApplications,
   listJobSnapshots,
   mergeApplication,
   openDatabase,
@@ -431,6 +432,15 @@ describe('database clear APIs', () => {
       ),
     ).toBe(false);
     expect((await getApplication('job-1'))?.state).toBe('applied');
+    await putApplication({
+      jobId: 'job-2',
+      state: 'invited',
+      viewedAt: 5,
+      appliedAt: null,
+      interviewedAt: null,
+      hiredAt: null,
+    });
+    expect((await listApplications()).map(({ jobId }) => jobId).sort()).toEqual(['job-1', 'job-2']);
   });
 
   test('degrades safely when IndexedDB is unavailable', async () => {

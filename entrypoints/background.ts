@@ -2,12 +2,14 @@ import { deriveApplicantMetrics } from '../lib/applicant-metrics';
 import {
   appendJobSnapshotIfChanged,
   getLatestJobCapture,
+  listApplications,
   listJobSnapshots,
   mergeApplication,
   openDatabase,
   putJob,
   putLatestJobCapture,
 } from '../lib/database';
+import { aggregateConversionStats } from '../lib/conversion';
 import { summarizeJobSnapshots } from '../lib/history';
 import { isJobInsights, type JobInsights } from '../lib/insights';
 import { jobIdFromPageUrl, normalizeJobId, isJobPage } from '../lib/job-page';
@@ -247,8 +249,15 @@ async function readJobHistory(tabId: number, jobId: string): Promise<JobHistoryR
       client: insights?.client,
       history: insights?.history.recentJobs,
     });
+    const conversion = aggregateConversionStats(await listApplications());
     if (!summary) {
-      return { jobId: normalizedJobId, summary: null, velocity: null, payProfile };
+      return {
+        jobId: normalizedJobId,
+        summary: null,
+        velocity: null,
+        payProfile,
+        conversion,
+      };
     }
     const metrics = deriveApplicantMetrics(summary.snapshots);
     const firstSeenApplicants =
@@ -273,6 +282,7 @@ async function readJobHistory(tabId: number, jobId: string): Promise<JobHistoryR
         summary.latest?.capturedAt,
       ),
       payProfile,
+      conversion,
     };
   } catch {
     return null;

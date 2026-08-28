@@ -516,6 +516,14 @@ export async function getApplication(
     ),
   ).then((record) => record ?? null);
 }
+export async function listApplications(): Promise<ApplicationRecord[]> {
+  const records = await runTransaction(DATABASE_STORES.applications, 'readonly', (transaction) =>
+    requestResult<ApplicationRecord[]>(
+      transaction.objectStore(DATABASE_STORES.applications).getAll(),
+    ),
+  );
+  return records ?? [];
+}
 
 export async function putWatchlist(record: WatchlistRecord | null | undefined): Promise<boolean> {
   if (!hasJobId(record)) return false;

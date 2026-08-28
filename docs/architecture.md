@@ -47,8 +47,8 @@ flowchart LR
 | MAIN world | `entrypoints/interceptor.content.ts` | Install response inspection at `document_start` on Upwork pages. |
 | Isolated content | `entrypoints/content.ts` | Validate same-origin page events, forward captures, and answer replay requests. |
 | Service worker | `entrypoints/background.ts` | Validate messages, serialize tab mutations, persist captures, serve popup reads, and update the action badge. |
-| Popup | `entrypoints/popup/` | Read the active tab and render the insight, history, watchlist, warning, and fit views. |
-| Options | `entrypoints/options/` | Edit the local profile and portfolio and clear IndexedDB job data. |
+| Popup | `entrypoints/popup/` | Read the active tab and render insights, history, conversion, watchlist, warnings, and fit views. |
+| Options | `entrypoints/options/` | Edit the local profile and portfolio, browse/remove the watchlist, and clear IndexedDB job data. |
 
 `wxt.config.ts` defines the React module, Manifest V3 metadata, `storage`
 permission, Upwork host permissions, and the Chromium 111 minimum version. WXT
@@ -202,9 +202,11 @@ key, then persists the validated mode in extension storage.
 - `ready` when a normalized snapshot is available.
 
 For a ready job with an ID, the popup also requests `GET_JOB_HISTORY`. The worker
-returns applicant history summary, proposal velocity, and client pay profile.
+returns applicant history summary, proposal velocity, client pay profile, and
+conversion stats aggregated from all locally observed application records.
 History is optional: if it cannot be read, the popup keeps the current session
 snapshot and explains that it is session-only.
+
 After the snapshot and optional history are read, the popup loads validated
 `userProfile` and `portfolio` values from `browser.storage.local`. It derives a
 nullable skill-match summary and bounded portfolio matches locally. A captured
@@ -218,23 +220,24 @@ available without personalization.
 2. warnings and explicit restrictions;
 3. Exact Proposals hero metric with competition counters and interview rate;
 4. applicant history when multiple captures support a trend;
-5. client track record;
-6. client pay profile when history is available;
-7. qualification details, profile skill match, and personal rate context;
-8. matching portfolio work when deterministic overlap exists;
-9. expandable related previous jobs and client hiring history;
-10. posting date, budget, and local-capture provenance.
-
+5. application outcomes with explicit sample sizes;
+6. client track record;
+7. client pay profile when history is available;
+8. qualification details, profile skill match, and personal rate context;
+9. matching portfolio work when deterministic overlap exists;
+10. expandable related previous jobs and client hiring history;
+11. posting date, budget, and local-capture provenance.
 The formatter layer (`lib/format.ts`) turns nullable values into stable display
 strings such as `Not available`; it does not fill missing data.
 
 ## Options flow
 
 `entrypoints/options/App.tsx` reads and validates local profile and portfolio
-values, then exposes:
+values and loads the locally saved watchlist collection. It exposes:
 
 - profile skills and fallback hourly rate;
 - portfolio entry create, edit, and remove operations;
+- saved-job titles, IDs, saved dates, and removal;
 - clear local IndexedDB job data with confirmation;
 - explicit success and error states when browser storage is unavailable.
 

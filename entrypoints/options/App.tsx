@@ -3,7 +3,8 @@ import { browser } from 'wxt/browser';
 import { clearAllLocalData } from '../../lib/database';
 import { createPortfolio, removePortfolio, updatePortfolio } from '../../lib/portfolio';
 import { isPortfolioEntry, isUserProfile, setUserProfile } from '../../lib/settings';
-import type { PortfolioEntry, UserProfile } from '../../lib/storage';
+import { listWatchlistedJobs, removeWatchlistedJob } from '../../lib/watchlist';
+import type { PortfolioEntry, UserProfile, WatchlistRecord } from '../../lib/storage';
 
 type Status = { tone: 'success' | 'error'; message: string } | null;
 type PortfolioDraft = { title: string; skills: string; tags: string; url: string };
@@ -114,12 +115,15 @@ function OptionsApp() {
     preferences: {},
   });
   const [portfolio, setPortfolio] = useState<PortfolioEntry[]>([]);
+  const [watchlist, setWatchlist] = useState<WatchlistRecord[]>([]);
   const [portfolioDraft, setPortfolioDraft] = useState<PortfolioDraft>(EMPTY_DRAFT);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [profileStatus, setProfileStatus] = useState<Status>(null);
   const [profileSaving, setProfileSaving] = useState(false);
   const [portfolioStatus, setPortfolioStatus] = useState<Status>(null);
   const [portfolioSaving, setPortfolioSaving] = useState(false);
+  const [watchlistStatus, setWatchlistStatus] = useState<Status>(null);
+  const [watchlistRemoving, setWatchlistRemoving] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [clearStatus, setClearStatus] = useState<Status>(null);
@@ -139,6 +143,7 @@ function OptionsApp() {
           );
         }
         setPortfolio(storedPortfolio);
+        setWatchlist(await listWatchlistedJobs());
       } catch {
         if (!cancelled) {
           setLoadFailed(true);
@@ -255,6 +260,29 @@ function OptionsApp() {
     }
   }
 
+  async function removeWatchlistJob(jobId: string) {
+    if (watchlistRemoving) return;
+    setWatchlistRemoving(true);
+    setWatchlistStatus(null);
+    try {
+      if (!(await removeWatchlistedJob(jobId))) {
+        setWatchlistStatus({
+          tone: 'error',
+          message: 'Local storage could not remove this saved job. Try again.',
+        });
+        return;
+      }
+      setWatchlist((current) => current.filter((entry) => entry.jobId !== jobId));
+      setWatchlistStatus({ tone: 'success', message: 'Saved job removed locally.' });
+    } catch {
+      setWatchlistStatus({
+        tone: 'error',
+        message: 'Local storage could not remove this saved job. Try again.',
+      });
+    } finally {
+      setWatchlistRemoving(false);
+    }
+  }
   async function clearLocalData() {
     if (clearPending || loading || loadFailed) return;
     if (
@@ -268,8 +296,10 @@ function OptionsApp() {
     setClearPending(true);
     setClearStatus(null);
     try {
+      const cleared = await clearAllLocalData();
+      if (cleared) setWatchlist([]);
       setClearStatus(
-        (await clearAllLocalData())
+        cleared
           ? { tone: 'success', message: 'Local history and job data cleared.' }
           : { tone: 'error', message: 'Local data could not be cleared. Try again.' },
       );
@@ -283,6 +313,7 @@ function OptionsApp() {
 
   const profileDisabled = loading || loadFailed || profileSaving;
   const portfolioDisabled = loading || loadFailed || portfolioSaving;
+  const watchlistDisabled = loading || loadFailed || watchlistRemoving;
   return (
     <main className="min-h-screen bg-slate-100 px-4 py-6 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100">
       <div className="mx-auto max-w-3xl space-y-5">
@@ -533,6 +564,62 @@ function OptionsApp() {
               </p>
             )}
           </form>
+        </section>
+
+        <section
+          className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+          aria-labelledby="watchlist-heading"
+        >
+          <h2 id="watchlist-heading" className="text-base font-semibold">
+            Watchlist
+          </h2>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Saved jobs stay on this device. Open a job page to review its latest insights.
+          </p>
+          {watchlist.length === 0 ? (
+            <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">No saved jobs yet.</p>
+          ) : (
+            <ul className="mt-4 space-y-2" aria-label="Saved jobs">
+              {watchlist.map((entry) => (
+                <li
+                  key={entry.jobId}
+                  className="flex items-start justify-between gap-3 rounded-md border border-slate-200 p-3 dark:border-slate-800"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">
+                      {entry.job.title ?? 'Untitled job'}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      {entry.jobId} · Saved{' '}
+                      {Number.isFinite(entry.savedAt)
+                        ? new Date(entry.savedAt).toLocaleDateString()
+                        : 'date unavailable'}
+                    </p>
+                  </div>
+                  <button
+                    className="shrink-0 rounded border border-red-300 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950 disabled:cursor-not-allowed disabled:opacity-50"
+                    type="button"
+                    onClick={() => void removeWatchlistJob(entry.jobId)}
+                    disabled={watchlistDisabled}
+                  >
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {watchlistStatus && (
+            <p
+              className={
+                watchlistStatus.tone === 'error'
+                  ? 'mt-3 text-sm text-red-700 dark:text-red-300'
+                  : 'mt-3 text-sm text-emerald-700 dark:text-emerald-300'
+              }
+              role={watchlistStatus.tone === 'error' ? 'alert' : 'status'}
+            >
+              {watchlistStatus.message}
+            </p>
+          )}
         </section>
 
         <section

@@ -171,6 +171,44 @@ describe('InsightsView components', () => {
     expect(html.includes('Matching portfolio work')).toBe(true);
     expect(html.includes('Title: cloudflare')).toBe(true);
   });
+  test('renders application conversion outcomes with denominators', () => {
+    const insights = normalizeJobInsights(samplePayload());
+    expect(insights).not.toBeNull();
+    if (!insights) throw new Error('insights should not be null');
+
+    const html = renderToString(
+      <AvailableState
+        insights={insights}
+        history={{
+          jobId: 'job-1',
+          summary: null,
+          velocity: null,
+          payProfile: {
+            totalCharges: null,
+            averageHourlyRate: null,
+            medianRecentFixedPayment: null,
+            averageRecentFixedPayment: null,
+            historicalHourlyRates: null,
+          },
+          conversion: {
+            applications: 4,
+            interviews: 2,
+            hires: 1,
+            applyToInterviewRate: 50,
+            applyToInterviewDenominator: 4,
+            interviewToHireRate: 50,
+            interviewToHireDenominator: 2,
+          },
+        }}
+      />,
+    );
+
+    expect(html.includes('Application Outcomes')).toBe(true);
+    expect(html.includes('Apply → Interview')).toBe(true);
+    expect(html.includes('n=4')).toBe(true);
+    expect(html.includes('Interview → Hire')).toBe(true);
+    expect(html.includes('n=2')).toBe(true);
+  });
 
   test('renders unavailable qualification summary when matches are absent', () => {
     const payload = samplePayload();

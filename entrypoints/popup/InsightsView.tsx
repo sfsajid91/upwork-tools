@@ -14,6 +14,7 @@ import type { ClientHistoryEntry, JobInsights, JobWarning } from '../../lib/insi
 import type { JobHistoryResponse } from '../../lib/protocol';
 import type { PortfolioMatch } from '../../lib/portfolio-match';
 import type { SkillMatchSummary } from '../../lib/skill-match';
+import type { ConversionStats } from '../../lib/conversion';
 import type { QualificationDetail } from '../../lib/qualification';
 import type { ThemeMode } from '../../lib/theme';
 
@@ -551,6 +552,41 @@ function PortfolioMatches({ matches }: { matches: PortfolioMatch[] }) {
   );
 }
 
+function ConversionSummary({ stats }: { stats: ConversionStats }) {
+  return (
+    <section
+      className="rounded-2xl border border-slate-200/90 bg-white p-3 shadow-xs dark:border-slate-800/90 dark:bg-slate-900"
+      aria-labelledby="conversion-heading"
+    >
+      <div className="mb-2 border-b border-slate-100 pb-2 dark:border-slate-800">
+        <h2
+          id="conversion-heading"
+          className="text-xs font-bold text-slate-900 dark:text-slate-100"
+        >
+          Application Outcomes
+        </h2>
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <MetricCell label="Applications" value={formatNumber(stats.applications)} />
+        <MetricCell label="Interviews" value={formatNumber(stats.interviews)} />
+        <MetricCell label="Hires" value={formatNumber(stats.hires)} />
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
+        <MetricCell
+          label="Apply → Interview"
+          value={formatPercent(stats.applyToInterviewRate)}
+          subvalue={`n=${formatNumber(stats.applyToInterviewDenominator)}`}
+        />
+        <MetricCell
+          label="Interview → Hire"
+          value={formatPercent(stats.interviewToHireRate)}
+          subvalue={`n=${formatNumber(stats.interviewToHireDenominator)}`}
+        />
+      </div>
+    </section>
+  );
+}
+
 function HistoryDetails({
   title,
   jobs,
@@ -1014,6 +1050,7 @@ export function AvailableState({
         </section>
       )}
 
+      {history && <ConversionSummary stats={history.conversion} />}
       {/* Client Track Record */}
       <section
         className="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-xs dark:border-slate-800/90 dark:bg-slate-900"

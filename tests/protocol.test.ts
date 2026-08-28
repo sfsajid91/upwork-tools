@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import type { JobInsights } from '../lib/insights';
 import {
   createPageEvent,
+  isJobHistoryResponse,
   isPageEvent,
   isPageReplayRequest,
   isRuntimeMessage,
@@ -69,6 +70,37 @@ const insights: JobInsights = {
   history: { recentJobs: [], relatedJobs: [] },
   warnings: [],
 };
+test('requires valid conversion stats in job history responses', () => {
+  const response = {
+    jobId: 'job-1',
+    summary: null,
+    velocity: null,
+    payProfile: {
+      totalCharges: null,
+      averageHourlyRate: null,
+      medianRecentFixedPayment: null,
+      averageRecentFixedPayment: null,
+      historicalHourlyRates: null,
+    },
+    conversion: {
+      applications: 2,
+      interviews: 1,
+      hires: 1,
+      applyToInterviewRate: 50,
+      applyToInterviewDenominator: 2,
+      interviewToHireRate: 100,
+      interviewToHireDenominator: 1,
+    },
+  };
+
+  expect(isJobHistoryResponse(response)).toBe(true);
+  expect(
+    isJobHistoryResponse({
+      ...response,
+      conversion: { ...response.conversion, applications: -1 },
+    }),
+  ).toBe(false);
+});
 
 describe('replay protocol', () => {
   test('accepts normal and replay page events', () => {

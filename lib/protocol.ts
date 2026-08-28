@@ -1,3 +1,4 @@
+import type { ConversionStats } from './conversion';
 import { isJobInsights, type JobInsights } from './insights';
 import type { ClientPayProfile } from './pay-profile';
 
@@ -8,12 +9,12 @@ export interface JobHistoryApplicantSummary {
   firstSeenDelta: number | null;
   recentDelta: number | null;
 }
-
 export interface JobHistoryResponse {
   jobId: string;
   summary: JobHistoryApplicantSummary | null;
   velocity: number | null;
   payProfile: ClientPayProfile;
+  conversion: ConversionStats;
 }
 export const PAGE_EVENT_SOURCE = 'upwork-tools';
 export const PAGE_EVENT_VERSION = 1;
@@ -85,6 +86,23 @@ function isClientPayProfile(value: unknown): value is ClientPayProfile {
         )))
   );
 }
+function isConversionStats(value: unknown): value is ConversionStats {
+  if (typeof value !== 'object' || value === null) return false;
+  const stats = value as Record<string, unknown>;
+  const count = (candidate: unknown): candidate is number =>
+    typeof candidate === 'number' && Number.isInteger(candidate) && candidate >= 0;
+  const rate = (candidate: unknown): candidate is number | null =>
+    candidate === null || (typeof candidate === 'number' && Number.isFinite(candidate));
+  return (
+    count(stats.applications) &&
+    count(stats.interviews) &&
+    count(stats.hires) &&
+    rate(stats.applyToInterviewRate) &&
+    count(stats.applyToInterviewDenominator) &&
+    rate(stats.interviewToHireRate) &&
+    count(stats.interviewToHireDenominator)
+  );
+}
 
 export function isJobHistoryResponse(value: unknown): value is JobHistoryResponse {
   if (typeof value !== 'object' || value === null) return false;
@@ -93,6 +111,7 @@ export function isJobHistoryResponse(value: unknown): value is JobHistoryRespons
   if (!isNullableFiniteNumber(response.velocity) || !isClientPayProfile(response.payProfile)) {
     return false;
   }
+  if (!isConversionStats(response.conversion)) return false;
   if (response.summary === null) return true;
   if (typeof response.summary !== 'object') return false;
   const summary = response.summary as Record<string, unknown>;

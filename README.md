@@ -43,10 +43,12 @@ popup—without polling, duplicate requests, page overlays, or a backend.
 ### Local workflow
 
 - Save a job to a local watchlist
+- Browse and remove saved jobs from Settings
+- Track applicant snapshots over time, including change and proposal velocity when enough observations exist
+- Review local application outcomes with explicit conversion denominators
 - Use local profile and portfolio data for deterministic skill and portfolio matching.
 - Switch between system, light, and dark themes
 - Clear locally stored job, history, application, and watchlist data from Settings
-
 Missing or invalid upstream values remain **Not available**. Valid zeroes remain
 zeroes. Upwork Tools shows evidence and derived metrics; it does not produce an
 opaque score, winning probability, or apply/skip recommendation.

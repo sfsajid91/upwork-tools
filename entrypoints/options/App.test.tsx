@@ -23,6 +23,8 @@ describe('options surface', () => {
     expect(html.includes('for="profile-skills"')).toBe(true);
     expect(html.includes('Fallback hourly rate')).toBe(true);
     expect(html.includes('Portfolio')).toBe(true);
+    expect(html.includes('Watchlist')).toBe(true);
+    expect(html.includes('No saved jobs yet.')).toBe(true);
     expect(html.includes('for="portfolio-url"')).toBe(true);
   });
 

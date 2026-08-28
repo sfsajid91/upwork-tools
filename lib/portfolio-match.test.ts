@@ -50,6 +50,15 @@ describe('portfolio ranking', () => {
     });
     expect(typeScript[0]?.skillOverlap).toEqual(['typescript']);
   });
+  test('matches portfolio tags against job title and skills', () => {
+    const result = rankPortfolioMatches([entry('API case study', [], ['GraphQL', 'TypeScript'])], {
+      title: 'Dashboard build',
+      skills: ['GraphQL', 'TypeScript'],
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.tagOverlap).toEqual(['graphql', 'typescript']);
+  });
 
   test('orders deterministic ties by original entry order and caps at three', () => {
     const entries = [1, 2, 3, 4].map((number) => entry(`API ${number}`, ['TypeScript']));

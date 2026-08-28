@@ -290,6 +290,8 @@ async function readJobHistory(tabId: number, jobId: string): Promise<JobHistoryR
 }
 
 async function readJobInsights(tabId: number): Promise<JobInsights | null> {
+  const state = getTabState(tabId);
+  const generation = state.generation;
   let currentUrl: string | undefined;
   let currentJobId: string | null = null;
   try {
@@ -301,8 +303,15 @@ async function readJobInsights(tabId: number): Promise<JobInsights | null> {
   }
   if (!currentJobId) return null;
 
+  const isCurrentJob = async (): Promise<boolean> => {
+    if (state.removed || state.generation !== generation) return false;
+    const tabJobId = await currentTabJobId(tabId);
+    return !state.removed && state.generation === generation && tabJobId === currentJobId;
+  };
+
   let insights = await readVerifiedSession(tabId, currentJobId);
-  if (insights) return insights;
+  if (insights && (await isCurrentJob())) return insights;
+  if (!(await isCurrentJob())) return null;
 
   try {
     await browser.tabs.sendMessage(tabId, {
@@ -314,21 +323,27 @@ async function readJobInsights(tabId: number): Promise<JobInsights | null> {
     // The content script may be absent or the tab may have navigated.
   }
 
+  if (!(await isCurrentJob())) return null;
   insights = await readVerifiedSession(tabId, currentJobId);
-  if (insights) return insights;
+  if (insights && (await isCurrentJob())) return insights;
+  if (!(await isCurrentJob())) return null;
 
   const capture = await getLatestJobCapture(currentJobId);
   if (!capture || normalizeJobId(capture.insights.job.id) !== currentJobId) return null;
-  try {
-    await browser.storage.session.set({
-      [storageKey(tabId)]: capture.insights,
-      [metadataKey(tabId)]: { jobId: currentJobId, capturedAt: capture.capturedAt },
-    });
-    await setBadge(tabId, currentUrl, String(capture.insights.activity.exactProposals ?? ''));
-    return capture.insights;
-  } catch {
-    return null;
-  }
+  return enqueueTabMutation(tabId, async () => {
+    if (!(await isCurrentJob())) return null;
+    try {
+      await browser.storage.session.set({
+        [storageKey(tabId)]: capture.insights,
+        [metadataKey(tabId)]: { jobId: currentJobId, capturedAt: capture.capturedAt },
+      });
+      if (!(await isCurrentJob())) return null;
+      await setBadge(tabId, currentUrl, String(capture.insights.activity.exactProposals ?? ''));
+      return (await isCurrentJob()) ? capture.insights : null;
+    } catch {
+      return null;
+    }
+  });
 }
 
 export default defineBackground(() => {
@@ -398,7 +413,7 @@ export default defineBackground(() => {
   });
 
   browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
-    if (changeInfo.status === 'loading') {
+    if (changeInfo.status === 'loading' || changeInfo.url !== undefined) {
       const generation = advanceTabGeneration(tabId);
       void enqueueTabMutation(tabId, async () => {
         if (getTabState(tabId).generation !== generation) return;

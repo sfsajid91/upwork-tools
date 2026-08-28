@@ -320,6 +320,18 @@ describe('background runtime messaging', () => {
     expect(values.has('job-insights:103')).toBe(false);
     expect(values.has('job-insights:103:metadata')).toBe(false);
   });
+  test('URL-only navigation clears the prior session snapshot', async () => {
+    const tabId = 105;
+    values.set(`job-insights:${tabId}`, insights);
+    values.set(`job-insights:${tabId}:metadata`, { jobId: 'job-7', capturedAt: Date.now() });
+    tabUrls.set(tabId, 'https://www.upwork.com/ab/details/job-7');
+
+    updatedListener?.(tabId, { url: 'https://www.upwork.com/ab/details/job-8' });
+    await Promise.all([...pendingStorageOperations]);
+
+    expect(values.has(`job-insights:${tabId}`)).toBe(false);
+    expect(values.has(`job-insights:${tabId}:metadata`)).toBe(false);
+  });
   test('loading a job clears its session snapshot before restoring its badge', async () => {
     const tabId = 104;
     const url = 'https://www.upwork.com/ab/details/job-7';

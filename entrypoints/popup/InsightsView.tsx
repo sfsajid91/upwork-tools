@@ -553,6 +553,8 @@ function PortfolioMatches({ matches }: { matches: PortfolioMatch[] }) {
 }
 
 function ConversionSummary({ stats }: { stats: ConversionStats }) {
+  // The tracker cannot observe a current-user interview yet; zero is unknown, not none.
+  const interviewMetricsAvailable = stats.interviews > 0;
   return (
     <section
       className="rounded-2xl border border-slate-200/90 bg-white p-3 shadow-xs dark:border-slate-800/90 dark:bg-slate-900"
@@ -568,19 +570,35 @@ function ConversionSummary({ stats }: { stats: ConversionStats }) {
       </div>
       <div className="grid grid-cols-3 gap-2 text-center">
         <MetricCell label="Applications" value={formatNumber(stats.applications)} />
-        <MetricCell label="Interviews" value={formatNumber(stats.interviews)} />
+        <MetricCell
+          label="Interviews"
+          value={interviewMetricsAvailable ? formatNumber(stats.interviews) : 'Not available'}
+          subvalue={interviewMetricsAvailable ? undefined : 'Not tracked'}
+        />
         <MetricCell label="Hires" value={formatNumber(stats.hires)} />
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
         <MetricCell
           label="Apply → Interview"
-          value={formatPercent(stats.applyToInterviewRate)}
-          subvalue={`n=${formatNumber(stats.applyToInterviewDenominator)}`}
+          value={
+            interviewMetricsAvailable ? formatPercent(stats.applyToInterviewRate) : 'Not available'
+          }
+          subvalue={
+            interviewMetricsAvailable
+              ? `n=${formatNumber(stats.applyToInterviewDenominator)}`
+              : 'Not tracked'
+          }
         />
         <MetricCell
           label="Interview → Hire"
-          value={formatPercent(stats.interviewToHireRate)}
-          subvalue={`n=${formatNumber(stats.interviewToHireDenominator)}`}
+          value={
+            interviewMetricsAvailable ? formatPercent(stats.interviewToHireRate) : 'Not available'
+          }
+          subvalue={
+            interviewMetricsAvailable
+              ? `n=${formatNumber(stats.interviewToHireDenominator)}`
+              : 'Not tracked'
+          }
         />
       </div>
     </section>

@@ -11,10 +11,10 @@ function snapshotReference(value: number | null | undefined): number | null | un
 }
 
 function requestResult<T>(request: IDBRequest<T>): Promise<T> {
-  const { promise, resolve, reject } = Promise.withResolvers<T>();
-  request.onsuccess = () => resolve(request.result);
-  request.onerror = () => reject(request.error ?? new Error('IndexedDB request failed'));
-  return promise;
+  return new Promise<T>((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error ?? new Error('IndexedDB request failed'));
+  });
 }
 
 function captureRecord(

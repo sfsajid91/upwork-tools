@@ -209,6 +209,42 @@ describe('InsightsView components', () => {
     expect(html.includes('Interview → Hire')).toBe(true);
     expect(html.includes('n=2')).toBe(true);
   });
+  test('marks interview conversion metrics unavailable without observed interview events', () => {
+    const insights = normalizeJobInsights(samplePayload());
+    expect(insights).not.toBeNull();
+    if (!insights) throw new Error('insights should not be null');
+
+    const html = renderToString(
+      <AvailableState
+        insights={insights}
+        history={{
+          jobId: 'job-1',
+          summary: null,
+          velocity: null,
+          payProfile: {
+            totalCharges: null,
+            averageHourlyRate: null,
+            medianRecentFixedPayment: null,
+            averageRecentFixedPayment: null,
+            historicalHourlyRates: null,
+          },
+          conversion: {
+            applications: 1,
+            interviews: 0,
+            hires: 0,
+            applyToInterviewRate: null,
+            applyToInterviewDenominator: 1,
+            interviewToHireRate: null,
+            interviewToHireDenominator: 0,
+          },
+        }}
+      />,
+    );
+
+    expect(html.includes('Interviews')).toBe(true);
+    expect(html.includes('Not available')).toBe(true);
+    expect(html.includes('Not tracked')).toBe(true);
+  });
 
   test('renders unavailable qualification summary when matches are absent', () => {
     const payload = samplePayload();

@@ -378,7 +378,11 @@ function isHistoryEntry(value: unknown): value is ClientHistoryEntry {
   return (
     ['id', 'title', 'type', 'status', 'startedOn'].every((key) =>
       isNullableStringValue(key, entry),
-    ) && ['amountPaid', 'feedbackScore'].every((key) => isNullableNumberValue(key, entry))
+    ) &&
+    ['amountPaid', 'feedbackScore'].every((key) => isNullableNumberValue(key, entry)) &&
+    ['hours', 'hourlyRate'].every(
+      (key) => entry[key] === undefined || isNullableNumberValue(key, entry),
+    )
   );
 }
 

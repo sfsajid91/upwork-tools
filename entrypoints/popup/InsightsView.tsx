@@ -812,6 +812,13 @@ export function AvailableState({
   const { job, activity, client, fit, history: clientHistory } = insights;
   const effectiveFreelancerHourlyRate =
     fit.freelancerHourlyRate ?? personalization.fallbackHourlyRate;
+  const effectiveRateContext =
+    fit.rateContext ??
+    (effectiveFreelancerHourlyRate !== null &&
+    client.averageHourlyRate !== null &&
+    client.averageHourlyRate > 0
+      ? effectiveFreelancerHourlyRate / client.averageHourlyRate
+      : null);
   const usesFallbackHourlyRate =
     fit.freelancerHourlyRate === null && personalization.fallbackHourlyRate !== null;
   const jobId = typeof job.id === 'string' && job.id.trim().length > 0 ? job.id.trim() : null;
@@ -1264,13 +1271,13 @@ export function AvailableState({
               </div>
             </div>
 
-            {fit.rateContext !== null && (
+            {effectiveRateContext !== null && (
               <div className="flex items-center justify-between border-t border-slate-200/60 pt-2 dark:border-slate-700/60">
                 <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
                   Rate Comparison
                 </span>
                 <span className="rounded bg-slate-200/80 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-slate-800 dark:bg-slate-700 dark:text-slate-200">
-                  {formatRateContext(fit.rateContext)}
+                  {formatRateContext(effectiveRateContext)}
                 </span>
               </div>
             )}

@@ -23,7 +23,7 @@ import {
   type WatchlistStatus,
 } from './InsightsView';
 
-type ViewState =
+export type ViewState =
   | { kind: 'loading' }
   | { kind: 'empty' }
   | { kind: 'error'; message: string }
@@ -92,6 +92,18 @@ function readyWithWatchlist(
   watchlistStatus: WatchlistStatus,
 ): Exclude<ViewState, { kind: 'loading' }> {
   return result.kind === 'ready' ? { ...result, watchlistStatus } : result;
+}
+
+export function mergePopupReadResult(
+  current: ViewState,
+  result: Exclude<ViewState, { kind: 'loading' }>,
+): Exclude<ViewState, { kind: 'loading' }> {
+  if (current.kind !== 'ready' || result.kind !== 'ready') return result;
+  return {
+    ...result,
+    watchlistStatus: current.watchlistStatus,
+    watchlistBusy: current.watchlistBusy,
+  };
 }
 
 export async function readPopupInsights({
@@ -167,7 +179,7 @@ function App() {
           );
         },
       });
-      setState(result);
+      setState((current) => mergePopupReadResult(current, result));
     } finally {
       requestInFlight.current = false;
     }

@@ -110,5 +110,15 @@ describe('message validation', () => {
     expect(isPageEvent({ ...event, source: 'other-extension' })).toBe(false);
     expect(isRuntimeMessage({ type: STORE_JOB_INSIGHTS, payload: insights })).toBe(true);
     expect(isRuntimeMessage({ type: STORE_JOB_INSIGHTS, payload: { nope: true } })).toBe(false);
+
+    for (const key of ['hours', 'hourlyRate'] as const) {
+      const malformed = structuredClone(insights);
+      const entry = malformed.history.recentJobs[0];
+      if (!entry) throw new Error('fixture should include history');
+      entry[key] = 'invalid' as never;
+      expect(isJobInsights(malformed)).toBe(false);
+      expect(isPageEvent(createPageEvent(malformed))).toBe(false);
+      expect(isRuntimeMessage({ type: STORE_JOB_INSIGHTS, payload: malformed })).toBe(false);
+    }
   });
 });

@@ -4,6 +4,7 @@ import { clearAllLocalData } from '../../lib/database';
 import { createPortfolio, removePortfolio, updatePortfolio } from '../../lib/portfolio';
 import { isPortfolioEntry, isUserProfile, setUserProfile } from '../../lib/settings';
 import { listWatchlistedJobs, removeWatchlistedJob } from '../../lib/watchlist';
+import { useTheme } from '../../lib/theme';
 import type { PortfolioEntry, UserProfile, WatchlistRecord } from '../../lib/storage';
 
 type Status = { tone: 'success' | 'error'; message: string } | null;
@@ -107,6 +108,7 @@ function draftFromEntry(entry: PortfolioEntry): PortfolioDraft {
 }
 
 function OptionsApp() {
+  useTheme();
   const [skills, setSkills] = useState('');
   const [fallbackRate, setFallbackRate] = useState('');
   const [profile, setProfile] = useState<UserProfile>({

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { renderToString } from 'react-dom/server';
 import { normalizeJobInsights } from '../../lib/insights';
+import { mergePopupReadResult, type ViewState } from './App';
 import { AvailableState, EmptyState, LoadingState, ThemeToggle } from './InsightsView';
 
 function samplePayload() {
@@ -168,6 +169,8 @@ describe('InsightsView components', () => {
     expect(html.includes('Profile skill match')).toBe(true);
     expect(html.includes('Matched:') && html.includes('React')).toBe(true);
     expect(html.includes('Local fallback')).toBe(true);
+    expect(html.includes('Rate Comparison')).toBe(true);
+    expect(html.includes('~4.1× client average')).toBe(true);
     expect(html.includes('Matching portfolio work')).toBe(true);
     expect(html.includes('Title: cloudflare')).toBe(true);
   });
@@ -332,5 +335,24 @@ describe('InsightsView components', () => {
 
     const darkHtml = renderToString(<ThemeToggle mode="dark" onToggle={() => {}} />);
     expect(darkHtml.includes('Dark')).toBe(true);
+  });
+});
+
+test('preserves watchlist mutations when history resolves later', () => {
+  const current = {
+    kind: 'ready',
+    watchlistStatus: { kind: 'saved' },
+    watchlistBusy: true,
+  } as unknown as ViewState;
+  const historyResult = {
+    kind: 'ready',
+    watchlistStatus: { kind: 'not-saved' },
+    watchlistBusy: false,
+  } as unknown as Exclude<ViewState, { kind: 'loading' }>;
+
+  expect(mergePopupReadResult(current, historyResult)).toMatchObject({
+    kind: 'ready',
+    watchlistStatus: { kind: 'saved' },
+    watchlistBusy: true,
   });
 });

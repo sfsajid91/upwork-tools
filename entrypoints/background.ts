@@ -1,6 +1,7 @@
 import { deriveApplicantMetrics } from '../lib/applicant-metrics';
 import {
   appendJobSnapshotIfChanged,
+  enforceHistoryRetention,
   getLatestJobCapture,
   listApplications,
   listJobSnapshots,
@@ -240,6 +241,7 @@ async function readJobHistory(tabId: number, jobId: string): Promise<JobHistoryR
   try {
     const normalizedJobId = normalizeJobId(jobId);
     if (!normalizedJobId || (await currentTabJobId(tabId)) !== normalizedJobId) return null;
+    await enforceHistoryRetention();
     const database = await openDatabase();
     if (!database) return null;
     const snapshots = await listJobSnapshots(normalizedJobId);
@@ -347,6 +349,7 @@ async function readJobInsights(tabId: number): Promise<JobInsights | null> {
 }
 
 export default defineBackground(() => {
+  void enforceHistoryRetention().catch(() => undefined);
   browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (!isRuntimeMessage(message)) return undefined;
     if (message.type === REQUEST_JOB_INSIGHTS_REPLAY) return undefined;

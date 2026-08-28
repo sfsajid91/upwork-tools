@@ -156,7 +156,7 @@ describe('InsightsView components', () => {
               title: 'Cloudflare project',
               skills: ['TypeScript'],
               tags: [],
-              url: null,
+              url: 'https://example.test/project',
               titleOverlap: ['cloudflare'],
               skillOverlap: ['typescript'],
               tagOverlap: [],
@@ -173,6 +173,9 @@ describe('InsightsView components', () => {
     expect(html.includes('~4.1× client average')).toBe(true);
     expect(html.includes('Matching portfolio work')).toBe(true);
     expect(html.includes('Title: cloudflare')).toBe(true);
+    expect(html.includes('href="https://example.test/project"')).toBe(true);
+    expect(html.includes('target="_blank"')).toBe(true);
+    expect(html.includes('rel="noopener noreferrer"')).toBe(true);
   });
   test('renders application conversion outcomes with denominators', () => {
     const insights = normalizeJobInsights(samplePayload());

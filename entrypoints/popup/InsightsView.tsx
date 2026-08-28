@@ -514,6 +514,17 @@ function QualificationDetails({ details }: { details: QualificationDetail[] }) {
     </details>
   );
 }
+function externalPortfolioUrl(value: string | null): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.hostname.length > 0 && (url.protocol === 'http:' || url.protocol === 'https:')
+      ? value
+      : null;
+  } catch {
+    return null;
+  }
+}
 
 function PortfolioMatches({ matches }: { matches: PortfolioMatch[] }) {
   if (matches.length === 0) return null;
@@ -533,14 +544,26 @@ function PortfolioMatches({ matches }: { matches: PortfolioMatch[] }) {
             ...match.skillOverlap.map((label) => `Skill: ${label}`),
             ...match.tagOverlap.map((label) => `Tag: ${label}`),
           ];
+          const portfolioUrl = externalPortfolioUrl(match.url);
           return (
             <li
               key={`${match.title}:${match.url ?? ''}:${match.titleOverlap.join(',')}:${match.skillOverlap.join(',')}:${match.tagOverlap.join(',')}`}
               className="border-b border-slate-100 py-2 last:border-b-0 dark:border-slate-800"
             >
-              <span className="block text-[11px] font-semibold text-slate-700 dark:text-slate-200">
-                {match.title}
-              </span>
+              {portfolioUrl ? (
+                <a
+                  className="block text-[11px] font-semibold text-emerald-700 underline decoration-emerald-300 underline-offset-2 hover:text-emerald-600 dark:text-emerald-300 dark:decoration-emerald-700 dark:hover:text-emerald-200"
+                  href={portfolioUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {match.title}
+                </a>
+              ) : (
+                <span className="block text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+                  {match.title}
+                </span>
+              )}
               <span className="mt-0.5 block text-[10.5px] text-slate-500 dark:text-slate-400">
                 {overlapLabels.join(' · ')}
               </span>

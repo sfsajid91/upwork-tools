@@ -30,9 +30,9 @@
     "semantic_hash": "46ba5ab63fe1d2e7aa192df0fd234076"
   },
   "entrypoints/background.ts": {
-    "mtime": 1787923994.1342869,
-    "seen": 1787924138.1789558,
-    "ast_hash": "1e5f69badf24568b063a66b0881d1900",
+    "mtime": 1787921331.356536,
+    "seen": 1787921437.5182014,
+    "ast_hash": "b73ee69c5a625e687cf131cdd5dc7f56",
     "semantic_hash": ""
   },
   "entrypoints/interceptor.content.ts": {
@@ -54,15 +54,15 @@
     "semantic_hash": "7f36e5a4a8c3280dddf6590d72fdf759"
   },
   "entrypoints/popup/InsightsView.test.tsx": {
-    "mtime": 1787923932.4444513,
-    "seen": 1787924138.1790025,
-    "ast_hash": "18d4bfa5e04964f8c30ed9aa9c37a874",
+    "mtime": 1787895287.1100414,
+    "seen": 1787895342.121182,
+    "ast_hash": "f5601da99bc2d527c9ed1da6ab4c12f8",
     "semantic_hash": ""
   },
   "entrypoints/popup/InsightsView.tsx": {
-    "mtime": 1787923955.098628,
-    "seen": 1787924138.179008,
-    "ast_hash": "f0afe73acbf70848864c61c420ca25a4",
+    "mtime": 1787895146.2613785,
+    "seen": 1787895342.1211889,
+    "ast_hash": "2139b5dfba285d9245f9a706b194663f",
     "semantic_hash": ""
   },
   "entrypoints/popup/App.tsx": {
@@ -1374,9 +1374,9 @@
     "semantic_hash": ""
   },
   "docs/architecture.md": {
-    "mtime": 1787923937.0898976,
-    "seen": 1787924138.1863925,
-    "ast_hash": "b275d51baa0e03219f41fd3cb915cfd0",
+    "mtime": 1787890082.1019483,
+    "seen": 1787890284.272589,
+    "ast_hash": "21430a842fdf21a301517f1dcaad25ed",
     "semantic_hash": ""
   },
   "images/upwork-tools.webp": {

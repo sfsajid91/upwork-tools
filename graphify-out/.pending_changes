@@ -1,0 +1,4 @@
+docs/architecture.md
+entrypoints/background.ts
+entrypoints/popup/InsightsView.test.tsx
+entrypoints/popup/InsightsView.tsx

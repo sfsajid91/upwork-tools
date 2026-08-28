@@ -79,33 +79,35 @@ export default defineContentScript({
       }
     });
 
-    browser.runtime.onMessage.addListener((message: unknown) => {
+    browser.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
       if (!isRuntimeReplayRequest(message)) return undefined;
       const requestId = message.requestId;
-      if (pending.has(requestId)) return false;
+      if (pending.has(requestId)) {
+        sendResponse(false);
+        return undefined;
+      }
       while (pending.size >= MAX_PENDING_REPLAYS) {
         const oldest = pending.keys().next().value;
         if (typeof oldest !== 'string') break;
         finish(oldest, false);
       }
 
-      return new Promise<boolean>((resolve) => {
-        const timer = setTimeout(() => finish(requestId, false), REPLAY_TIMEOUT_MS);
-        pending.set(requestId, { timer, resolve });
-        try {
-          window.postMessage(
-            {
-              source: PAGE_EVENT_SOURCE,
-              version: PAGE_EVENT_VERSION,
-              type: REQUEST_CURRENT_JOB_INSIGHTS,
-              requestId,
-            },
-            window.location.origin,
-          );
-        } catch {
-          finish(requestId, false);
-        }
-      });
+      const timer = setTimeout(() => finish(requestId, false), REPLAY_TIMEOUT_MS);
+      pending.set(requestId, { timer, resolve: sendResponse });
+      try {
+        window.postMessage(
+          {
+            source: PAGE_EVENT_SOURCE,
+            version: PAGE_EVENT_VERSION,
+            type: REQUEST_CURRENT_JOB_INSIGHTS,
+            requestId,
+          },
+          window.location.origin,
+        );
+      } catch {
+        finish(requestId, false);
+      }
+      return true;
     });
   },
 });

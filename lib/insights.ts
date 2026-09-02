@@ -171,6 +171,11 @@ const RELATED_TITLE_STOP_WORDS: Record<string, true> = {
   this: true,
   that: true,
   job: true,
+  senior: true,
+  junior: true,
+  lead: true,
+  developer: true,
+  engineer: true,
 };
 
 function titleTokens(title: string | null): Set<string> {
@@ -179,7 +184,7 @@ function titleTokens(title: string | null): Set<string> {
     title
       .toLowerCase()
       .split(/[^a-z0-9]+/)
-      .filter((token) => token.length >= 4 && !RELATED_TITLE_STOP_WORDS[token]),
+      .filter((token) => token.length >= 3 && !RELATED_TITLE_STOP_WORDS[token]),
   );
 }
 

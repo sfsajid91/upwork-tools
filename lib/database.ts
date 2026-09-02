@@ -35,11 +35,6 @@ const HISTORY_STORES = [
 let databaseFactory: IDBFactory | null = null;
 const DAY_MS = 24 * 60 * 60 * 1_000;
 
-type StoredSnapshot = {
-  record: JobSnapshotRecord;
-  key: IDBValidKey;
-};
-
 type TransactionCallback<T> = (transaction: IDBTransaction) => Promise<T> | T;
 
 let databasePromise: Promise<IDBDatabase | null> | null = null;
@@ -52,6 +47,14 @@ function hasJobId(value: unknown): value is { jobId: string } {
   if (typeof value !== 'object' || value === null || !('jobId' in value)) return false;
   const jobId = value.jobId;
   return typeof jobId === 'string' && jobId.trim().length > 0;
+}
+function isValidTimestamp(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0;
+}
+
+function isValidJobSnapshotRecord(value: unknown): value is JobSnapshotRecord {
+  if (!hasJobId(value) || !('capturedAt' in value)) return false;
+  return isValidTimestamp(value.capturedAt);
 }
 
 function requestResult<T>(request: IDBRequest<T>): Promise<T> {
@@ -238,48 +241,57 @@ export function runTransaction<T>(
     });
   });
 }
+function iterateCursor(
+  request: IDBRequest<IDBCursorWithValue | null>,
+  onCursor: (cursor: IDBCursorWithValue) => void,
+): Promise<void> {
+  const { promise, resolve, reject } = Promise.withResolvers<void>();
+  request.onsuccess = () => {
+    const cursor = request.result;
+    if (!cursor) {
+      resolve();
+      return;
+    }
+    try {
+      onCursor(cursor);
+      cursor.continue();
+    } catch (error) {
+      reject(error);
+    }
+  };
+  request.onerror = () => reject(request.error ?? new Error('Cursor iteration failed'));
+  return promise;
+}
+
 async function enforceHistoryRetentionInTransaction(
   transaction: IDBTransaction,
   now: number,
 ): Promise<void> {
   const store = transaction.objectStore(DATABASE_STORES.jobSnapshots);
-  const [records, keys] = await Promise.all([
-    requestResult<JobSnapshotRecord[]>(store.getAll()),
-    requestResult<IDBValidKey[]>(store.getAllKeys()),
-  ]);
   const cutoff = now - HISTORY_RETENTION_DAYS * DAY_MS;
-  const perJob = new Map<string, StoredSnapshot[]>();
+  const perJob = new Map<string, Array<{ capturedAt: number; key: IDBValidKey }>>();
 
-  for (let index = 0; index < records.length; index += 1) {
-    const record = records[index];
-    const key = keys[index];
-    if (!record || key === undefined || !hasJobId(record)) continue;
-    if (Number.isFinite(record.capturedAt) && record.capturedAt < cutoff) {
-      await requestResult(store.delete(key));
-      continue;
+  await iterateCursor(store.openCursor(), (cursor) => {
+    const record = cursor.value;
+    const key = cursor.primaryKey;
+    if (!isValidJobSnapshotRecord(record) || record.capturedAt < cutoff) {
+      cursor.delete();
+      return;
     }
     const snapshots = perJob.get(record.jobId) ?? [];
-    snapshots.push({ record, key });
+    snapshots.push({ capturedAt: record.capturedAt, key });
     perJob.set(record.jobId, snapshots);
-  }
+  });
 
   for (const snapshots of perJob.values()) {
     if (snapshots.length <= MAX_SNAPSHOTS_PER_JOB) continue;
     snapshots.sort((left, right) => {
-      const leftTime = Number.isFinite(left.record.capturedAt)
-        ? left.record.capturedAt
-        : Number.POSITIVE_INFINITY;
-      const rightTime = Number.isFinite(right.record.capturedAt)
-        ? right.record.capturedAt
-        : Number.POSITIVE_INFINITY;
-      if (leftTime !== rightTime) return rightTime > leftTime ? 1 : -1;
+      if (left.capturedAt !== right.capturedAt) return right.capturedAt - left.capturedAt;
       const leftKey = typeof left.key === 'number' ? left.key : 0;
       const rightKey = typeof right.key === 'number' ? right.key : 0;
       return rightKey - leftKey;
     });
-    for (const snapshot of snapshots.slice(MAX_SNAPSHOTS_PER_JOB)) {
-      await requestResult(store.delete(snapshot.key));
-    }
+    for (const excess of snapshots.slice(MAX_SNAPSHOTS_PER_JOB)) store.delete(excess.key);
   }
 }
 
@@ -290,9 +302,7 @@ function isLatestJobCaptureRecord(value: unknown): value is LatestJobCaptureReco
   return (
     normalizeJobId(typeof record.jobId === 'string' ? record.jobId : null) === record.jobId &&
     normalizeJobId(insights && isJobInsights(insights) ? insights.job.id : null) === record.jobId &&
-    typeof record.capturedAt === 'number' &&
-    Number.isFinite(record.capturedAt) &&
-    record.capturedAt >= 0 &&
+    isValidTimestamp(record.capturedAt) &&
     isJobInsights(insights)
   );
 }
@@ -302,18 +312,11 @@ async function enforceLatestCaptureRetentionInTransaction(
   now: number,
 ): Promise<void> {
   const store = transaction.objectStore(DATABASE_STORES.latestCaptures);
-  const [records, keys] = await Promise.all([
-    requestResult<LatestJobCaptureRecord[]>(store.getAll()),
-    requestResult<IDBValidKey[]>(store.getAllKeys()),
-  ]);
   const cutoff = now - HISTORY_RETENTION_DAYS * DAY_MS;
-  for (let index = 0; index < records.length; index += 1) {
-    const record = records[index];
-    const key = keys[index];
-    if (key !== undefined && (!isLatestJobCaptureRecord(record) || record.capturedAt < cutoff)) {
-      await requestResult(store.delete(key));
-    }
-  }
+  await iterateCursor(store.openCursor(), (cursor) => {
+    const record = cursor.value;
+    if (!isLatestJobCaptureRecord(record) || record.capturedAt < cutoff) cursor.delete();
+  });
 }
 
 export async function putLatestJobCapture(
@@ -323,9 +326,7 @@ export async function putLatestJobCapture(
     typeof record !== 'object' ||
     record === null ||
     !isJobInsights(record.insights) ||
-    typeof record.capturedAt !== 'number' ||
-    !Number.isFinite(record.capturedAt) ||
-    record.capturedAt < 0
+    !isValidTimestamp(record.capturedAt)
   ) {
     return false;
   }
@@ -396,7 +397,7 @@ export async function getJob(jobId: string | null | undefined): Promise<JobRecor
 export async function putJobSnapshot(
   record: JobSnapshotRecord | null | undefined,
 ): Promise<number | null> {
-  if (!hasJobId(record)) return null;
+  if (!isValidJobSnapshotRecord(record)) return null;
   const { id: _ignoredId, ...snapshot } = record;
   void _ignoredId;
   const result = await runTransaction(
@@ -418,7 +419,7 @@ export async function appendJobSnapshotIfChanged(
   windowMs = 60_000,
   shouldWrite?: () => boolean,
 ): Promise<number | null> {
-  if (!hasJobId(record)) return null;
+  if (!isValidJobSnapshotRecord(record)) return null;
   const { id: _ignoredId, ...snapshot } = record;
   void _ignoredId;
   const result = await runTransaction(

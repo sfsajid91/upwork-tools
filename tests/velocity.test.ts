@@ -30,4 +30,9 @@ describe('proposal velocity', () => {
     expect(formatProposalVelocity(2.5)).toBe('2.5 applicants/hour');
     expect(formatProposalVelocity(null)).toBe('Not available');
   });
+  test('rounds calculated and displayed velocity to one decimal place', () => {
+    expect(calculateProposalVelocity(0, 1, start, start + 3 * hour)).toBe(0.3);
+    expect(formatProposalVelocity(2)).toBe('2.0 applicants/hour');
+    expect(formatProposalVelocity(-0.26)).toBe('-0.3 applicants/hour');
+  });
 });

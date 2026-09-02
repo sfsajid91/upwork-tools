@@ -146,4 +146,49 @@ describe('qualification details', () => {
       },
     ]);
   });
+  test('suppresses trailing-plus default zero values but keeps near misses', () => {
+    const defaults = [
+      match({
+        qualification: 'MinimumJobSuccessScore',
+        clientPreferred: '0',
+        clientPreferredLabel: '0%+',
+      }),
+      match({
+        qualification: 'HoursBilled',
+        clientPreferred: '0',
+        clientPreferredLabel: '0+ hours',
+      }),
+      match({
+        qualification: 'ExperienceYears',
+        clientPreferred: '0',
+        clientPreferredLabel: '0+ years',
+      }),
+      match({
+        qualification: 'MinimumJobSuccessScore',
+        clientPreferred: '0',
+        clientPreferredLabel: 'At least 0.0%+',
+      }),
+    ];
+    expect(parseQualificationMatches(defaults)).toHaveLength(1);
+    expect(parseQualificationMatches(defaults)[0]?.requirementName).toBe('ExperienceYears');
+
+    const nearMisses = [
+      match({
+        qualification: 'MinimumJobSuccessScore',
+        clientPreferred: '10',
+        clientPreferredLabel: '10%+',
+      }),
+      match({
+        qualification: 'HoursBilled',
+        clientPreferred: '0.5',
+        clientPreferredLabel: '0.5%+',
+      }),
+      match({
+        qualification: 'HoursBilled',
+        clientPreferred: '100',
+        clientPreferredLabel: '100+ hours',
+      }),
+    ];
+    expect(parseQualificationMatches(nearMisses)).toHaveLength(3);
+  });
 });

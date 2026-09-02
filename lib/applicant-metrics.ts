@@ -20,6 +20,8 @@ function hasValidOrder(snapshots: readonly ApplicantSnapshot[]): boolean {
     if (
       !snapshot ||
       !Number.isFinite(snapshot.capturedAt) ||
+      !Number.isInteger(snapshot.capturedAt) ||
+      snapshot.capturedAt <= 0 ||
       !isValidCount(snapshot.applicants) ||
       (previous !== undefined && snapshot.capturedAt < previous.capturedAt)
     ) {

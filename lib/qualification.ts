@@ -66,7 +66,10 @@ function isDefaultZeroRequirement(requirementName: string): boolean {
 }
 
 function isZero(value: string | null): boolean {
-  return value !== null && /^(?:at least\s+)?0+(?:\.0+)?(?:%|\s*hours?|\s*years?)?$/i.test(value);
+  return (
+    value !== null &&
+    /^(?:at least\s+)?0+(?:\.0+)?(?:%\+?|\+?\s*(?:hours?|years?)|\+)?$/i.test(value)
+  );
 }
 
 function isMeaninglessClientRequirement(

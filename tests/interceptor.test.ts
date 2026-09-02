@@ -153,20 +153,24 @@ describe('interceptor inspection', () => {
     expect(events[0].payload.job.id).toBe(captureId);
   });
 
-  test('captures marker JSON parsed on a supported job page', async () => {
+  test('captures matching marker JSON and ignores mismatched job IDs', async () => {
     fakeWindow.location.href = 'https://www.upwork.com/ab/details/job-interceptor';
-    const captureId = `job-parse-${crypto.randomUUID()}`;
     const captured = waitForCapture();
 
-    expect(() =>
-      JSON.parse(JSON.stringify(payload).replace('job-interceptor', captureId)),
-    ).not.toThrow();
+    expect(() => JSON.parse(JSON.stringify(payload))).not.toThrow();
     await captured;
 
     expect(events).toHaveLength(1);
     expect(isPageEvent(events[0])).toBe(true);
     if (!isPageEvent(events[0])) throw new Error('expected a page event');
-    expect(events[0].payload.job.id).toBe(captureId);
+    expect(events[0].payload.job.id).toBe('job-interceptor');
+
+    events.length = 0;
+    expect(() =>
+      JSON.parse(JSON.stringify(payload).replace('job-interceptor', 'other-job')),
+    ).not.toThrow();
+    await Promise.resolve();
+    expect(events).toHaveLength(0);
   });
   test('does not capture unsupported URLs or marker text that fails inspection', async () => {
     const unsupportedBody = JSON.stringify(payload);

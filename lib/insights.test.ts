@@ -175,6 +175,64 @@ describe('normalizeJobInsights', () => {
 
     expect(insights?.history.relatedJobs.map((job) => job.id)).toEqual(['strong-1']);
   });
+  test('matches three-character technical tokens but filters generic roles', () => {
+    for (const token of ['AWS', 'GCP', 'PHP', 'SQL', 'Vue', 'iOS']) {
+      const result = normalizeJobInsights(
+        payload({
+          opening: {
+            job: {
+              status: 'OPEN',
+              info: { id: 'current', title: `${token} developer` },
+            },
+            qualifications: {},
+          },
+          buyer: {
+            workHistory: [
+              {
+                startDate: '2026-08-20T00:00:00.000Z',
+                jobInfo: { id: `related-${token}`, title: `${token.toLowerCase()} specialist` },
+              },
+            ],
+          },
+        }),
+      );
+      expect(result?.history.relatedJobs.map((job) => job.id)).toEqual([`related-${token}`]);
+    }
+
+    const genericOnly = normalizeJobInsights(
+      payload({
+        opening: {
+          job: {
+            status: 'OPEN',
+            info: { id: 'current', title: 'Senior Lead Developer Engineer' },
+          },
+          qualifications: {},
+        },
+      }),
+    );
+    expect(genericOnly?.history.relatedJobs).toEqual([]);
+
+    const roleOnlyOverlap = normalizeJobInsights(
+      payload({
+        opening: {
+          job: {
+            status: 'OPEN',
+            info: { id: 'current', title: 'Backend developer' },
+          },
+          qualifications: {},
+        },
+        buyer: {
+          workHistory: [
+            {
+              startDate: '2026-08-20T00:00:00.000Z',
+              jobInfo: { id: 'frontend', title: 'Frontend developer' },
+            },
+          ],
+        },
+      }),
+    );
+    expect(roleOnlyOverlap?.history.relatedJobs).toEqual([]);
+  });
   test('excludes current history when public and internal IDs differ', () => {
     const insights = normalizeJobInsights(
       payload({

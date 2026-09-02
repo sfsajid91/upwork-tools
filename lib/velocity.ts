@@ -1,3 +1,5 @@
+export const MIN_PROPOSAL_VELOCITY_INTERVAL_MS = 3_600_000;
+
 /** A timestamp accepted by proposal velocity calculations. Numeric values are milliseconds since epoch. */
 export type VelocityTimestamp = number | string | Date | null | undefined;
 
@@ -38,13 +40,14 @@ export function calculateProposalVelocity(
   const latestMs = timestampMs(latestTimestamp);
   if (previousMs === null || latestMs === null || latestMs <= previousMs) return null;
 
-  const elapsedHours = (latestMs - previousMs) / 3_600_000;
-  if (!Number.isFinite(elapsedHours) || elapsedHours < 1) return null;
+  const elapsedHours = (latestMs - previousMs) / MIN_PROPOSAL_VELOCITY_INTERVAL_MS;
+  if (!Number.isFinite(elapsedHours) || latestMs - previousMs < MIN_PROPOSAL_VELOCITY_INTERVAL_MS)
+    return null;
 
-  return (latestApplicants - previousApplicants) / elapsedHours;
+  return Number(((latestApplicants - previousApplicants) / elapsedHours).toFixed(1));
 }
 
 /** Formats a velocity without implying whether it is desirable. */
 export function formatProposalVelocity(value: number | null): string {
-  return value === null ? 'Not available' : `${value} applicants/hour`;
+  return value === null ? 'Not available' : `${value.toFixed(1)} applicants/hour`;
 }

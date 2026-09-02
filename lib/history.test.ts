@@ -32,8 +32,11 @@ describe('job snapshot history', () => {
       snapshot('job-1', 20),
       { ...snapshot('job-1', 10), capturedAt: undefined },
       { ...snapshot('job-1', 30), capturedAt: Number.NaN },
+      { ...snapshot('job-1', 0), capturedAt: 0 },
+      { ...snapshot('job-1', -1), capturedAt: -1 },
+      { ...snapshot('job-1', 40), capturedAt: 1.5 },
+      { ...snapshot('job-1', 50), capturedAt: Number.POSITIVE_INFINITY },
     ] as unknown as JobSnapshotRecord[];
-
     expect(queryJobSnapshots(records, 'job-1').map((record) => record.capturedAt)).toEqual([20]);
     expect(summarizeJobSnapshots(records, '')).toBeNull();
     expect(summarizeJobSnapshots(records, 'missing')).toBeNull();
@@ -49,6 +52,24 @@ describe('job snapshot history', () => {
       firstSeen: only,
       recent: [only],
       previous: null,
+      velocityBaseline: null,
     });
+  });
+  test('selects the most recent baseline at least one hour before latest', () => {
+    const hour = 3_600_000;
+    const records = [
+      snapshot('job-1', 1_000, 1),
+      snapshot('job-1', 2_000, 2),
+      snapshot('job-1', hour + 2_000, 3),
+    ];
+
+    expect(summarizeJobSnapshots(records, 'job-1')?.velocityBaseline?.id).toBe(2);
+  });
+  test('leaves the velocity baseline unavailable when all captures are too close', () => {
+    const summary = summarizeJobSnapshots(
+      [snapshot('job-1', 1_000), snapshot('job-1', 2_000), snapshot('job-1', 3_000)],
+      'job-1',
+    );
+    expect(summary?.velocityBaseline).toBeNull();
   });
 });

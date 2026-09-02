@@ -10,6 +10,13 @@ const ALIASES: Record<string, string> = {
   typescript: 'TypeScript',
   reactjs: 'React',
 };
+const SYMBOLIC_ALIASES: Record<string, string> = {
+  'c++': 'C++',
+  'c#': 'C#',
+  '.net': '.NET',
+  'node.js': 'Node.js',
+  'vue.js': 'Vue.js',
+};
 
 /**
  * Produces the stable key used for explicit aliases and unknown labels.
@@ -27,8 +34,11 @@ function skillKey(label: string): string {
 /** Normalizes one label without guessing at unknown skill names. */
 export function normalizeSkillName(label: string): string {
   if (typeof label !== 'string') return '';
-  const key = skillKey(label);
-  if (!key) return '';
+  const normalizedLabel = label.normalize('NFKC').trim();
+  if (!normalizedLabel) return '';
+  const exact = SYMBOLIC_ALIASES[normalizedLabel.toLocaleLowerCase('en-US')];
+  if (exact) return exact;
+  const key = skillKey(normalizedLabel);
   return ALIASES[key.replace(/\s/g, '')] ?? key;
 }
 

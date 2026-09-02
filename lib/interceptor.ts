@@ -106,9 +106,19 @@ function installReplayListener(): void {
 
 function inspectPayload(payload: unknown, url: string | null): void {
   try {
-    if (url === null ? !isSupportedPageContext() : !isSupportedUrl(url)) return;
+    if (url === null) {
+      const pageJobId = jobIdFromPageUrl(window.location.href);
+      if (!pageJobId) return;
+      const insights = normalizeJobInsights(payload);
+      if (!insights) return;
+      const payloadJobId = normalizeJobId(insights.job.id);
+      if (!payloadJobId || pageJobId !== payloadJobId) return;
+      emitInsights(insights, window.location.href);
+      return;
+    }
+    if (!isSupportedUrl(url)) return;
     const insights = normalizeJobInsights(payload);
-    if (insights) emitInsights(insights, url ?? window.location.href);
+    if (insights) emitInsights(insights, url);
   } catch {
     // Inspection must never affect the host page.
   }

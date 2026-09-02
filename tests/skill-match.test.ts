@@ -21,6 +21,14 @@ describe('skill matching', () => {
       }),
     ).toEqual({ matched: 2, total: 3, matchedSkills: ['TypeScript', 'Python'] });
   });
+  test('does not conflate symbolic languages with plain C', () => {
+    expect(
+      matchSkills({ profileSkills: ['C++'], ontologySkills: ['C'], additionalSkills: [] }),
+    ).toEqual({ matched: 0, total: 1, matchedSkills: [] });
+    expect(
+      matchSkills({ profileSkills: ['c#'], ontologySkills: ['C#'], additionalSkills: [] }),
+    ).toEqual({ matched: 1, total: 1, matchedSkills: ['C#'] });
+  });
 
   test('returns unavailable for null or empty profiles', () => {
     const job = { ontologySkills: ['TypeScript'], additionalSkills: [] };

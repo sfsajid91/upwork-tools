@@ -278,9 +278,9 @@ async function readJobHistory(tabId: number, jobId: string): Promise<JobHistoryR
         recentDelta: metrics.recentDelta,
       },
       velocity: calculateProposalVelocity(
-        summary.previous?.applicants,
+        summary.velocityBaseline?.applicants,
         summary.latest?.applicants,
-        summary.previous?.capturedAt,
+        summary.velocityBaseline?.capturedAt,
         summary.latest?.capturedAt,
       ),
       payProfile,
@@ -291,7 +291,10 @@ async function readJobHistory(tabId: number, jobId: string): Promise<JobHistoryR
   }
 }
 
-async function readJobInsights(tabId: number): Promise<JobInsights | null> {
+async function readJobInsights(
+  tabId: number,
+  includePersistentFallback: boolean,
+): Promise<JobInsights | null> {
   const state = getTabState(tabId);
   const generation = state.generation;
   let currentUrl: string | undefined;
@@ -311,41 +314,24 @@ async function readJobInsights(tabId: number): Promise<JobInsights | null> {
     return !state.removed && state.generation === generation && tabJobId === currentJobId;
   };
 
-  let insights = await readVerifiedSession(tabId, currentJobId);
+  const insights = await readVerifiedSession(tabId, currentJobId);
   if (insights && (await isCurrentJob())) return insights;
-  if (!(await isCurrentJob())) return null;
-
-  try {
-    await browser.tabs.sendMessage(tabId, {
-      type: REQUEST_JOB_INSIGHTS_REPLAY,
-      tabId,
-      requestId: crypto.randomUUID(),
-    });
-  } catch {
-    // The content script may be absent or the tab may have navigated.
-  }
-
-  if (!(await isCurrentJob())) return null;
-  insights = await readVerifiedSession(tabId, currentJobId);
-  if (insights && (await isCurrentJob())) return insights;
-  if (!(await isCurrentJob())) return null;
+  if (!includePersistentFallback || !(await isCurrentJob())) return null;
 
   const capture = await getLatestJobCapture(currentJobId);
   if (!capture || normalizeJobId(capture.insights.job.id) !== currentJobId) return null;
-  return enqueueTabMutation(tabId, async () => {
+  if (!(await isCurrentJob())) return null;
+  try {
+    await browser.storage.session.set({
+      [storageKey(tabId)]: capture.insights,
+      [metadataKey(tabId)]: { jobId: currentJobId, capturedAt: capture.capturedAt },
+    });
     if (!(await isCurrentJob())) return null;
-    try {
-      await browser.storage.session.set({
-        [storageKey(tabId)]: capture.insights,
-        [metadataKey(tabId)]: { jobId: currentJobId, capturedAt: capture.capturedAt },
-      });
-      if (!(await isCurrentJob())) return null;
-      await setBadge(tabId, currentUrl, String(capture.insights.activity.exactProposals ?? ''));
-      return (await isCurrentJob()) ? capture.insights : null;
-    } catch {
-      return null;
-    }
-  });
+    await setBadge(tabId, currentUrl, String(capture.insights.activity.exactProposals ?? ''));
+    return (await isCurrentJob()) ? capture.insights : null;
+  } catch {
+    return null;
+  }
 }
 
 export default defineBackground(() => {
@@ -411,12 +397,26 @@ export default defineBackground(() => {
       return true;
     }
 
-    void readJobInsights(message.tabId).then(sendResponse, () => sendResponse(null));
+    void enqueueTabMutation(message.tabId, () => readJobInsights(message.tabId, false))
+      .then(async (insights) => {
+        if (insights) return insights;
+        try {
+          await browser.tabs.sendMessage(message.tabId, {
+            type: REQUEST_JOB_INSIGHTS_REPLAY,
+            tabId: message.tabId,
+            requestId: crypto.randomUUID(),
+          });
+        } catch {
+          // The content script may be absent or the tab may have navigated.
+        }
+        return enqueueTabMutation(message.tabId, () => readJobInsights(message.tabId, true));
+      })
+      .then(sendResponse, () => sendResponse(null));
     return true;
   });
 
   browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
-    if (changeInfo.status === 'loading' || changeInfo.url !== undefined) {
+    if (changeInfo.status === 'loading' && changeInfo.url !== undefined) {
       const generation = advanceTabGeneration(tabId);
       void enqueueTabMutation(tabId, async () => {
         if (getTabState(tabId).generation !== generation) return;

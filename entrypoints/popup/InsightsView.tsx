@@ -11,6 +11,11 @@ import {
   formatRelativeTime,
 } from '../../lib/format';
 import type { ClientHistoryEntry, JobInsights, JobWarning } from '../../lib/insights';
+import type { JobHistoryResponse } from '../../lib/protocol';
+import type { PortfolioMatch } from '../../lib/portfolio-match';
+import type { SkillMatchSummary } from '../../lib/skill-match';
+import type { ConversionStats } from '../../lib/conversion';
+import type { QualificationDetail } from '../../lib/qualification';
 import type { ThemeMode } from '../../lib/theme';
 
 // --- Vector Icons ---
@@ -281,6 +286,21 @@ function MonitorIcon({ className = 'size-3.5' }: { className?: string }) {
 
 // --- Component Helpers ---
 
+export type WatchlistStatus =
+  | { kind: 'saved' }
+  | { kind: 'not-saved' }
+  | { kind: 'unavailable'; reason: 'missing-id' | 'storage' };
+export interface PopupPersonalization {
+  fallbackHourlyRate: number | null;
+  skillMatch: SkillMatchSummary | null;
+  portfolioMatches: PortfolioMatch[];
+}
+const EMPTY_POPUP_PERSONALIZATION: PopupPersonalization = {
+  fallbackHourlyRate: null,
+  skillMatch: null,
+  portfolioMatches: [],
+};
+
 const WARNING_COPY: Record<JobWarning, string> = {
   'position-filled': 'Position already filled',
   'already-hired': 'Client already hired for this job',
@@ -445,6 +465,169 @@ function HistoryRow({ job }: { job: ClientHistoryEntry }) {
   );
 }
 
+function QualificationDetails({ details }: { details: QualificationDetail[] }) {
+  if (details.length === 0) return null;
+
+  return (
+    <details className="overflow-hidden rounded-xl border border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60">
+      <summary className="flex cursor-pointer list-none items-center justify-between px-2.5 py-2 text-xs font-semibold text-slate-700 select-none hover:bg-slate-100/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-slate-200 dark:hover:bg-slate-700/60">
+        <span>Qualification details</span>
+        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+          {details.length}
+        </span>
+      </summary>
+      <ul className="m-0 list-none border-t border-slate-100 bg-white/70 px-2.5 py-1 dark:border-slate-800 dark:bg-slate-900/50">
+        {details.map((detail) => (
+          <li
+            key={`${detail.requirementName}:${detail.clientLabel}:${detail.freelancerLabel ?? ''}:${detail.matched}`}
+            className="border-b border-slate-100 py-2 last:border-b-0 dark:border-slate-800"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+                {detail.requirementName}
+              </span>
+              <span
+                className={`shrink-0 text-[10px] font-bold ${
+                  detail.matched
+                    ? 'text-emerald-700 dark:text-emerald-400'
+                    : 'text-rose-700 dark:text-rose-400'
+                }`}
+              >
+                {detail.matched ? 'Matched' : 'Not matched'}
+              </span>
+            </div>
+            <div className="mt-1 grid grid-cols-2 gap-x-2 text-[10.5px] leading-snug text-slate-500 dark:text-slate-400">
+              <span>
+                <span className="font-semibold text-slate-600 dark:text-slate-300">Client: </span>
+                {detail.clientLabel}
+              </span>
+              <span>
+                <span className="font-semibold text-slate-600 dark:text-slate-300">
+                  Freelancer:{' '}
+                </span>
+                {detail.freelancerLabel ?? detail.freelancerValue ?? 'Not available'}
+              </span>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+function externalPortfolioUrl(value: string | null): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.hostname.length > 0 && (url.protocol === 'http:' || url.protocol === 'https:')
+      ? value
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function PortfolioMatches({ matches }: { matches: PortfolioMatch[] }) {
+  if (matches.length === 0) return null;
+
+  return (
+    <details className="overflow-hidden rounded-xl border border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60">
+      <summary className="flex cursor-pointer list-none items-center justify-between px-2.5 py-2 text-xs font-semibold text-slate-700 select-none hover:bg-slate-100/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-slate-200 dark:hover:bg-slate-700/60">
+        <span>Matching portfolio work</span>
+        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+          {matches.length}
+        </span>
+      </summary>
+      <ul className="m-0 list-none border-t border-slate-100 bg-white/70 px-2.5 py-1 dark:border-slate-800 dark:bg-slate-900/50">
+        {matches.map((match) => {
+          const overlapLabels = [
+            ...match.titleOverlap.map((label) => `Title: ${label}`),
+            ...match.skillOverlap.map((label) => `Skill: ${label}`),
+            ...match.tagOverlap.map((label) => `Tag: ${label}`),
+          ];
+          const portfolioUrl = externalPortfolioUrl(match.url);
+          return (
+            <li
+              key={`${match.title}:${match.url ?? ''}:${match.titleOverlap.join(',')}:${match.skillOverlap.join(',')}:${match.tagOverlap.join(',')}`}
+              className="border-b border-slate-100 py-2 last:border-b-0 dark:border-slate-800"
+            >
+              {portfolioUrl ? (
+                <a
+                  className="block text-[11px] font-semibold text-emerald-700 underline decoration-emerald-300 underline-offset-2 hover:text-emerald-600 dark:text-emerald-300 dark:decoration-emerald-700 dark:hover:text-emerald-200"
+                  href={portfolioUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {match.title}
+                </a>
+              ) : (
+                <span className="block text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+                  {match.title}
+                </span>
+              )}
+              <span className="mt-0.5 block text-[10.5px] text-slate-500 dark:text-slate-400">
+                {overlapLabels.join(' · ')}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </details>
+  );
+}
+
+function ConversionSummary({ stats }: { stats: ConversionStats }) {
+  // The tracker cannot observe a current-user interview yet; zero is unknown, not none.
+  const interviewMetricsAvailable = stats.interviews > 0;
+  return (
+    <section
+      className="rounded-2xl border border-slate-200/90 bg-white p-3 shadow-xs dark:border-slate-800/90 dark:bg-slate-900"
+      aria-labelledby="conversion-heading"
+    >
+      <div className="mb-2 border-b border-slate-100 pb-2 dark:border-slate-800">
+        <h2
+          id="conversion-heading"
+          className="text-xs font-bold text-slate-900 dark:text-slate-100"
+        >
+          Application Outcomes
+        </h2>
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <MetricCell label="Applications" value={formatNumber(stats.applications)} />
+        <MetricCell
+          label="Interviews"
+          value={interviewMetricsAvailable ? formatNumber(stats.interviews) : 'Not available'}
+          subvalue={interviewMetricsAvailable ? undefined : 'Not tracked'}
+        />
+        <MetricCell label="Hires" value={formatNumber(stats.hires)} />
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
+        <MetricCell
+          label="Apply → Interview"
+          value={
+            interviewMetricsAvailable ? formatPercent(stats.applyToInterviewRate) : 'Not available'
+          }
+          subvalue={
+            interviewMetricsAvailable
+              ? `n=${formatNumber(stats.applyToInterviewDenominator)}`
+              : 'Not tracked'
+          }
+        />
+        <MetricCell
+          label="Interview → Hire"
+          value={
+            interviewMetricsAvailable ? formatPercent(stats.interviewToHireRate) : 'Not available'
+          }
+          subvalue={
+            interviewMetricsAvailable
+              ? `n=${formatNumber(stats.interviewToHireDenominator)}`
+              : 'Not tracked'
+          }
+        />
+      </div>
+    </section>
+  );
+}
+
 function HistoryDetails({
   title,
   jobs,
@@ -504,12 +687,14 @@ export function EmptyState({
   tone = 'default',
   themeMode,
   onToggleTheme,
+  onRetry,
 }: {
   title: string;
   copy: string;
   tone?: 'default' | 'error';
   themeMode?: ThemeMode;
   onToggleTheme?: () => void;
+  onRetry?: () => void;
 }) {
   return (
     <section className="flex min-h-[460px] flex-col items-center justify-center rounded-2xl border border-slate-200/90 bg-white p-6 text-center shadow-xs dark:border-slate-800/90 dark:bg-slate-900">
@@ -537,12 +722,26 @@ export function EmptyState({
       <h1 className="mb-2 text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
         {title}
       </h1>
-      <p className="mb-6 max-w-[32ch] text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+      <p
+        className="mb-6 max-w-[32ch] text-xs leading-relaxed text-slate-500 dark:text-slate-400"
+        role="status"
+        aria-live="polite"
+      >
         {copy}
       </p>
 
+      {onRetry && (
+        <button
+          type="button"
+          className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white dark:focus-visible:outline-slate-100"
+          onClick={onRetry}
+        >
+          Retry
+        </button>
+      )}
+
       {tone === 'default' && (
-        <div className="w-full rounded-xl border border-slate-100 bg-slate-50 p-3.5 text-left dark:border-slate-800 dark:bg-slate-800/60">
+        <div className="mt-6 w-full rounded-xl border border-slate-100 bg-slate-50 p-3.5 text-left dark:border-slate-800 dark:bg-slate-800/60">
           <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
             How it works
           </div>
@@ -614,14 +813,56 @@ export function LoadingState({
 
 export function AvailableState({
   insights,
+  history,
+  personalization = EMPTY_POPUP_PERSONALIZATION,
+  historyFallback = false,
+  watchlistStatus = { kind: 'not-saved' },
+  watchlistBusy = false,
+  onToggleWatchlist,
   themeMode,
   onToggleTheme,
 }: {
   insights: JobInsights;
+  history?: JobHistoryResponse | null;
+  personalization?: PopupPersonalization;
+  historyFallback?: boolean;
+  watchlistStatus?: WatchlistStatus;
+  watchlistBusy?: boolean;
+  onToggleWatchlist?: () => void | Promise<void>;
   themeMode?: ThemeMode;
   onToggleTheme?: () => void;
 }) {
-  const { job, activity, client, fit, history } = insights;
+  const { job, activity, client, fit, history: clientHistory } = insights;
+  const effectiveFreelancerHourlyRate =
+    fit.freelancerHourlyRate ?? personalization.fallbackHourlyRate;
+  const effectiveRateContext =
+    fit.rateContext ??
+    (effectiveFreelancerHourlyRate !== null &&
+    client.averageHourlyRate !== null &&
+    client.averageHourlyRate > 0
+      ? effectiveFreelancerHourlyRate / client.averageHourlyRate
+      : null);
+  const usesFallbackHourlyRate =
+    fit.freelancerHourlyRate === null && personalization.fallbackHourlyRate !== null;
+  const jobId = typeof job.id === 'string' && job.id.trim().length > 0 ? job.id.trim() : null;
+  const effectiveWatchlistStatus =
+    jobId === null && watchlistStatus.kind === 'not-saved'
+      ? { kind: 'unavailable' as const, reason: 'missing-id' as const }
+      : watchlistStatus;
+  const canToggleWatchlist =
+    jobId !== null &&
+    effectiveWatchlistStatus.kind !== 'unavailable' &&
+    onToggleWatchlist !== undefined;
+  const watchlistLabel =
+    effectiveWatchlistStatus.kind === 'saved'
+      ? 'Remove job from watchlist'
+      : effectiveWatchlistStatus.kind === 'unavailable'
+        ? 'Watchlist unavailable'
+        : 'Save job to watchlist';
+  const observedApplicationLabel =
+    fit.applicationState === null
+      ? 'Observed application state: Not observed'
+      : `Observed application state: ${formatApplicationState(fit.applicationState)}`;
 
   const location = [client.city, client.country].filter(Boolean).join(', ') || 'Not available';
 
@@ -686,6 +927,69 @@ export function AvailableState({
             {subTitleParts.join(' · ')}
           </p>
         )}
+        {historyFallback && (
+          <p
+            className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-900 dark:border-amber-900/80 dark:bg-amber-950/40 dark:text-amber-200"
+            role="status"
+            aria-live="polite"
+          >
+            Showing session-only insights. Optional history storage was unavailable.
+          </p>
+        )}
+        <section
+          className="mt-2.5 rounded-xl border border-slate-100 bg-slate-50 p-2.5 dark:border-slate-800 dark:bg-slate-800/60"
+          aria-label="Local job controls"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <span className="block text-[10.5px] font-bold text-slate-700 dark:text-slate-200">
+                Watchlist
+              </span>
+              <span
+                className="block text-[10px] text-slate-500 dark:text-slate-400"
+                role="status"
+                aria-live="polite"
+              >
+                {effectiveWatchlistStatus.kind === 'saved'
+                  ? 'Saved locally'
+                  : effectiveWatchlistStatus.kind === 'unavailable'
+                    ? effectiveWatchlistStatus.reason === 'missing-id'
+                      ? 'Unavailable without a job ID'
+                      : 'Local storage unavailable'
+                    : 'Not saved'}
+              </span>
+            </div>
+            <button
+              type="button"
+              className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-[10.5px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+              aria-label={watchlistLabel}
+              title={watchlistLabel}
+              disabled={!canToggleWatchlist || watchlistBusy}
+              onClick={() => void onToggleWatchlist?.()}
+            >
+              <StarIcon className="size-3" />
+              <span>
+                {watchlistBusy
+                  ? 'Saving…'
+                  : effectiveWatchlistStatus.kind === 'saved'
+                    ? 'Saved'
+                    : 'Save'}
+              </span>
+            </button>
+          </div>
+          <div
+            className="mt-2 flex items-center justify-between border-t border-slate-200/70 pt-2 text-[10.5px] dark:border-slate-700/70"
+            role="status"
+            aria-label={observedApplicationLabel}
+          >
+            <span className="font-medium text-slate-500 dark:text-slate-400">
+              Observed application
+            </span>
+            <span className="font-semibold text-slate-700 dark:text-slate-200">
+              {formatApplicationState(fit.applicationState)}
+            </span>
+          </div>
+        </section>
       </header>
 
       {/* Warnings & Restrictions */}
@@ -753,7 +1057,48 @@ export function AvailableState({
           </div>
         )}
       </section>
+      {history?.summary && (
+        <section
+          className="rounded-2xl border border-slate-200/90 bg-white p-3 shadow-xs dark:border-slate-800/90 dark:bg-slate-900"
+          aria-label="Applicant history"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
+              Applicant History
+            </span>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400">
+              {history.summary.snapshotCount} capture
+              {history.summary.snapshotCount === 1 ? '' : 's'}
+            </span>
+          </div>
+          <div className="mt-2 grid grid-cols-3 gap-2 text-center">
+            {history.summary.firstSeenDelta !== null && (
+              <MetricCell
+                label="Since first"
+                value={`${history.summary.firstSeenDelta > 0 ? '+' : ''}${formatNumber(history.summary.firstSeenDelta)}`}
+              />
+            )}
+            {history.summary.recentDelta !== null && (
+              <MetricCell
+                label="Since prior"
+                value={`${history.summary.recentDelta > 0 ? '+' : ''}${formatNumber(history.summary.recentDelta)}`}
+              />
+            )}
+            {history.velocity !== null && (
+              <MetricCell label="Proposals/hour" value={history.velocity.toFixed(1)} />
+            )}
+            {history.summary.firstSeenDelta === null &&
+              history.summary.recentDelta === null &&
+              history.velocity === null && (
+                <span className="col-span-3 text-[11px] text-slate-500 dark:text-slate-400">
+                  No trend yet
+                </span>
+              )}
+          </div>
+        </section>
+      )}
 
+      {history && <ConversionSummary stats={history.conversion} />}
       {/* Client Track Record */}
       <section
         className="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-xs dark:border-slate-800/90 dark:bg-slate-900"
@@ -842,6 +1187,42 @@ export function AvailableState({
           </div>
         </div>
       </section>
+      {history && (
+        <section
+          className="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-xs dark:border-slate-800/90 dark:bg-slate-900"
+          aria-labelledby="pay-profile-heading"
+        >
+          <div className="mb-3 flex items-center gap-1.5 border-b border-slate-100 pb-2 dark:border-slate-800">
+            <BuildingIcon className="size-3.5 text-slate-500 dark:text-slate-400" />
+            <h2
+              id="pay-profile-heading"
+              className="text-xs font-bold text-slate-900 dark:text-slate-100"
+            >
+              Client Pay Profile
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+            <MetricCell
+              label="Typical Fixed Payment"
+              value={formatMoney(history.payProfile.medianRecentFixedPayment, 'USD')}
+            />
+            <MetricCell
+              label="Average Fixed Payment"
+              value={formatMoney(history.payProfile.averageRecentFixedPayment, 'USD')}
+            />
+            <MetricCell
+              label="Historical Hourly"
+              value={
+                history.payProfile.historicalHourlyRates
+                  ? history.payProfile.historicalHourlyRates
+                      .map((rate) => `${formatMoney(rate, 'USD')}/hr`)
+                      .join(' · ')
+                  : 'Not available'
+              }
+            />
+          </div>
+        </section>
+      )}
 
       {/* Your Fit & Rate Dynamics */}
       <section
@@ -872,6 +1253,20 @@ export function AvailableState({
               {qualificationSummary ?? 'Not available'}
             </span>
           </div>
+          <QualificationDetails details={fit.qualificationDetails ?? []} />
+          {personalization.skillMatch && (
+            <div className="rounded-xl border border-slate-100 bg-slate-50 p-2.5 dark:border-slate-800 dark:bg-slate-800/60">
+              <MetricCell
+                label="Profile skill match"
+                value={`${personalization.skillMatch.matched}/${personalization.skillMatch.total}`}
+              />
+              {personalization.skillMatch.matchedSkills.length > 0 && (
+                <p className="mt-1 text-[10.5px] text-slate-500 dark:text-slate-400">
+                  Matched: {personalization.skillMatch.matchedSkills.join(' · ')}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Rate Comparison Box */}
           <div className="rounded-xl border border-slate-100 bg-slate-50 p-2.5 dark:border-slate-800 dark:bg-slate-800/60">
@@ -881,8 +1276,13 @@ export function AvailableState({
                   Your Hourly Rate
                 </span>
                 <span className="text-xs font-bold tabular-nums text-slate-900 dark:text-slate-100">
-                  {formatMoney(fit.freelancerHourlyRate, 'USD')}
+                  {formatMoney(effectiveFreelancerHourlyRate, 'USD')}
                 </span>
+                {usesFallbackHourlyRate && (
+                  <span className="mt-0.5 block text-[10px] text-slate-500 dark:text-slate-400">
+                    Local fallback
+                  </span>
+                )}
               </div>
               <div>
                 <span className="block text-[10.5px] font-medium text-slate-500 dark:text-slate-400">
@@ -894,29 +1294,34 @@ export function AvailableState({
               </div>
             </div>
 
-            {fit.rateContext !== null && (
+            {effectiveRateContext !== null && (
               <div className="flex items-center justify-between border-t border-slate-200/60 pt-2 dark:border-slate-700/60">
                 <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
                   Rate Comparison
                 </span>
                 <span className="rounded bg-slate-200/80 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-slate-800 dark:bg-slate-700 dark:text-slate-200">
-                  {formatRateContext(fit.rateContext)}
+                  {formatRateContext(effectiveRateContext)}
                 </span>
               </div>
             )}
           </div>
+          <PortfolioMatches matches={personalization.portfolioMatches} />
         </div>
       </section>
 
       {/* Expandable History Sections */}
       <HistoryDetails
         title="Related Previous Jobs"
-        jobs={history.relatedJobs}
+        jobs={clientHistory.relatedJobs}
         badgeText="Repeat Context"
         defaultOpen={true}
       />
 
-      <HistoryDetails title="Client Hiring History" jobs={history.recentJobs} defaultOpen={false} />
+      <HistoryDetails
+        title="Client Hiring History"
+        jobs={clientHistory.recentJobs}
+        defaultOpen={false}
+      />
 
       {/* Footer */}
       <footer className="mt-1 flex flex-col gap-1 rounded-xl bg-slate-200/50 p-2.5 text-[10.5px] text-slate-500 dark:bg-slate-900/60 dark:text-slate-400">

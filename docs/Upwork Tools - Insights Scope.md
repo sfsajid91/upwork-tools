@@ -4,6 +4,12 @@ The goal is to show only insights that help answer:
 
 **Is this job worth applying to?**
 
+## Product boundary
+
+This scope is local-only and deterministic. A snapshot is captured only from the supported response naturally received when the user opens a job; there is no polling, duplicate request, or page UI. The latest per-tab value uses `browser.storage.session`; persistent normalized snapshots, applications, and watchlist data use IndexedDB; small profile, portfolio, preferences, and UI settings use `browser.storage.local`. Retain history for 90 days and no more than 100 snapshots per job. One clear-data operation removes extension history, applications, and watchlist while preserving unrelated browser storage. If the source does not provide a value, show it as unavailable.
+
+Out of scope: cloud sync, telemetry, polling, duplicate requests, Connect tracking, automatic applications, backend storage, Upwork page UI, and invented scores or recommendations.
+
 ## 1. Competition
 
 Show:

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { renderToString } from 'react-dom/server';
 import { normalizeJobInsights } from '../../lib/insights';
+import { mergePopupReadResult, type ViewState } from './App';
 import { AvailableState, EmptyState, LoadingState, ThemeToggle } from './InsightsView';
 
 function samplePayload() {
@@ -64,7 +65,24 @@ function samplePayload() {
             applied: true,
             hourlyRate: { amount: 25 },
             qualificationsMatches: {
-              matches: [{ qualified: true }, { qualified: false }],
+              matches: [
+                {
+                  qualification: 'EnglishLevel',
+                  clientPreferred: '3',
+                  clientPreferredLabel: 'Fluent',
+                  freelancerValue: '3',
+                  freelancerValueLabel: 'Fluent',
+                  qualified: true,
+                },
+                {
+                  qualification: 'MinimumJobSuccessScore',
+                  clientPreferred: '90',
+                  clientPreferredLabel: 'At least 90%',
+                  freelancerValue: '70',
+                  freelancerValueLabel: '70%',
+                  qualified: false,
+                },
+              ],
             },
           },
         },
@@ -109,6 +127,206 @@ describe('InsightsView components', () => {
     expect(html.includes('Your Fit &amp; Rates')).toBe(true);
     expect(html.includes('Related Previous Jobs')).toBe(true);
     expect(html.includes('Repeat Context')).toBe(true);
+    expect(html.includes('Qualifications Matched')).toBe(true);
+    expect(html.includes('1/2')).toBe(true);
+    expect(html.includes('<details')).toBe(true);
+    expect(html.includes('Qualification details')).toBe(true);
+    expect(html.includes('EnglishLevel')).toBe(true);
+    expect(html.includes('Client:')).toBe(true);
+    expect(html.includes('Freelancer:')).toBe(true);
+    expect(html.includes('Matched')).toBe(true);
+    expect(html.includes('Not matched')).toBe(true);
+  });
+  test('renders local personalization and fallback rate context', () => {
+    const insights = normalizeJobInsights(samplePayload());
+    expect(insights).not.toBeNull();
+    if (!insights) throw new Error('insights should not be null');
+
+    const html = renderToString(
+      <AvailableState
+        insights={{
+          ...insights,
+          fit: { ...insights.fit, freelancerHourlyRate: null, rateContext: null },
+        }}
+        personalization={{
+          fallbackHourlyRate: 42,
+          skillMatch: { matched: 1, total: 2, matchedSkills: ['React'] },
+          portfolioMatches: [
+            {
+              title: 'Cloudflare project',
+              skills: ['TypeScript'],
+              tags: [],
+              url: 'https://example.test/project',
+              titleOverlap: ['cloudflare'],
+              skillOverlap: ['typescript'],
+              tagOverlap: [],
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(html.includes('Profile skill match')).toBe(true);
+    expect(html.includes('Matched:') && html.includes('React')).toBe(true);
+    expect(html.includes('Local fallback')).toBe(true);
+    expect(html.includes('Rate Comparison')).toBe(true);
+    expect(html.includes('~4.1× client average')).toBe(true);
+    expect(html.includes('Matching portfolio work')).toBe(true);
+    expect(html.includes('Title: cloudflare')).toBe(true);
+    expect(html.includes('href="https://example.test/project"')).toBe(true);
+    expect(html.includes('target="_blank"')).toBe(true);
+    expect(html.includes('rel="noopener noreferrer"')).toBe(true);
+  });
+  test('renders application conversion outcomes with denominators', () => {
+    const insights = normalizeJobInsights(samplePayload());
+    expect(insights).not.toBeNull();
+    if (!insights) throw new Error('insights should not be null');
+
+    const html = renderToString(
+      <AvailableState
+        insights={insights}
+        history={{
+          jobId: 'job-1',
+          summary: null,
+          velocity: null,
+          payProfile: {
+            totalCharges: null,
+            averageHourlyRate: null,
+            medianRecentFixedPayment: null,
+            averageRecentFixedPayment: null,
+            historicalHourlyRates: null,
+          },
+          conversion: {
+            applications: 4,
+            interviews: 2,
+            hires: 1,
+            applyToInterviewRate: 50,
+            applyToInterviewDenominator: 4,
+            interviewToHireRate: 50,
+            interviewToHireDenominator: 2,
+          },
+        }}
+      />,
+    );
+
+    expect(html.includes('Application Outcomes')).toBe(true);
+    expect(html.includes('Apply → Interview')).toBe(true);
+    expect(html.includes('n=4')).toBe(true);
+    expect(html.includes('Interview → Hire')).toBe(true);
+    expect(html.includes('n=2')).toBe(true);
+  });
+  test('marks interview conversion metrics unavailable without observed interview events', () => {
+    const insights = normalizeJobInsights(samplePayload());
+    expect(insights).not.toBeNull();
+    if (!insights) throw new Error('insights should not be null');
+
+    const html = renderToString(
+      <AvailableState
+        insights={insights}
+        history={{
+          jobId: 'job-1',
+          summary: null,
+          velocity: null,
+          payProfile: {
+            totalCharges: null,
+            averageHourlyRate: null,
+            medianRecentFixedPayment: null,
+            averageRecentFixedPayment: null,
+            historicalHourlyRates: null,
+          },
+          conversion: {
+            applications: 1,
+            interviews: 0,
+            hires: 0,
+            applyToInterviewRate: null,
+            applyToInterviewDenominator: 1,
+            interviewToHireRate: null,
+            interviewToHireDenominator: 0,
+          },
+        }}
+      />,
+    );
+
+    expect(html.includes('Interviews')).toBe(true);
+    expect(html.includes('Not available')).toBe(true);
+    expect(html.includes('Not tracked')).toBe(true);
+  });
+
+  test('renders unavailable qualification summary when matches are absent', () => {
+    const payload = samplePayload();
+    const insights = normalizeJobInsights({
+      data: {
+        jobAuthDetails: {
+          ...payload.data.jobAuthDetails,
+          currentUserInfo: {},
+        },
+      },
+    });
+    expect(insights).not.toBeNull();
+    if (!insights) throw new Error('insights should not be null');
+
+    const html = renderToString(<AvailableState insights={insights} />);
+    expect(html.includes('Qualifications Matched')).toBe(true);
+    expect(html.includes('Not available')).toBe(true);
+    expect(html.includes('Qualification details')).toBe(false);
+  });
+
+  test('renders disabled watchlist control when the normalized job ID is missing', () => {
+    const insights = normalizeJobInsights(samplePayload());
+    expect(insights).not.toBeNull();
+    if (!insights) throw new Error('insights should not be null');
+    const html = renderToString(
+      <AvailableState
+        insights={{ ...insights, job: { ...insights.job, id: null } }}
+        onToggleWatchlist={() => {}}
+      />,
+    );
+    expect(html.includes('disabled=""')).toBe(true);
+    expect(html.includes('Unavailable without a job ID')).toBe(true);
+    expect(html.includes('Watchlist unavailable')).toBe(true);
+  });
+
+  test('renders saved and removable watchlist status with accessible labels', () => {
+    const insights = normalizeJobInsights(samplePayload());
+    expect(insights).not.toBeNull();
+    if (!insights) throw new Error('insights should not be null');
+    const savedHtml = renderToString(
+      <AvailableState
+        insights={insights}
+        watchlistStatus={{ kind: 'saved' }}
+        onToggleWatchlist={() => {}}
+      />,
+    );
+    expect(savedHtml.includes('Saved locally')).toBe(true);
+    expect(savedHtml.includes('Remove job from watchlist')).toBe(true);
+    expect(savedHtml.includes('Observed application')).toBe(true);
+    expect(savedHtml.includes('Already applied')).toBe(true);
+
+    const removedHtml = renderToString(
+      <AvailableState
+        insights={insights}
+        watchlistStatus={{ kind: 'not-saved' }}
+        onToggleWatchlist={() => {}}
+      />,
+    );
+    expect(removedHtml.includes('Not saved')).toBe(true);
+    expect(removedHtml.includes('Save job to watchlist')).toBe(true);
+  });
+
+  test('renders storage failure fallback without recommendation language', () => {
+    const insights = normalizeJobInsights(samplePayload());
+    expect(insights).not.toBeNull();
+    if (!insights) throw new Error('insights should not be null');
+    const html = renderToString(
+      <AvailableState
+        insights={insights}
+        watchlistStatus={{ kind: 'unavailable', reason: 'storage' }}
+        onToggleWatchlist={() => {}}
+      />,
+    );
+    expect(html.includes('Local storage unavailable')).toBe(true);
+    expect(html.includes('Watchlist unavailable')).toBe(true);
+    expect(html.toLowerCase().includes('recommend')).toBe(false);
   });
 
   test('renders ThemeToggle in system, light, and dark modes', () => {
@@ -120,5 +338,24 @@ describe('InsightsView components', () => {
 
     const darkHtml = renderToString(<ThemeToggle mode="dark" onToggle={() => {}} />);
     expect(darkHtml.includes('Dark')).toBe(true);
+  });
+});
+
+test('preserves watchlist mutations when history resolves later', () => {
+  const current = {
+    kind: 'ready',
+    watchlistStatus: { kind: 'saved' },
+    watchlistBusy: true,
+  } as unknown as ViewState;
+  const historyResult = {
+    kind: 'ready',
+    watchlistStatus: { kind: 'not-saved' },
+    watchlistBusy: false,
+  } as unknown as Exclude<ViewState, { kind: 'loading' }>;
+
+  expect(mergePopupReadResult(current, historyResult)).toMatchObject({
+    kind: 'ready',
+    watchlistStatus: { kind: 'saved' },
+    watchlistBusy: true,
   });
 });

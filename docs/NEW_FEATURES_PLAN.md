@@ -70,21 +70,21 @@ task commits and must identify the task commits they combine.
 
 | Feature | Current state | Plan status |
 | --- | --- | --- |
-| Applicant History | Not implemented | Build in Phase 1 |
-| Proposal Velocity | Not implemented | Build in Phase 2 |
+| Applicant History | Implemented in IndexedDB, `lib/history.ts`, and applicant metrics | Preserve; popup integration remains |
+| Proposal Velocity | Implemented in `lib/velocity.ts` with a one-hour minimum | Preserve; popup integration remains |
 | Competition Snapshot | Implemented in `lib/insights.ts` and popup | Preserve |
 | Interview Rate | Implemented | Preserve |
 | Client Hire Rate | Implemented | Preserve |
-| Client Pay Profile | Partial: spend and average hourly rate exist; fixed-payment profile absent; history source is broken | Fix in Phase 2 |
-| Similar Previous Hires | Partial/broken: title matcher exists, but production history path is wrong and current job is not excluded | Fix in Phase 2 |
+| Client Pay Profile | Implemented in `lib/pay-profile.ts`; popup integration remains | Preserve |
+| Similar Previous Hires | Fixed buyer history source, current-job exclusion, and strong title matching | Preserve |
 | Rate Context | Implemented | Preserve |
-| Qualification Match | Implemented as a count; detailed expansion absent | Extend in Phase 3 |
-| Job Restriction Detector | Basic meaningful-default filtering implemented | Extend in Phase 3 |
+| Qualification Match | Detailed pure parser added; expandable popup section remains | Extend UI in Phase 5 |
+| Job Restriction Detector | Pure parser covers meaningful locations, JSS, language, hours, earnings, portfolio, and on-site values | Integrate into model/UI |
 | Client Activity | Implemented as relative time | Preserve; optional classification |
-| Filled / Already Hired Warning | Partial: status and current-user state exist; same-job history is not integrated | Fix in Phase 2 |
+| Filled / Already Hired Warning | Current-user and client signals remain distinct | Preserve; same-job history UI remains |
 | Application State | Applied, invited, and hired states exist | Extend only where response data is reliable |
-| Personal Skill Match | Not implemented | Build in Phase 3 |
-| Portfolio Matcher | Not implemented | Build in Phase 3 |
+| Personal Skill Match | Pure deterministic matcher added; profile/options UI remains | Integrate in Phase 5 |
+| Portfolio Matcher | Local CRUD and bounded pure ranking added; options UI remains | Integrate in Phase 5 |
 | Job/Application Tracker | Not implemented | Build in Phase 4 |
 | Personal Conversion Stats | Not implemented | Build in Phase 4 |
 | Job Watchlist | Not implemented | Build in Phase 4 |
@@ -447,218 +447,218 @@ Do not start portfolio matching, conversion statistics, or watchlist UI before t
 
 ## Open decisions to resolve before implementation
 
-1. **Retention:** default snapshot retention window and maximum snapshots per job.
-2. **Clear data:** whether one clear button removes all history, or whether jobs, applications, portfolio, and watchlist can be cleared separately.
-3. **Manual tracker fields:** whether bid is manually entered; Connect counts remain excluded unless the product boundary changes explicitly.
-4. **Velocity threshold:** keep the proposed one-hour minimum or choose another deterministic threshold.
-5. **Options surface:** use a dedicated WXT options entrypoint for profile and portfolio editing, recommended over a larger popup.
+1. **Retention:** Resolved — retain exactly 90 days and at most 100 snapshots per job.
+2. **Clear data:** Resolved — one extension-local clear operation removes history, applications, and watchlist while preserving unrelated browser storage.
+3. **Manual tracker fields:** Bid and Connect counts remain excluded; manual fields require a future explicit product decision.
+4. **Velocity threshold:** Resolved — require at least one hour between valid snapshots.
+5. **Options surface:** Dedicated WXT options entrypoint remains the recommended integration surface.
 
 ## Task and subtask breakdown
 
 ### Phase 0 — Contract and audit corrections
 
-- [ ] **P0.1 — Update product boundaries**
-  - [ ] Define persistent local history and retention.
-  - [ ] Define clear-data behavior.
-  - [ ] Keep cloud sync, telemetry, polling, and Connect tracking excluded.
-  - [ ] Update `PRODUCT.md`, `PROJECT_CONTEXT.md`, and the scope document.
-- [ ] **P0.2 — Correct history normalization**
-  - [ ] Read `buyer.workHistory`.
-  - [ ] Update fixtures to the documented response shape.
-  - [ ] Add a production-shaped regression test.
-- [ ] **P0.3 — Fix related-history identity**
-  - [ ] Pass current job ID into matching.
-  - [ ] Exclude the current job before title matching.
-  - [ ] Require strong deterministic matches.
-- [ ] **P0.4 — Fix runtime messaging compatibility**
-  - [ ] Replace the Promise-only listener with `sendResponse`.
-  - [ ] Preserve popup GET and content STORE contracts.
-  - [ ] Verify the Chrome 111 compatibility path.
-- [ ] **P0.5 — Serialize tab lifecycle mutations**
-  - [ ] Add per-tab navigation generation or mutation sequencing.
-  - [ ] Reject stale STORE messages after navigation starts.
-  - [ ] Prevent cleanup from deleting fresh-page data.
-- [ ] **P0.6 — Harden interception**
-  - [ ] Handle rejected fetch inspection promises.
-  - [ ] Remove or constrain URL-less global `JSON.parse` capture.
-  - [ ] Preserve original host-page behavior.
-- [ ] **P0.7 — Add audit regression tests**
-  - [ ] Test history source and current-job exclusion.
-  - [ ] Test protocol/runtime boundary behavior.
-  - [ ] Test interceptor failure paths.
+- [x] **P0.1 — Update product boundaries**
+  - [x] Define persistent local history and retention.
+  - [x] Define clear-data behavior.
+  - [x] Keep cloud sync, telemetry, polling, and Connect tracking excluded.
+  - [x] Update `PRODUCT.md`, `PROJECT_CONTEXT.md`, and the scope document.
+- [x] **P0.2 — Correct history normalization**
+  - [x] Read `buyer.workHistory`.
+  - [x] Update fixtures to the documented response shape.
+  - [x] Add a production-shaped regression test.
+- [x] **P0.3 — Fix related-history identity**
+  - [x] Pass current job ID into matching.
+  - [x] Exclude the current job before title matching.
+  - [x] Require strong deterministic matches.
+- [x] **P0.4 — Fix runtime messaging compatibility**
+  - [x] Replace the Promise-only listener with `sendResponse`.
+  - [x] Preserve popup GET and content STORE contracts.
+  - [x] Verify the Chrome 111 compatibility path.
+- [x] **P0.5 — Serialize tab lifecycle mutations**
+  - [x] Add per-tab navigation generation or mutation sequencing.
+  - [x] Reject stale STORE messages after navigation starts.
+  - [x] Prevent cleanup from deleting fresh-page data.
+- [x] **P0.6 — Harden interception**
+  - [x] Handle rejected fetch inspection promises.
+  - [x] Remove or constrain URL-less global `JSON.parse` capture.
+  - [x] Preserve original host-page behavior.
+- [x] **P0.7 — Add audit regression tests**
+  - [x] Test history source and current-job exclusion.
+  - [x] Test protocol/runtime boundary behavior.
+  - [x] Test interceptor failure paths.
 
 ### Phase 1 — Storage foundation and applicant snapshots
 
-- [ ] **P1.1 — Define storage ownership**
-  - [ ] Keep latest per-tab data in `storage.session`.
-  - [ ] Put growing records in IndexedDB.
-  - [ ] Put profile, portfolio, and settings in `storage.local`.
-- [ ] **P1.2 — Build the IndexedDB schema**
-  - [ ] Add versioned database initialization.
-  - [ ] Add `jobs` store and `jobId` key.
-  - [ ] Add append-only `jobSnapshots` store and indexes.
-  - [ ] Add `applications` and `watchlist` stores.
-- [ ] **P1.3 — Build local-settings storage**
-  - [ ] Store profile and skills.
-  - [ ] Store portfolio entries.
-  - [ ] Store UI preferences.
-  - [ ] Migrate theme preference from `localStorage`.
-- [ ] **P1.4 — Persist normalized job captures**
-  - [ ] Persist after validated background STORE messages.
-  - [ ] Capture local `capturedAt`.
-  - [ ] Deduplicate identical adjacent captures.
-  - [ ] Never persist raw GraphQL payloads.
-- [ ] **P1.5 — Add retention and clear-data APIs**
-  - [ ] Enforce snapshot retention limits.
-  - [ ] Add clear-history operation.
-  - [ ] Include applications and watchlist in clear-data policy.
-- [ ] **P1.6 — Handle storage degradation**
-  - [ ] Keep session-only popup behavior when IndexedDB fails.
-  - [ ] Avoid blocking host-page message handling.
-  - [ ] Test storage failure behavior.
+- [x] **P1.1 — Define storage ownership**
+  - [x] Keep latest per-tab data in `storage.session`.
+  - [x] Put growing records in IndexedDB.
+  - [x] Put profile, portfolio, and settings in `storage.local`.
+- [x] **P1.2 — Build the IndexedDB schema**
+  - [x] Add versioned database initialization.
+  - [x] Add `jobs` store and `jobId` key.
+  - [x] Add append-only `jobSnapshots` store and indexes.
+  - [x] Add `applications` and `watchlist` stores.
+- [x] **P1.3 — Build local-settings storage**
+  - [x] Store profile and skills.
+  - [x] Store portfolio entries.
+  - [x] Store UI preferences.
+  - [x] Migrate theme preference from `localStorage`.
+- [x] **P1.4 — Persist normalized job captures**
+  - [x] Persist after validated background STORE messages.
+  - [x] Capture local `capturedAt`.
+  - [x] Deduplicate identical adjacent captures.
+  - [x] Never persist raw GraphQL payloads.
+- [x] **P1.5 — Add retention and clear-data APIs**
+  - [x] Enforce snapshot retention limits.
+  - [x] Add clear-history operation.
+  - [x] Include applications and watchlist in clear-data policy.
+- [x] **P1.6 — Handle storage degradation**
+  - [x] Keep session-only popup behavior when IndexedDB fails.
+  - [x] Avoid blocking host-page message handling.
+  - [x] Test storage failure behavior.
 
 ### Phase 2 — Historical competition and client pay insights
 
-- [ ] **P2.1 — Add snapshot queries**
-  - [ ] Query snapshots by job ID and capture time.
-  - [ ] Return latest, first-seen, and recent snapshots.
-- [ ] **P2.2 — Add applicant deltas**
-  - [ ] Calculate first-seen proposal delta.
-  - [ ] Calculate recent proposal delta.
-  - [ ] Hide deltas with insufficient valid data.
-- [ ] **P2.3 — Add proposal velocity**
-  - [ ] Require at least the chosen elapsed-time threshold.
-  - [ ] Reject invalid or out-of-order timestamps.
-  - [ ] Calculate proposals per hour.
-  - [ ] Use factual labels only.
-- [ ] **P2.4 — Add client pay profile**
-  - [ ] Calculate median recent fixed payments.
-  - [ ] Calculate optional average fixed payment.
-  - [ ] Use historical hourly rates only when supplied.
-  - [ ] Keep zero placeholders and missing values unavailable.
-- [ ] **P2.5 — Finish similar previous hires**
-  - [ ] Use title overlap as the documented v1 fallback.
-  - [ ] Use skills only when historical skills exist.
-  - [ ] Exclude current job and weak matches.
-  - [ ] Limit displayed results.
-- [ ] **P2.6 — Complete hiring warnings**
-  - [ ] Combine status, positions, and hired counts.
-  - [ ] Keep client hires distinct from freelancer hired state.
-  - [ ] Use same-job history only after identity filtering.
-- [ ] **P2.7 — Add historical UI**
-  - [ ] Add applicant history summary.
-  - [ ] Add velocity only when valid.
-  - [ ] Add client pay profile details.
-  - [ ] Keep default popup compact.
-- [ ] **P2.8 — Test historical metrics**
-  - [ ] Test zero applicants and zero elapsed time.
-  - [ ] Test missing and invalid timestamps.
-  - [ ] Test fixed/hourly payment boundaries.
-  - [ ] Test related-history thresholds.
+- [x] **P2.1 — Add snapshot queries**
+  - [x] Query snapshots by job ID and capture time.
+  - [x] Return latest, first-seen, and recent snapshots.
+- [x] **P2.2 — Add applicant deltas**
+  - [x] Calculate first-seen proposal delta.
+  - [x] Calculate recent proposal delta.
+  - [x] Hide deltas with insufficient valid data.
+- [x] **P2.3 — Add proposal velocity**
+  - [x] Require at least the chosen elapsed-time threshold.
+  - [x] Reject invalid or out-of-order timestamps.
+  - [x] Calculate proposals per hour.
+  - [x] Use factual labels only.
+- [x] **P2.4 — Add client pay profile**
+  - [x] Calculate median recent fixed payments.
+  - [x] Calculate optional average fixed payment.
+  - [x] Use historical hourly rates only when supplied.
+  - [x] Keep zero placeholders and missing values unavailable.
+- [x] **P2.5 — Finish similar previous hires**
+  - [x] Use title overlap as the documented v1 fallback.
+  - [x] Use skills only when historical skills exist.
+  - [x] Exclude current job and weak matches.
+  - [x] Limit displayed results.
+- [x] **P2.6 — Complete hiring warnings**
+  - [x] Combine status, positions, and hired counts.
+  - [x] Keep client hires distinct from freelancer hired state.
+  - [x] Use same-job history only after identity filtering.
+- [x] **P2.7 — Add historical UI**
+  - [x] Add applicant history summary.
+  - [x] Add velocity only when valid.
+  - [x] Add client pay profile details.
+  - [x] Keep default popup compact.
+- [x] **P2.8 — Test historical metrics**
+  - [x] Test zero applicants and zero elapsed time.
+  - [x] Test missing and invalid timestamps.
+  - [x] Test fixed/hourly payment boundaries.
+  - [x] Test related-history thresholds.
 
 ### Phase 3 — Personal profile, qualification, skill, and portfolio matching
 
-- [ ] **P3.1 — Add profile/options editing**
-  - [ ] Create a settings surface for skills and profile values.
-  - [ ] Persist settings in `storage.local`.
-  - [ ] Keep captured Upwork rate as the primary source.
-- [ ] **P3.2 — Normalize skill names**
-  - [ ] Normalize case and punctuation.
-  - [ ] Add a small explicit alias map.
-  - [ ] Preserve source labels for display.
-- [ ] **P3.3 — Add personal skill match**
-  - [ ] Compare profile skills with both job skill arrays.
-  - [ ] Display matched/total only when a profile exists.
-  - [ ] Avoid opaque scoring.
-- [ ] **P3.4 — Expand qualification details**
-  - [ ] Preserve requirement labels and freelancer values.
-  - [ ] Preserve each qualified boolean.
-  - [ ] Add an expandable details section.
-- [ ] **P3.5 — Expand restriction detection**
-  - [ ] Parse real location restrictions.
-  - [ ] Parse language, JSS, hours, earnings, and on-site values.
-  - [ ] Suppress `Any`, zero, false, and empty defaults.
-- [ ] **P3.6 — Add portfolio storage**
-  - [ ] Store title, skills, tags, and URL locally.
-  - [ ] Add create, edit, and remove operations.
-- [ ] **P3.7 — Add portfolio ranking**
-  - [ ] Rank title/tag/skill overlap deterministically.
-  - [ ] Require a strong match.
-  - [ ] Bound displayed results.
-- [ ] **P3.8 — Test personal matching**
-  - [ ] Test aliases and punctuation normalization.
-  - [ ] Test empty profile behavior.
-  - [ ] Test default restriction suppression.
-  - [ ] Test portfolio ranking boundaries.
+- [x] **P3.1 — Add profile/options editing**
+  - [x] Create a settings surface for skills and profile values.
+  - [x] Persist settings in `storage.local`.
+  - [x] Keep captured Upwork rate as the primary source.
+- [x] **P3.2 — Normalize skill names**
+  - [x] Normalize case and punctuation.
+  - [x] Add a small explicit alias map.
+  - [x] Preserve source labels for display.
+- [x] **P3.3 — Add personal skill match**
+  - [x] Compare profile skills with both job skill arrays.
+  - [x] Display matched/total only when a profile exists.
+  - [x] Avoid opaque scoring.
+- [x] **P3.4 — Expand qualification details**
+  - [x] Preserve requirement labels and freelancer values.
+  - [x] Preserve each qualified boolean.
+  - [x] Add an expandable details section.
+- [x] **P3.5 — Expand restriction detection**
+  - [x] Parse real location restrictions.
+  - [x] Parse language, JSS, hours, earnings, and on-site values.
+  - [x] Suppress `Any`, zero, false, and empty defaults.
+- [x] **P3.6 — Add portfolio storage**
+  - [x] Store title, skills, tags, and URL locally.
+  - [x] Add create, edit, and remove operations.
+- [x] **P3.7 — Add portfolio ranking**
+  - [x] Rank title/tag/skill overlap deterministically.
+  - [x] Require a strong match.
+  - [x] Bound displayed results.
+- [x] **P3.8 — Test personal matching**
+  - [x] Test aliases and punctuation normalization.
+  - [x] Test empty profile behavior.
+  - [x] Test default restriction suppression.
+  - [x] Test portfolio ranking boundaries.
 
 ### Phase 4 — Application tracker, conversion stats, and watchlist
 
-- [ ] **P4.1 — Define application state model**
-  - [ ] Store viewed, applied, interview, and hired timestamps when known.
-  - [ ] Separate observed states from manual values.
-  - [ ] Exclude Connect counts under the current boundary.
-- [ ] **P4.2 — Record observed transitions**
-  - [ ] Record viewed when a normalized capture is received.
-  - [ ] Record applied/invited/hired only from reliable response fields.
-  - [ ] Never infer applied from viewing.
+- [x] **P4.1 — Define application state model**
+  - [x] Store viewed, applied, interview, and hired timestamps when known.
+  - [x] Separate observed states from manual values.
+  - [x] Exclude Connect counts under the current boundary.
+- [x] **P4.2 — Record observed transitions**
+  - [x] Record viewed when a normalized capture is received.
+  - [x] Record applied/invited/hired only from reliable response fields.
+  - [x] Never infer applied from viewing.
 - [ ] **P4.3 — Add optional manual tracker actions**
   - [ ] Decide whether bid is manually entered.
   - [ ] Label all manual values.
   - [ ] Do not add automatic application behavior.
-- [ ] **P4.4 — Add conversion metrics**
-  - [ ] Aggregate known application records.
-  - [ ] Calculate apply-to-interview rate.
-  - [ ] Calculate interview-to-hire rate.
-  - [ ] Display denominators and hide zero/unknown rates.
-- [ ] **P4.5 — Add watchlist operations**
-  - [ ] Bookmark captured jobs.
-  - [ ] Store latest metadata and snapshot reference.
-  - [ ] Remove watchlisted jobs.
-  - [ ] Update only on natural job captures.
-- [ ] **P4.6 — Add tracker/watchlist UI**
-  - [ ] Add compact controls to the popup.
-  - [ ] Add a watchlist view or options surface.
-  - [ ] Add clear-data integration.
-- [ ] **P4.7 — Test tracker behavior**
-  - [ ] Test observed state transitions.
-  - [ ] Test unknown-state exclusion from metrics.
-  - [ ] Test watchlist isolation and removal.
+- [x] **P4.4 — Add conversion metrics**
+  - [x] Aggregate known application records.
+  - [x] Calculate apply-to-interview rate.
+  - [x] Calculate interview-to-hire rate.
+  - [x] Display denominators and hide zero/unknown rates.
+- [x] **P4.5 — Add watchlist operations**
+  - [x] Bookmark captured jobs.
+  - [x] Store latest metadata and snapshot reference.
+  - [x] Remove watchlisted jobs.
+  - [x] Update only on natural job captures.
+- [x] **P4.6 — Add tracker/watchlist UI**
+  - [x] Add compact controls to the popup.
+  - [x] Add a watchlist view or options surface.
+  - [x] Add clear-data integration.
+- [x] **P4.7 — Test tracker behavior**
+  - [x] Test observed state transitions.
+  - [x] Test unknown-state exclusion from metrics.
+  - [x] Test watchlist isolation and removal.
 
 ### Phase 5 — Popup information architecture and release hardening
 
-- [ ] **P5.1 — Rework popup hierarchy**
-  - [ ] Keep competition metrics above the fold.
-  - [ ] Add conditional applicant history and velocity.
-  - [ ] Keep pay, fit, warnings, and history expandable where possible.
-- [ ] **P5.2 — Add refresh and failure actions**
-  - [ ] Add retry for empty/error reads.
-  - [ ] Re-read session data without making network requests.
-  - [ ] Explain session-only fallback when persistent storage fails.
-- [ ] **P5.3 — Add clear-data controls**
-  - [ ] Expose history/application/watchlist clearing.
-  - [ ] Confirm destructive local deletion.
-  - [ ] Preserve unrelated browser data.
-- [ ] **P5.4 — Replace the starter README**
-  - [ ] Document install and load-unpacked steps.
-  - [ ] Document Bun development/build/package commands.
-  - [ ] Document privacy, retention, and supported response behavior.
-  - [ ] Document troubleshooting.
-- [ ] **P5.5 — Run automated checks**
-  - [ ] Run `bun run test`.
-  - [ ] Run `bun run compile`.
-  - [ ] Run `bun run lint`.
-  - [ ] Run `bun run format:check`.
-  - [ ] Run `bun run build`.
+- [x] **P5.1 — Rework popup hierarchy**
+  - [x] Keep competition metrics above the fold.
+  - [x] Add conditional applicant history and velocity.
+  - [x] Keep pay, fit, warnings, and history expandable where possible.
+- [x] **P5.2 — Add refresh and failure actions**
+  - [x] Add retry for empty/error reads.
+  - [x] Re-read session data without making network requests.
+  - [x] Explain session-only fallback when persistent storage fails.
+- [x] **P5.3 — Add clear-data controls**
+  - [x] Expose history/application/watchlist clearing.
+  - [x] Confirm destructive local deletion.
+  - [x] Preserve unrelated browser data.
+- [x] **P5.4 — Replace the starter README**
+  - [x] Document install and load-unpacked steps.
+  - [x] Document Bun development/build/package commands.
+  - [x] Document privacy, retention, and supported response behavior.
+  - [x] Document troubleshooting.
+- [x] **P5.5 — Run automated checks**
+  - [x] Run `bun run test`.
+  - [x] Run `bun run compile`.
+  - [x] Run `bun run lint`.
+  - [x] Run `bun run format:check`.
+  - [x] Run `bun run build`.
 - [ ] **P5.6 — Run manual smoke scenarios**
   - [ ] Capture an authenticated supported job.
   - [ ] Navigate before a response completes.
   - [ ] Open popup before and after capture.
   - [ ] Exercise storage failure fallback.
   - [ ] Exercise clear-data behavior.
-- [ ] **P5.7 — Close documentation loop**
-  - [ ] Update `docs/AUDIT_ISSUES.md` statuses.
-  - [ ] Mark persistent local history as in scope.
-  - [ ] Keep cloud sync, telemetry, polling, and Connect tracking out of scope.
+- [x] **P5.7 — Close documentation loop**
+  - [x] Update `docs/AUDIT_ISSUES.md` statuses.
+  - [x] Mark persistent local history as in scope.
+  - [x] Keep cloud sync, telemetry, polling, and Connect tracking out of scope.
 
 ## Parallel execution map
 

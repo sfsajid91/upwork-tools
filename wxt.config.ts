@@ -12,5 +12,6 @@ export default defineConfig({
     description: 'Shows locally captured Upwork job insights for the active tab.',
     minimum_chrome_version: '111',
     permissions: ['storage'],
+    host_permissions: ['*://*.upwork.com/*'],
   },
 });

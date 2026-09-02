@@ -9,7 +9,16 @@
   "files": {
     "ignoreUnknown": true,
     "maxSize": 1048576,
-    "includes": ["**", "!!node_modules", "!!.output", "!!.wxt", "!!dist", "!!coverage", "!!.agents"]
+    "includes": [
+      "**",
+      "!!node_modules",
+      "!!.output",
+      "!!.wxt",
+      "!!dist",
+      "!!coverage",
+      "!!.agents",
+      "!!graphify-out"
+    ]
   },
   "formatter": {
     "enabled": true,

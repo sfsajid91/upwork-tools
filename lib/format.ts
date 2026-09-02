@@ -1,26 +1,32 @@
 export function formatNumber(value: number | null): string {
-  return value === null ? 'Not available' : new Intl.NumberFormat().format(value);
+  return value !== null && Number.isFinite(value)
+    ? new Intl.NumberFormat().format(value)
+    : 'Not available';
 }
 
 export function formatMoney(amount: number | null, currency: string | null): string {
-  if (amount === null) return 'Not available';
+  if (amount === null || !Number.isFinite(amount)) return 'Not available';
+  const currencyCode =
+    typeof currency === 'string' && /^[a-z]{3}$/i.test(currency) ? currency.toUpperCase() : 'USD';
   return new Intl.NumberFormat(undefined, {
     style: 'currency',
-    currency: currency ?? 'USD',
+    currency: currencyCode,
     maximumFractionDigits: 2,
   }).format(amount);
 }
 
 export function formatPercent(value: number | null): string {
-  return value === null ? 'Not available' : `${value.toFixed(1)}%`;
+  return value === null || !Number.isFinite(value) ? 'Not available' : `${value.toFixed(1)}%`;
 }
 
 export function formatRating(value: number | null): string {
-  return value === null ? 'Not available' : value.toFixed(2);
+  return value === null || !Number.isFinite(value) ? 'Not available' : value.toFixed(2);
 }
 
 export function formatRateContext(value: number | null): string {
-  return value === null ? 'Not available' : `~${value.toFixed(1)}× client average`;
+  return value === null || !Number.isFinite(value)
+    ? 'Not available'
+    : `~${value.toFixed(1)}× client average`;
 }
 
 export function formatJobStatus(value: string | null): string {

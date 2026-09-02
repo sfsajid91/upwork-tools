@@ -24,7 +24,14 @@ A local-first browser extension for broad job-quality intelligence: it combines 
 
 ## Operating Context
 
-The user opens an Upwork job in a browser tab, lets its details load normally, and opens the extension popup to review the latest captured snapshot for that tab. The popup must remain useful when data is missing, unavailable, loading, or cannot be read. Each browser tab is evaluated independently; snapshots are cleared when a tab starts loading a new page or closes.
+The user opens an Upwork job in a browser tab, lets its details load normally, and opens the extension popup to review the latest captured snapshot for that tab. The popup must remain useful when data is missing, unavailable, loading, or cannot be read. Each browser tab is evaluated independently; only its latest `browser.storage.session` snapshot is cleared when a tab starts loading a new page or closes. Persistent IndexedDB history is retained independently.
+
+## Local data boundary
+
+Captures are created only when the user naturally opens an Upwork job and the supported response is already received; there is no polling or duplicate request. The latest per-tab snapshot uses `browser.storage.session`. Persistent normalized job snapshots, applications, and watchlist data use IndexedDB; small profile, portfolio, preference, and UI settings use `browser.storage.local`. Persistent history is retained for 90 days and at most 100 snapshots per job. One clear-data operation removes this extension's history, applications, and watchlist while preserving unrelated browser storage. Missing source values remain unavailable; the extension never invents them.
+
+Cloud sync, telemetry, Connect tracking, automatic applications, backend storage, and Upwork page UI remain out of scope.
+
 
 ## Capabilities and Constraints
 
@@ -32,11 +39,11 @@ The user opens an Upwork job in a browser tab, lets its details load normally, a
 - Inspection failures must not affect the original Upwork request, response, or page behavior.
 - Only the supported `gql-query-get-auth-job-details-v2` response is inspected and normalized into nullable `JobInsights` data; missing or invalid values become `null`, while valid zeroes remain `0`.
 - An isolated content script validates page events and forwards normalized snapshots to the background service worker.
-- The background worker validates sender tab identity and stores only the latest snapshot per tab in `browser.storage.session`.
+- The background worker validates sender tab identity, stores the latest snapshot per tab in `browser.storage.session`, and appends normalized job metadata and competition snapshots to IndexedDB when a job ID exists.
 - The popup requests the active tab's snapshot and renders loading, empty, error, or available states. Exact Proposals leads transparent competition metrics, followed by client quality, Your Fit, applicable warnings, and expandable client history or related jobs.
 - Formatting handles money, percentages, dates, relative activity, statuses, ratings, rate context, and unavailable values. Historical client hire rate uses jobs with hires divided by jobs posted; no AI score or apply/skip recommendation is generated.
-- No backend, accounts, analytics, telemetry, cloud sync, persistent job history, automatic applications, Connect-spending data, duplicate job-details requests, or Upwork DOM/page UI.
-- Data remains local to the browser session and is not merged across tabs.
+- No backend, accounts, analytics, telemetry, cloud sync, automatic applications, Connect-spending data, polling, duplicate job-details requests, or Upwork DOM/page UI.
+- Persistent normalized history is local, bounded, and clearable; it is not merged across tabs or synced to the cloud.
 
 ## Brand Commitments
 
@@ -54,7 +61,7 @@ The product name is **Upwork Tools**. The extension describes itself as showing 
 ## Product Principles
 
 - Read from the user's existing authenticated response; do not create duplicate requests.
-- Keep insight data local, session-scoped, and isolated per tab.
+- Keep insight data local, bounded, clearable, and isolated per tab/job; use session storage for the latest tab snapshot and IndexedDB for persistent history.
 - Never interfere with Upwork's normal page behavior.
 - Make the most decision-relevant signal, Exact Proposals, immediately legible.
 - Treat missing upstream data as a normal state rather than inventing certainty.

@@ -13,11 +13,25 @@ describe('job page identity', () => {
     expect(normalizeJobId('  ~022  ')).toBe('022');
     expect(normalizeJobId('0007')).toBe('0007');
   });
+  test('extracts IDs from SEO and apply routes', () => {
+    expect(jobIdFromPageUrl('https://www.upwork.com/jobs/Title_~0193eabc')).toBe('0193eabc');
+    expect(jobIdFromPageUrl('https://www.upwork.com/jobs/Title_~0193eabc?source=search#top')).toBe(
+      '0193eabc',
+    );
+    expect(jobIdFromPageUrl('https://www.upwork.com/freelance-jobs/apply/Title_~0193eabc/')).toBe(
+      '0193eabc',
+    );
+    expect(normalizeJobId('Title_With_Underscores_~0193eabc')).toBe('0193eabc');
+    expect(normalizeJobId('Title_~')).toBeNull();
+  });
 
   test('rejects non-job and malformed routes', () => {
     expect(jobIdFromPageUrl('https://example.com/details/job-1')).toBeNull();
     expect(jobIdFromPageUrl('https://www.upwork.com/nx/find-work/best-matches')).toBeNull();
     expect(jobIdFromPageUrl('https://www.upwork.com/details/')).toBeNull();
+    expect(jobIdFromPageUrl('https://www.upwork.com/jobs/search')).toBeNull();
+    expect(jobIdFromPageUrl('https://www.upwork.com/jobs/')).toBeNull();
+    expect(jobIdFromPageUrl('https://www.upwork.com/jobs')).toBeNull();
     expect(jobIdFromPageUrl('not a url')).toBeNull();
     expect(isJobPage('https://www.upwork.com/jobs/~job-1')).toBe(true);
     expect(isJobPage('https://www.upwork.com/jobs/')).toBe(false);

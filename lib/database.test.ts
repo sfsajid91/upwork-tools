@@ -1,5 +1,6 @@
 import { afterAll, beforeEach, describe, expect, test } from 'bun:test';
 import {
+  DATABASE_STORES,
   appendJobSnapshotIfChanged,
   clearAllLocalData,
   clearHistory,
@@ -139,6 +140,32 @@ class FakeObjectStore {
       return undefined;
     });
   }
+  openCursor(): FakeRequest<IDBCursorWithValue | null> {
+    const entries = [...this.data.records.entries()];
+    let index = 0;
+    let request!: FakeRequest<IDBCursorWithValue | null>;
+    const makeCursor = (): IDBCursorWithValue | null => {
+      const entry = entries[index];
+      if (!entry) return null;
+      const [key, value] = entry;
+      const cursor = {
+        value: { ...value },
+        primaryKey: key,
+        continue: () => {
+          index += 1;
+          this.transaction.request(() => {
+            request.result = makeCursor();
+            request.onsuccess?.({});
+            return undefined;
+          });
+        },
+        delete: () => this.delete(key),
+      } as unknown as IDBCursorWithValue;
+      return cursor;
+    };
+    request = this.transaction.request(makeCursor);
+    return request;
+  }
 
   index(name: string): FakeIndex {
     if (!this.data.indexes.includes(name)) throw new Error(`Missing index: ${name}`);
@@ -207,6 +234,9 @@ class FakeIndexedDB {
       request.onsuccess?.({});
     });
     return request;
+  }
+  seed(storeName: string, key: IDBValidKey, value: Record<string, unknown>): void {
+    this.database.stores.get(storeName)?.records.set(key, { ...value });
   }
 }
 
@@ -311,6 +341,44 @@ describe('database retention', () => {
     ).toBeNull();
     expect(callbackCalls).toBe(2);
   });
+  test('rejects invalid snapshot timestamps before writing', async () => {
+    const invalidTimes = [
+      Number.NaN,
+      Number.POSITIVE_INFINITY,
+      Number.NEGATIVE_INFINITY,
+      0,
+      -1,
+      1.5,
+    ];
+    for (const capturedAt of invalidTimes) {
+      expect(await putJobSnapshot(snapshot('job-invalid', capturedAt))).toBeNull();
+      expect(await appendJobSnapshotIfChanged(snapshot('job-invalid', capturedAt))).toBeNull();
+    }
+    expect(await listJobSnapshots('job-invalid')).toEqual([]);
+    expect(await putJobSnapshot(snapshot('job-valid', 1))).not.toBeNull();
+    expect(await appendJobSnapshotIfChanged(snapshot('job-valid', 2))).not.toBeNull();
+  });
+  test('retention removes legacy-invalid snapshot rows in one cursor pass', async () => {
+    const now = Date.now();
+    fakeIndexedDB.seed(DATABASE_STORES.jobSnapshots, 1_001, {
+      ...snapshot('job-legacy', now),
+    });
+    fakeIndexedDB.seed(DATABASE_STORES.jobSnapshots, 1_002, {
+      ...snapshot('job-legacy', 0),
+    });
+    fakeIndexedDB.seed(DATABASE_STORES.jobSnapshots, 1_003, {
+      ...snapshot('', now),
+    });
+    fakeIndexedDB.seed(DATABASE_STORES.jobSnapshots, 1_004, {
+      ...snapshot('job-legacy', Number.NaN),
+    });
+
+    expect(await enforceHistoryRetention(now)).toBe(true);
+    expect((await listJobSnapshots('job-legacy')).map((record) => record.capturedAt)).toEqual([
+      now,
+    ]);
+  });
+
   test('writes and reads the latest complete capture by normalized job ID', async () => {
     const record = {
       jobId: '~job-latest',
@@ -356,6 +424,33 @@ describe('database retention', () => {
       }),
     ).toBe(true);
     expect(await getLatestJobCapture('job-latest')).toBeNull();
+  });
+  test('rejects non-positive and fractional latest capture timestamps', async () => {
+    for (const capturedAt of [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, 0, -1, 1.5]) {
+      expect(
+        await putLatestJobCapture({
+          jobId: 'job-latest',
+          capturedAt,
+          insights: latestInsights,
+        }),
+      ).toBe(false);
+    }
+    expect(await getLatestJobCapture('job-latest')).toBeNull();
+  });
+
+  test('honors latest capture write guards inside the transaction', async () => {
+    let allowWrite = false;
+    const record = {
+      jobId: 'job-latest',
+      capturedAt: Date.now(),
+      insights: latestInsights,
+    };
+
+    expect(await putLatestJobCapture(record, () => allowWrite)).toBe(false);
+    expect(await getLatestJobCapture('job-latest')).toBeNull();
+    allowWrite = true;
+    expect(await putLatestJobCapture(record, () => allowWrite)).toBe(true);
+    expect(await getLatestJobCapture('job-latest')).not.toBeNull();
   });
 });
 
@@ -428,6 +523,7 @@ describe('database clear APIs', () => {
           interviewedAt: null,
           hiredAt: 4,
         },
+
         () => false,
       ),
     ).toBe(false);
@@ -441,6 +537,24 @@ describe('database clear APIs', () => {
       hiredAt: null,
     });
     expect((await listApplications()).map(({ jobId }) => jobId).sort()).toEqual(['job-1', 'job-2']);
+  });
+  test('rejects invalid application timestamps before writing', async () => {
+    const valid = {
+      jobId: 'job-invalid',
+      state: null,
+      viewedAt: 1,
+      appliedAt: 2,
+      interviewedAt: 3,
+      hiredAt: 4,
+    };
+    for (const field of ['viewedAt', 'appliedAt', 'interviewedAt', 'hiredAt'] as const) {
+      for (const value of [0, -1, 1.5, Number.NaN]) {
+        const invalid = { ...valid, [field]: value };
+        expect(await putApplication(invalid)).toBe(false);
+        expect(await mergeApplication(invalid)).toBe(false);
+      }
+    }
+    expect(await getApplication('job-invalid')).toBeNull();
   });
 
   test('degrades safely when IndexedDB is unavailable', async () => {

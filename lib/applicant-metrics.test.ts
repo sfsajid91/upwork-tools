@@ -59,4 +59,13 @@ describe('applicant metrics', () => {
       recentDelta: null,
     });
   });
+  test('rejects zero, negative, fractional, and infinite timestamps', () => {
+    for (const capturedAt of [0, -1, 1.5, Number.POSITIVE_INFINITY]) {
+      expect(deriveApplicantMetrics([snapshot(capturedAt, 1)])).toEqual({
+        latestApplicantCount: null,
+        firstSeenDelta: null,
+        recentDelta: null,
+      });
+    }
+  });
 });

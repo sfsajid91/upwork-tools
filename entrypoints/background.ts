@@ -36,6 +36,9 @@ type TabState = {
   generation: number;
   pending: Promise<void>;
   removed: boolean;
+  lastStatus?: string;
+  lastUrl?: string;
+  navigating: boolean;
 };
 
 type TabCaptureMetadata = {
@@ -52,6 +55,7 @@ function getTabState(tabId: number): TabState {
       generation: 0,
       pending: state?.removed ? state.pending : Promise.resolve(),
       removed: false,
+      navigating: false,
     };
     tabStates.set(tabId, state);
   }
@@ -80,8 +84,8 @@ function isValidCaptureMetadata(value: unknown): value is TabCaptureMetadata {
     typeof metadata.jobId === 'string' &&
     normalizeJobId(metadata.jobId) === metadata.jobId &&
     typeof metadata.capturedAt === 'number' &&
-    Number.isFinite(metadata.capturedAt) &&
-    metadata.capturedAt >= 0
+    Number.isInteger(metadata.capturedAt) &&
+    metadata.capturedAt > 0
   );
 }
 
@@ -131,7 +135,10 @@ async function persistJobInsights(
   }
   if (state.removed || state.generation !== generation) return;
   try {
-    await putLatestJobCapture({ jobId, capturedAt, insights });
+    await putLatestJobCapture(
+      { jobId, capturedAt, insights },
+      () => !state.removed && state.generation === generation,
+    );
   } catch {
     // IndexedDB failures must not affect session-only capture.
   }
@@ -238,6 +245,8 @@ async function restoreBadge(tabId: number, url?: string): Promise<void> {
 }
 
 async function readJobHistory(tabId: number, jobId: string): Promise<JobHistoryResponse | null> {
+  const state = getTabState(tabId);
+  const generation = state.generation;
   try {
     const normalizedJobId = normalizeJobId(jobId);
     if (!normalizedJobId || (await currentTabJobId(tabId)) !== normalizedJobId) return null;
@@ -252,6 +261,7 @@ async function readJobHistory(tabId: number, jobId: string): Promise<JobHistoryR
       history: insights?.history.recentJobs,
     });
     const conversion = aggregateConversionStats(await listApplications());
+    if (state.removed || state.generation !== generation) return null;
     if (!summary) {
       return {
         jobId: normalizedJobId,
@@ -278,9 +288,9 @@ async function readJobHistory(tabId: number, jobId: string): Promise<JobHistoryR
         recentDelta: metrics.recentDelta,
       },
       velocity: calculateProposalVelocity(
-        summary.previous?.applicants,
+        summary.velocityBaseline?.applicants,
         summary.latest?.applicants,
-        summary.previous?.capturedAt,
+        summary.velocityBaseline?.capturedAt,
         summary.latest?.capturedAt,
       ),
       payProfile,
@@ -291,7 +301,10 @@ async function readJobHistory(tabId: number, jobId: string): Promise<JobHistoryR
   }
 }
 
-async function readJobInsights(tabId: number): Promise<JobInsights | null> {
+async function readJobInsights(
+  tabId: number,
+  includePersistentFallback: boolean,
+): Promise<JobInsights | null> {
   const state = getTabState(tabId);
   const generation = state.generation;
   let currentUrl: string | undefined;
@@ -311,41 +324,24 @@ async function readJobInsights(tabId: number): Promise<JobInsights | null> {
     return !state.removed && state.generation === generation && tabJobId === currentJobId;
   };
 
-  let insights = await readVerifiedSession(tabId, currentJobId);
+  const insights = await readVerifiedSession(tabId, currentJobId);
   if (insights && (await isCurrentJob())) return insights;
-  if (!(await isCurrentJob())) return null;
-
-  try {
-    await browser.tabs.sendMessage(tabId, {
-      type: REQUEST_JOB_INSIGHTS_REPLAY,
-      tabId,
-      requestId: crypto.randomUUID(),
-    });
-  } catch {
-    // The content script may be absent or the tab may have navigated.
-  }
-
-  if (!(await isCurrentJob())) return null;
-  insights = await readVerifiedSession(tabId, currentJobId);
-  if (insights && (await isCurrentJob())) return insights;
-  if (!(await isCurrentJob())) return null;
+  if (!includePersistentFallback || !(await isCurrentJob())) return null;
 
   const capture = await getLatestJobCapture(currentJobId);
   if (!capture || normalizeJobId(capture.insights.job.id) !== currentJobId) return null;
-  return enqueueTabMutation(tabId, async () => {
+  if (!(await isCurrentJob())) return null;
+  try {
+    await browser.storage.session.set({
+      [storageKey(tabId)]: capture.insights,
+      [metadataKey(tabId)]: { jobId: currentJobId, capturedAt: capture.capturedAt },
+    });
     if (!(await isCurrentJob())) return null;
-    try {
-      await browser.storage.session.set({
-        [storageKey(tabId)]: capture.insights,
-        [metadataKey(tabId)]: { jobId: currentJobId, capturedAt: capture.capturedAt },
-      });
-      if (!(await isCurrentJob())) return null;
-      await setBadge(tabId, currentUrl, String(capture.insights.activity.exactProposals ?? ''));
-      return (await isCurrentJob()) ? capture.insights : null;
-    } catch {
-      return null;
-    }
-  });
+    await setBadge(tabId, currentUrl, String(capture.insights.activity.exactProposals ?? ''));
+    return (await isCurrentJob()) ? capture.insights : null;
+  } catch {
+    return null;
+  }
 }
 
 export default defineBackground(() => {
@@ -411,12 +407,30 @@ export default defineBackground(() => {
       return true;
     }
 
-    void readJobInsights(message.tabId).then(sendResponse, () => sendResponse(null));
+    void enqueueTabMutation(message.tabId, () => readJobInsights(message.tabId, false))
+      .then(async (insights) => {
+        if (insights) return insights;
+        try {
+          await browser.tabs.sendMessage(message.tabId, {
+            type: REQUEST_JOB_INSIGHTS_REPLAY,
+            tabId: message.tabId,
+            requestId: crypto.randomUUID(),
+          });
+        } catch {
+          // The content script may be absent or the tab may have navigated.
+        }
+        return enqueueTabMutation(message.tabId, () => readJobInsights(message.tabId, true));
+      })
+      .then(sendResponse, () => sendResponse(null));
     return true;
   });
 
   browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
-    if (changeInfo.status === 'loading' || changeInfo.url !== undefined) {
+    const state = getTabState(tabId);
+    const wasLoading = state.lastStatus === 'loading';
+    const wasNavigating = state.navigating;
+    const enqueueNavigationCleanup = (url?: string) => {
+      state.navigating = true;
       const generation = advanceTabGeneration(tabId);
       void enqueueTabMutation(tabId, async () => {
         if (getTabState(tabId).generation !== generation) return;
@@ -425,28 +439,59 @@ export default defineBackground(() => {
         } catch {
           // Session storage must not affect navigation cleanup.
         }
-        await restoreBadge(tabId, changeInfo.url);
+        await restoreBadge(tabId, url);
       }).catch(() => undefined);
+    };
+
+    if (changeInfo.status === 'loading') {
+      state.lastStatus = 'loading';
+      if (changeInfo.url !== undefined) state.lastUrl = changeInfo.url;
+      if (!state.navigating) {
+        state.navigating = true;
+        enqueueNavigationCleanup(changeInfo.url);
+      }
+      return;
+    }
+
+    if (changeInfo.status === 'complete') {
+      state.navigating = false;
+      state.lastStatus = 'complete';
+    }
+
+    if (changeInfo.url !== undefined) {
+      const urlChanged = state.lastUrl !== changeInfo.url;
+      state.lastUrl = changeInfo.url;
+      if (wasLoading) {
+        if (urlChanged) {
+          void enqueueTabMutation(tabId, () => restoreBadge(tabId, changeInfo.url)).catch(
+            () => undefined,
+          );
+        }
+      } else if (wasNavigating) {
+        if (urlChanged) enqueueNavigationCleanup(changeInfo.url);
+      } else if (urlChanged) {
+        enqueueNavigationCleanup(changeInfo.url);
+      }
     }
   });
   browser.tabs.onRemoved.addListener((tabId) => {
-    const state = getTabState(tabId);
+    const targetState = getTabState(tabId);
     const generation = advanceTabGeneration(tabId);
     const cleanup = enqueueTabMutation(tabId, async () => {
-      if (!state.removed || state.generation !== generation) return;
+      if (!targetState.removed || targetState.generation !== generation) return;
       try {
         await browser.storage.session.remove([storageKey(tabId), metadataKey(tabId)]);
       } catch {
         // Session storage must not affect tab cleanup.
       }
-      if (state.removed && state.generation === generation) {
+      if (targetState.removed && targetState.generation === generation) {
         await setBadge(tabId, undefined, '');
       }
     });
-    state.removed = true;
+    targetState.removed = true;
     void cleanup.then(
       () => {
-        if (tabStates.get(tabId) === state && state.generation === generation) {
+        if (tabStates.get(tabId) === targetState && targetState.generation === generation) {
           tabStates.delete(tabId);
         }
       },

@@ -50,6 +50,20 @@ describe('portfolio ranking', () => {
     });
     expect(typeScript[0]?.skillOverlap).toEqual(['typescript']);
   });
+
+  test('preserves symbolic skill names during matching', () => {
+    for (const skill of ['C++', 'C#', '.NET', 'Node.js']) {
+      const result = rankPortfolioMatches([entry('API project', [skill])], {
+        title: 'API project',
+        skills: [skill],
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0]?.skillOverlap).toEqual([
+        skill === 'Node.js' ? 'nodejs' : skill.toLocaleLowerCase('en-US'),
+      ]);
+    }
+  });
   test('matches portfolio tags against job title and skills', () => {
     const result = rankPortfolioMatches([entry('API case study', [], ['GraphQL', 'TypeScript'])], {
       title: 'Dashboard build',

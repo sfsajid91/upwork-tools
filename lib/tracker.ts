@@ -24,7 +24,7 @@ function isApplicationState(value: unknown): value is ApplicationState {
 }
 
 function timestamp(value: unknown): number | null {
-  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+  return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : null;
 }
 
 function laterTimestamp(current: unknown, incoming: unknown): number | null {

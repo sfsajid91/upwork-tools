@@ -25,7 +25,7 @@ A local-first browser extension for broad job-quality intelligence: it combines 
 ## Operating Context
 
 The user opens an Upwork job in a browser tab, lets its details load normally, and opens the extension popup to review the latest captured snapshot for that tab. The popup must remain useful when data is missing, unavailable, loading, or cannot be read. Each browser tab is evaluated independently; only its latest `browser.storage.session` snapshot is cleared when a tab starts loading a new page or closes. Persistent IndexedDB history is retained independently.
- 
+
 ## Local data boundary
 
 Captures are created only when the user naturally opens an Upwork job and the supported response is already received; there is no polling or duplicate request. The latest per-tab snapshot uses `browser.storage.session`. Persistent normalized job snapshots, applications, and watchlist data use IndexedDB; small profile, portfolio, preference, and UI settings use `browser.storage.local`. Persistent history is retained for 90 days and at most 100 snapshots per job. One clear-data operation removes this extension's history, applications, and watchlist while preserving unrelated browser storage. Missing source values remain unavailable; the extension never invents them.

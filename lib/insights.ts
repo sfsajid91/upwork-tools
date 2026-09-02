@@ -1,3 +1,4 @@
+import { normalizeJobId } from './job-page';
 import { type QualificationDetail, summarizeQualificationMatches } from './qualification';
 import { deriveHiringWarnings } from './hiring-warnings';
 import { restrictionLabels } from './restrictions';
@@ -101,6 +102,10 @@ function nullableNumber(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
+function nonNegativeInteger(value: unknown): number | null {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0 ? value : null;
+}
+
 function nullableBoolean(value: unknown): boolean | null {
   return typeof value === 'boolean' ? value : null;
 }
@@ -171,15 +176,23 @@ const RELATED_TITLE_STOP_WORDS: Record<string, true> = {
   this: true,
   that: true,
   job: true,
+  senior: true,
+  junior: true,
+  lead: true,
+  developer: true,
+  engineer: true,
+  manager: true,
+  consultant: true,
+  specialist: true,
+  designer: true,
 };
-
 function titleTokens(title: string | null): Set<string> {
   if (!title) return new Set();
   return new Set(
     title
       .toLowerCase()
       .split(/[^a-z0-9]+/)
-      .filter((token) => token.length >= 4 && !RELATED_TITLE_STOP_WORDS[token]),
+      .filter((token) => token.length >= 3 && !RELATED_TITLE_STOP_WORDS[token]),
   );
 }
 
@@ -192,7 +205,9 @@ function relatedHistory(
   if (currentTokens.size === 0) return [];
   const threshold = currentTokens.size === 1 ? 1 : 2;
   return recentJobs
-    .filter((job) => currentJobId === null || job.id !== currentJobId)
+    .filter(
+      (job) => currentJobId === null || normalizeJobId(job.id) !== normalizeJobId(currentJobId),
+    )
     .filter((job) => {
       const matchingTokens = [...titleTokens(job.title)].filter((token) =>
         currentTokens.has(token),
@@ -262,10 +277,10 @@ export function normalizeJobInsights(payload: unknown): JobInsights | null {
   );
   const currentTitle = nullableString(info?.title);
   const currentStatus = nullableString(job?.status);
-  const exactProposals = nullableNumber(activity?.totalApplicants);
-  const interviewed = nullableNumber(activity?.totalInvitedToInterview);
-  const totalHired = nullableNumber(activity?.totalHired);
-  const positionsToHire = nullableNumber(activity?.numberOfPositionsToHire);
+  const exactProposals = nonNegativeInteger(activity?.totalApplicants);
+  const interviewed = nonNegativeInteger(activity?.totalInvitedToInterview);
+  const totalHired = nonNegativeInteger(activity?.totalHired);
+  const positionsToHire = nonNegativeInteger(activity?.numberOfPositionsToHire);
   const clientAverageHourlyRate = firstNumber(hourlyRate?.amount);
   const freelancerHourlyRate = nullableNumber(valueAt(freelancerInfo, 'hourlyRate', 'amount'));
   const currentApplicationState = applicationState(freelancerInfo);

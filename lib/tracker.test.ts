@@ -114,6 +114,36 @@ describe('application tracker', () => {
     expect(knownIncoming.state).toBe('applied');
   });
 
+  test('rejects non-positive and fractional event timestamps', () => {
+    for (const at of [0, -1, 1.5, Number.NaN]) {
+      expect(
+        transitionApplicationRecord(createApplicationRecord('job-viewed'), {
+          type: 'viewed',
+          at,
+        }).viewedAt,
+      ).toBeNull();
+      expect(
+        transitionApplicationRecord(createApplicationRecord('job-applied'), {
+          type: 'observed-state',
+          state: 'applied',
+          at,
+        }).appliedAt,
+      ).toBeNull();
+      expect(
+        transitionApplicationRecord(createApplicationRecord('job-interviewed'), {
+          type: 'interviewed',
+          at,
+        }).interviewedAt,
+      ).toBeNull();
+      expect(
+        transitionApplicationRecord(createApplicationRecord('job-hired'), {
+          type: 'hired',
+          at,
+        }).hiredAt,
+      ).toBeNull();
+    }
+  });
+
   test('does not create bid or Connect fields', () => {
     const record = transitionApplicationRecord(createApplicationRecord('job-1'), {
       type: 'observed-state',

@@ -175,6 +175,88 @@ describe('normalizeJobInsights', () => {
 
     expect(insights?.history.relatedJobs.map((job) => job.id)).toEqual(['strong-1']);
   });
+  test('matches three-character technical tokens but filters generic roles', () => {
+    for (const token of ['AWS', 'GCP', 'PHP', 'SQL', 'Vue', 'iOS']) {
+      const result = normalizeJobInsights(
+        payload({
+          opening: {
+            job: {
+              status: 'OPEN',
+              info: { id: 'current', title: `${token} developer` },
+            },
+            qualifications: {},
+          },
+          buyer: {
+            workHistory: [
+              {
+                startDate: '2026-08-20T00:00:00.000Z',
+                jobInfo: { id: `related-${token}`, title: `${token.toLowerCase()} specialist` },
+              },
+            ],
+          },
+        }),
+      );
+      expect(result?.history.relatedJobs.map((job) => job.id)).toEqual([`related-${token}`]);
+    }
+
+    const genericOnly = normalizeJobInsights(
+      payload({
+        opening: {
+          job: {
+            status: 'OPEN',
+            info: { id: 'current', title: 'Senior Lead Developer Engineer' },
+          },
+          qualifications: {},
+        },
+      }),
+    );
+    expect(genericOnly?.history.relatedJobs).toEqual([]);
+
+    const roleOnlyOverlap = normalizeJobInsights(
+      payload({
+        opening: {
+          job: {
+            status: 'OPEN',
+            info: { id: 'current', title: 'Backend developer' },
+          },
+          qualifications: {},
+        },
+        buyer: {
+          workHistory: [
+            {
+              startDate: '2026-08-20T00:00:00.000Z',
+              jobInfo: { id: 'frontend', title: 'Frontend developer' },
+            },
+          ],
+        },
+      }),
+    );
+    expect(roleOnlyOverlap?.history.relatedJobs).toEqual([]);
+  });
+  test('filters expanded generic role terms from related history', () => {
+    for (const role of ['manager', 'consultant', 'specialist', 'designer']) {
+      const result = normalizeJobInsights(
+        payload({
+          opening: {
+            job: {
+              status: 'OPEN',
+              info: { id: 'current', title: `${role} ${role}` },
+            },
+            qualifications: {},
+          },
+          buyer: {
+            workHistory: [
+              {
+                startDate: '2026-08-20T00:00:00.000Z',
+                jobInfo: { id: `related-${role}`, title: `${role} ${role}` },
+              },
+            ],
+          },
+        }),
+      );
+      expect(result?.history.relatedJobs).toEqual([]);
+    }
+  });
   test('excludes current history when public and internal IDs differ', () => {
     const insights = normalizeJobInsights(
       payload({
@@ -213,6 +295,59 @@ describe('normalizeJobInsights', () => {
     );
 
     expect(insights?.history.relatedJobs.map((job) => job.id)).toEqual(['~other-public']);
+  });
+
+  test('normalizes ID variants when excluding the current history entry', () => {
+    const insights = normalizeJobInsights(
+      payload({
+        opening: {
+          job: {
+            info: { id: 'current-job', title: 'Landing page backend' },
+            qualifications: {},
+          },
+        },
+        buyer: {
+          workHistory: [
+            {
+              startDate: '2026-08-20T00:00:00.000Z',
+              jobInfo: { id: '~current-job', title: 'Landing page backend' },
+            },
+            {
+              startDate: '2026-08-19T00:00:00.000Z',
+              jobInfo: { id: '~other-job', title: 'Landing page backend API' },
+            },
+          ],
+        },
+      }),
+    );
+
+    expect(insights?.history.relatedJobs.map((job) => job.id)).toEqual(['~other-job']);
+  });
+
+  test('normalizes negative and fractional activity counts to null', () => {
+    const insights = normalizeJobInsights(
+      payload({
+        opening: {
+          job: {
+            info: { id: 'count-job', title: 'Count test' },
+            clientActivity: {
+              totalApplicants: -1,
+              totalInvitedToInterview: 1.5,
+              totalHired: Number.NaN,
+              numberOfPositionsToHire: 2.5,
+            },
+            qualifications: {},
+          },
+        },
+      }),
+    );
+
+    expect(insights?.activity).toMatchObject({
+      exactProposals: null,
+      interviewed: null,
+      totalHired: null,
+      positionsToHire: null,
+    });
   });
 
   test('preserves explicit hourly history fields for pay metrics', () => {

@@ -111,6 +111,11 @@ describe('replay protocol', () => {
     expect(isPageEvent(createPageEvent(insights, { requestId: '', capturedAt: Number.NaN }))).toBe(
       false,
     );
+    for (const capturedAt of [0, -1, 1.5, Number.NaN]) {
+      expect(isPageEvent(createPageEvent(insights, { requestId: 'request-1', capturedAt }))).toBe(
+        false,
+      );
+    }
   });
 
   test('validates page and runtime replay requests', () => {
@@ -149,6 +154,15 @@ describe('replay protocol', () => {
         replay: { capturedAt: Number.POSITIVE_INFINITY },
       }),
     ).toBe(false);
+    for (const capturedAt of [0, -1, 1.5, Number.NaN]) {
+      expect(
+        isRuntimeMessage({
+          type: STORE_JOB_INSIGHTS,
+          payload: insights,
+          replay: { capturedAt },
+        }),
+      ).toBe(false);
+    }
     expect(isRuntimeMessage({ type: STORE_JOB_INSIGHTS, payload: insights })).toBe(true);
   });
 });

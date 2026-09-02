@@ -36,6 +36,9 @@ type TabState = {
   generation: number;
   pending: Promise<void>;
   removed: boolean;
+  lastStatus?: string;
+  lastUrl?: string;
+  navigating: boolean;
 };
 
 type TabCaptureMetadata = {
@@ -52,6 +55,7 @@ function getTabState(tabId: number): TabState {
       generation: 0,
       pending: state?.removed ? state.pending : Promise.resolve(),
       removed: false,
+      navigating: false,
     };
     tabStates.set(tabId, state);
   }
@@ -416,7 +420,10 @@ export default defineBackground(() => {
   });
 
   browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
-    if (changeInfo.status === 'loading' && changeInfo.url !== undefined) {
+    const state = getTabState(tabId);
+    const wasLoading = state.lastStatus === 'loading';
+    const wasNavigating = state.navigating;
+    const enqueueNavigationCleanup = (url?: string) => {
       const generation = advanceTabGeneration(tabId);
       void enqueueTabMutation(tabId, async () => {
         if (getTabState(tabId).generation !== generation) return;
@@ -425,8 +432,37 @@ export default defineBackground(() => {
         } catch {
           // Session storage must not affect navigation cleanup.
         }
-        await restoreBadge(tabId, changeInfo.url);
+        await restoreBadge(tabId, url);
       }).catch(() => undefined);
+    };
+
+    if (changeInfo.status === 'loading') {
+      state.lastStatus = 'loading';
+      if (changeInfo.url !== undefined) state.lastUrl = changeInfo.url;
+      if (!state.navigating) {
+        state.navigating = true;
+        enqueueNavigationCleanup(changeInfo.url);
+      }
+      return;
+    }
+
+    if (changeInfo.status === 'complete') {
+      state.navigating = false;
+      state.lastStatus = 'complete';
+    }
+
+    if (changeInfo.url !== undefined) {
+      const urlChanged = state.lastUrl !== changeInfo.url;
+      state.lastUrl = changeInfo.url;
+      if (wasLoading || wasNavigating) {
+        if (urlChanged) {
+          void enqueueTabMutation(tabId, () => restoreBadge(tabId, changeInfo.url)).catch(
+            () => undefined,
+          );
+        }
+      } else if (urlChanged) {
+        enqueueNavigationCleanup(changeInfo.url);
+      }
     }
   });
   browser.tabs.onRemoved.addListener((tabId) => {

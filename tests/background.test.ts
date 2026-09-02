@@ -320,22 +320,65 @@ describe('background runtime messaging', () => {
     expect(values.has('job-insights:103')).toBe(false);
     expect(values.has('job-insights:103:metadata')).toBe(false);
   });
-  test('URL-only and loading-only updates preserve the session snapshot', async () => {
-    const tabId = 105;
+  test('page reload clears the prior session snapshot without a URL update', async () => {
+    const tabId = 108;
     values.set(`job-insights:${tabId}`, insights);
     values.set(`job-insights:${tabId}:metadata`, { jobId: 'job-7', capturedAt: Date.now() });
     tabUrls.set(tabId, 'https://www.upwork.com/ab/details/job-7');
 
-    updatedListener?.(tabId, { url: 'https://www.upwork.com/ab/details/job-8' });
     updatedListener?.(tabId, { status: 'loading' });
     await Promise.all([...pendingStorageOperations]);
 
-    expect(values.get(`job-insights:${tabId}`)).toEqual(insights);
-    const metadata = values.get(`job-insights:${tabId}:metadata`) as
-      | { jobId?: unknown; capturedAt?: unknown }
-      | undefined;
-    expect(metadata?.jobId).toBe('job-7');
-    expect(typeof metadata?.capturedAt).toBe('number');
+    expect(values.has(`job-insights:${tabId}`)).toBe(false);
+    expect(values.has(`job-insights:${tabId}:metadata`)).toBe(false);
+  });
+  test('URL-only SPA navigation clears the prior session snapshot', async () => {
+    const tabId = 109;
+    const url = 'https://www.upwork.com/ab/details/job-8';
+    values.set(`job-insights:${tabId}`, insights);
+    values.set(`job-insights:${tabId}:metadata`, { jobId: 'job-7', capturedAt: Date.now() });
+    tabUrls.set(tabId, url);
+
+    updatedListener?.(tabId, { status: 'complete' });
+    updatedListener?.(tabId, { url });
+    await Promise.all([...pendingStorageOperations]);
+
+    expect(values.has(`job-insights:${tabId}`)).toBe(false);
+    expect(values.has(`job-insights:${tabId}:metadata`)).toBe(false);
+  });
+  test('URL-only SPA navigation invalidates an in-flight STORE', async () => {
+    const tabId = 110;
+    const gate = deferred();
+    nextSetGate = gate;
+    const completed = store(tabId, 'https://www.upwork.com/ab/details/job-7');
+    await gate.started;
+
+    updatedListener?.(tabId, { status: 'complete' });
+    updatedListener?.(tabId, { url: 'https://www.upwork.com/ab/details/job-8' });
+    gate.resolve();
+    await completed;
+    await Promise.all([...pendingStorageOperations]);
+
+    expect(values.has(`job-insights:${tabId}`)).toBe(false);
+  });
+  test('multi-stage navigation advances once and preserves a fresh STORE', async () => {
+    const tabId = 111;
+    const url = 'https://www.upwork.com/ab/details/job-8';
+    updatedListener?.(tabId, { status: 'loading' });
+    await Promise.all([...pendingStorageOperations]);
+
+    const gate = deferred();
+    nextSetGate = gate;
+    const payload = { ...insights, job: { ...insights.job, id: 'job-8' } };
+    const completed = store(tabId, url, payload);
+    await gate.started;
+
+    updatedListener?.(tabId, { url });
+    gate.resolve();
+    await completed;
+    await Promise.all([...pendingStorageOperations]);
+
+    expect(values.get(`job-insights:${tabId}`)).toEqual(payload);
   });
   test('loading a job clears its session snapshot before restoring its badge', async () => {
     const tabId = 104;

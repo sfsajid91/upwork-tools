@@ -437,6 +437,21 @@ describe('database retention', () => {
     }
     expect(await getLatestJobCapture('job-latest')).toBeNull();
   });
+
+  test('honors latest capture write guards inside the transaction', async () => {
+    let allowWrite = false;
+    const record = {
+      jobId: 'job-latest',
+      capturedAt: Date.now(),
+      insights: latestInsights,
+    };
+
+    expect(await putLatestJobCapture(record, () => allowWrite)).toBe(false);
+    expect(await getLatestJobCapture('job-latest')).toBeNull();
+    allowWrite = true;
+    expect(await putLatestJobCapture(record, () => allowWrite)).toBe(true);
+    expect(await getLatestJobCapture('job-latest')).not.toBeNull();
+  });
 });
 
 describe('database clear APIs', () => {
@@ -508,6 +523,7 @@ describe('database clear APIs', () => {
           interviewedAt: null,
           hiredAt: 4,
         },
+
         () => false,
       ),
     ).toBe(false);
@@ -521,6 +537,24 @@ describe('database clear APIs', () => {
       hiredAt: null,
     });
     expect((await listApplications()).map(({ jobId }) => jobId).sort()).toEqual(['job-1', 'job-2']);
+  });
+  test('rejects invalid application timestamps before writing', async () => {
+    const valid = {
+      jobId: 'job-invalid',
+      state: null,
+      viewedAt: 1,
+      appliedAt: 2,
+      interviewedAt: 3,
+      hiredAt: 4,
+    };
+    for (const field of ['viewedAt', 'appliedAt', 'interviewedAt', 'hiredAt'] as const) {
+      for (const value of [0, -1, 1.5, Number.NaN]) {
+        const invalid = { ...valid, [field]: value };
+        expect(await putApplication(invalid)).toBe(false);
+        expect(await mergeApplication(invalid)).toBe(false);
+      }
+    }
+    expect(await getApplication('job-invalid')).toBeNull();
   });
 
   test('degrades safely when IndexedDB is unavailable', async () => {

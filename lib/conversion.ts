@@ -20,15 +20,23 @@ export function aggregateConversionStats(
 
   for (const record of records ?? []) {
     if (
-      (typeof record.appliedAt === 'number' && Number.isFinite(record.appliedAt)) ||
+      (typeof record.appliedAt === 'number' &&
+        Number.isInteger(record.appliedAt) &&
+        record.appliedAt > 0) ||
       record.state === 'applied'
     ) {
       applications += 1;
     }
-    if (typeof record.interviewedAt === 'number' && Number.isFinite(record.interviewedAt))
+    if (
+      typeof record.interviewedAt === 'number' &&
+      Number.isInteger(record.interviewedAt) &&
+      record.interviewedAt > 0
+    )
       interviews += 1;
     if (
-      (typeof record.hiredAt === 'number' && Number.isFinite(record.hiredAt)) ||
+      (typeof record.hiredAt === 'number' &&
+        Number.isInteger(record.hiredAt) &&
+        record.hiredAt > 0) ||
       record.state === 'hired'
     )
       hires += 1;

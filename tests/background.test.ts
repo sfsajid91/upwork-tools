@@ -1,7 +1,6 @@
 import { afterAll, afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import type { JobInsights } from '../lib/insights';
-import { GET_JOB_INSIGHTS, STORE_JOB_INSIGHTS } from '../lib/protocol';
-
+import { GET_JOB_HISTORY, GET_JOB_INSIGHTS, STORE_JOB_INSIGHTS } from '../lib/protocol';
 type RuntimeListener = (
   message: unknown,
   sender: { tab?: { id?: number; url?: string } },
@@ -41,6 +40,7 @@ type ReplayResponder = (tabId: number, message: unknown) => Promise<unknown>;
 let nextSetGate: Deferred | undefined;
 let replayResponder: ReplayResponder | undefined;
 let nextRemoveGate: Deferred | undefined;
+let nextGetGate: Deferred | undefined;
 const pendingStorageOperations = new Set<Promise<unknown>>();
 
 function trackStorageOperation<T>(operation: Promise<T>): Promise<T> {
@@ -116,6 +116,12 @@ const fakeBrowser = {
       },
     },
     async get(tabId: number) {
+      if (nextGetGate) {
+        const gate = nextGetGate;
+        nextGetGate = undefined;
+        gate.start();
+        await gate.promise;
+      }
       return { id: tabId, url: tabUrls.get(tabId) ?? 'https://www.upwork.com/ab/details/job-7' };
     },
     async sendMessage(tabId: number, message: unknown) {
@@ -210,6 +216,7 @@ beforeEach(() => {
   nextSetGate = undefined;
   replayResponder = undefined;
   nextRemoveGate = undefined;
+  nextGetGate = undefined;
 });
 afterEach(async () => {
   while (pendingStorageOperations.size > 0) {
@@ -586,5 +593,59 @@ describe('background runtime messaging', () => {
     await Promise.all([...pendingStorageOperations]);
     expect(values.has('job-insights:22')).toBe(false);
     expect(values.has('job-insights:22:metadata')).toBe(false);
+  });
+
+  test('stale STORE cannot retain a latest session capture after navigation', async () => {
+    const tabId = 23;
+    const gate = deferred();
+    nextSetGate = gate;
+    const completed = store(tabId, 'https://www.upwork.com/ab/details/job-7');
+    await gate.started;
+
+    updatedListener?.(tabId, {
+      status: 'loading',
+      url: 'https://www.upwork.com/ab/details/job-8',
+    });
+    gate.resolve();
+    await completed;
+
+    expect(values.has(`job-insights:${tabId}`)).toBe(false);
+  });
+
+  test('tab removal cleans the removed tab state before a reused tab ID writes', async () => {
+    const tabId = 24;
+    const gate = deferred();
+    const replacement = { ...insights, job: { ...insights.job, id: 'job-24' } };
+    values.set(`job-insights:${tabId}`, insights);
+    values.set(`job-insights:${tabId}:metadata`, { jobId: 'job-7', capturedAt: Date.now() });
+    nextRemoveGate = gate;
+    removedListener?.(tabId);
+    await gate.started;
+
+    const completed = store(tabId, 'https://www.upwork.com/ab/details/job-24', replacement);
+    gate.resolve();
+    await completed;
+
+    expect(values.get(`job-insights:${tabId}`)).toEqual(replacement);
+  });
+
+  test('history reads return null after tab removal invalidates their generation', async () => {
+    const tabId = 25;
+    const gate = deferred();
+    tabUrls.set(tabId, 'https://www.upwork.com/ab/details/job-7');
+    nextGetGate = gate;
+    let response: unknown;
+    const completed = Promise.withResolvers<void>();
+    const returned = listener?.({ type: GET_JOB_HISTORY, tabId, jobId: 'job-7' }, {}, (value) => {
+      response = value;
+      completed.resolve();
+    });
+    expect(returned).toBe(true);
+    await gate.started;
+    removedListener?.(tabId);
+    gate.resolve();
+    await completed.promise;
+
+    expect(response).toBeNull();
   });
 });

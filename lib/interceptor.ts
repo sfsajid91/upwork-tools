@@ -45,16 +45,7 @@ function requestUrl(input: unknown): string | null {
   }
 }
 
-function safeConsoleInfo(message: string, style: string, metadata?: Record<string, unknown>): void {
-  try {
-    if (metadata) console.info(message, style, metadata);
-    else console.info(message, style);
-  } catch {
-    // Diagnostics must never affect interception or the host page.
-  }
-}
-
-function emitInsights(insights: JobInsights, url: string): void {
+function emitInsights(insights: JobInsights): void {
   const signature = JSON.stringify(insights);
   const now = Date.now();
   if (
@@ -68,11 +59,6 @@ function emitInsights(insights: JobInsights, url: string): void {
   const jobId = normalizeJobId(insights.job.id);
   if (jobId) latestCapture = { jobId, insights, capturedAt: now };
   window.postMessage(createPageEvent(insights), window.location.origin);
-  safeConsoleInfo('%c[upwork-tools] job found', 'color: #16a34a; font-weight: 600', {
-    id: insights.job.id,
-    title: insights.job.title,
-    url,
-  });
 }
 
 function installReplayListener(): void {
@@ -113,12 +99,12 @@ function inspectPayload(payload: unknown, url: string | null): void {
       if (!insights) return;
       const payloadJobId = normalizeJobId(insights.job.id);
       if (!payloadJobId || pageJobId !== payloadJobId) return;
-      emitInsights(insights, window.location.href);
+      emitInsights(insights);
       return;
     }
     if (!isSupportedUrl(url)) return;
     const insights = normalizeJobInsights(payload);
-    if (insights) emitInsights(insights, url);
+    if (insights) emitInsights(insights);
   } catch {
     // Inspection must never affect the host page.
   }
@@ -198,7 +184,6 @@ function installFetchAndResponseHooks(page: InterceptedWindow): void {
       ? wrapFetch(current as typeof window.fetch)
       : current,
   );
-  safeConsoleInfo('%c[upwork-tools] fetch listening', 'color: #2563eb; font-weight: 600');
 
   try {
     const descriptor = Object.getOwnPropertyDescriptor(page, '_authOrigFetch');

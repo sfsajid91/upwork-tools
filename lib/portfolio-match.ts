@@ -1,3 +1,4 @@
+import { normalizeSkillName } from './skills';
 import type { PortfolioEntry } from './storage';
 
 export interface PortfolioMatchJob {
@@ -13,26 +14,7 @@ export interface PortfolioMatch extends PortfolioEntry {
   tagOverlap: string[];
 }
 
-const ALIASES: Record<string, string> = {
-  js: 'javascript',
-  javascript: 'javascript',
-  ts: 'typescript',
-  'type script': 'typescript',
-  typescript: 'typescript',
-  node: 'nodejs',
-  'node js': 'nodejs',
-  nodejs: 'nodejs',
-  'react js': 'react',
-  reactjs: 'react',
-  react: 'react',
-  'next js': 'nextjs',
-  nextjs: 'nextjs',
-  'vue js': 'vue',
-  vuejs: 'vue',
-  vue: 'vue',
-  'cloudflare workers': 'cloudflare workers',
-  workers: 'cloudflare workers',
-};
+const NORMALIZED_NODE_NAME = 'nodejs';
 
 const STOP_WORDS = new Set([
   'a',
@@ -53,15 +35,10 @@ const STOP_WORDS = new Set([
 ]);
 
 function canonical(value: string): string {
-  const cleaned = value
-    .normalize('NFKC')
-    .toLocaleLowerCase('en-US')
-    .replace(/ς/g, 'σ')
-    .replace(/\p{M}/gu, '')
-    .replace(/[^\p{L}\p{N}]+/gu, ' ')
-    .trim()
-    .replace(/\s+/g, ' ');
-  return ALIASES[cleaned] ?? cleaned;
+  const normalized = normalizeSkillName(value).toLocaleLowerCase('en-US');
+  if (normalized === 'js') return 'javascript';
+  if (normalized === 'ts') return 'typescript';
+  return normalized === 'node' || normalized === 'node.js' ? NORMALIZED_NODE_NAME : normalized;
 }
 
 function tokens(value: string | null | undefined): Set<string> {

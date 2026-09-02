@@ -52,6 +52,21 @@ function isValidTimestamp(value: unknown): value is number {
   return typeof value === 'number' && Number.isInteger(value) && value > 0;
 }
 
+function isValidNullableTimestamp(value: unknown): value is number | null {
+  return value === null || isValidTimestamp(value);
+}
+
+function isValidApplicationRecord(value: unknown): value is ApplicationRecord {
+  if (!hasJobId(value)) return false;
+  const record = value as Partial<ApplicationRecord>;
+  return (
+    isValidNullableTimestamp(record.viewedAt) &&
+    isValidNullableTimestamp(record.appliedAt) &&
+    isValidNullableTimestamp(record.interviewedAt) &&
+    isValidNullableTimestamp(record.hiredAt)
+  );
+}
+
 function isValidJobSnapshotRecord(value: unknown): value is JobSnapshotRecord {
   if (!hasJobId(value) || !('capturedAt' in value)) return false;
   return isValidTimestamp(value.capturedAt);
@@ -321,12 +336,14 @@ async function enforceLatestCaptureRetentionInTransaction(
 
 export async function putLatestJobCapture(
   record: LatestJobCaptureRecord | null | undefined,
+  shouldWrite?: () => boolean,
 ): Promise<boolean> {
   if (
     typeof record !== 'object' ||
     record === null ||
     !isJobInsights(record.insights) ||
-    !isValidTimestamp(record.capturedAt)
+    !isValidTimestamp(record.capturedAt) ||
+    (shouldWrite && !shouldWrite())
   ) {
     return false;
   }
@@ -336,6 +353,7 @@ export async function putLatestJobCapture(
     DATABASE_STORES.latestCaptures,
     'readwrite',
     async (transaction) => {
+      if (shouldWrite && !shouldWrite()) return null;
       await requestResult(
         transaction.objectStore(DATABASE_STORES.latestCaptures).put({ ...record, jobId }),
       );
@@ -470,7 +488,7 @@ export async function putApplication(
   record: ApplicationRecord | null | undefined,
   shouldWrite?: () => boolean,
 ): Promise<boolean> {
-  if (!hasJobId(record) || (shouldWrite && !shouldWrite())) return false;
+  if (!isValidApplicationRecord(record) || (shouldWrite && !shouldWrite())) return false;
   const result = await runTransaction(
     DATABASE_STORES.applications,
     'readwrite',
@@ -491,7 +509,7 @@ export async function mergeApplication(
   record: ApplicationRecord | null | undefined,
   shouldWrite?: () => boolean,
 ): Promise<boolean> {
-  if (!hasJobId(record) || (shouldWrite && !shouldWrite())) return false;
+  if (!isValidApplicationRecord(record) || (shouldWrite && !shouldWrite())) return false;
   const result = await runTransaction(
     DATABASE_STORES.applications,
     'readwrite',
@@ -515,7 +533,7 @@ export async function getApplication(
     requestResult<ApplicationRecord | undefined>(
       transaction.objectStore(DATABASE_STORES.applications).get(jobId),
     ),
-  ).then((record) => record ?? null);
+  ).then((record) => (isValidApplicationRecord(record) ? record : null));
 }
 export async function listApplications(): Promise<ApplicationRecord[]> {
   const records = await runTransaction(DATABASE_STORES.applications, 'readonly', (transaction) =>
@@ -523,7 +541,7 @@ export async function listApplications(): Promise<ApplicationRecord[]> {
       transaction.objectStore(DATABASE_STORES.applications).getAll(),
     ),
   );
-  return records ?? [];
+  return (records ?? []).filter(isValidApplicationRecord);
 }
 
 export async function putWatchlist(record: WatchlistRecord | null | undefined): Promise<boolean> {

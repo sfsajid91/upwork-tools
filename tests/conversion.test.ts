@@ -34,6 +34,22 @@ describe('conversion stats', () => {
     });
   });
 
+  test('ignores invalid application timestamps', () => {
+    const stats = aggregateConversionStats([
+      record({ appliedAt: 0 }),
+      record({ appliedAt: -1 }),
+      record({ appliedAt: 1.5 }),
+      record({ interviewedAt: Number.NaN }),
+      record({ hiredAt: 0 }),
+      record({ hiredAt: -1 }),
+      record({ hiredAt: 1.5 }),
+    ]);
+
+    expect(stats.applications).toBe(0);
+    expect(stats.interviews).toBe(0);
+    expect(stats.hires).toBe(0);
+  });
+
   test('returns null rates and zero denominators when no stages are known', () => {
     expect(aggregateConversionStats([record(), record({ state: 'hired' })])).toEqual({
       applications: 0,

@@ -297,6 +297,59 @@ describe('normalizeJobInsights', () => {
     expect(insights?.history.relatedJobs.map((job) => job.id)).toEqual(['~other-public']);
   });
 
+  test('normalizes ID variants when excluding the current history entry', () => {
+    const insights = normalizeJobInsights(
+      payload({
+        opening: {
+          job: {
+            info: { id: 'current-job', title: 'Landing page backend' },
+            qualifications: {},
+          },
+        },
+        buyer: {
+          workHistory: [
+            {
+              startDate: '2026-08-20T00:00:00.000Z',
+              jobInfo: { id: '~current-job', title: 'Landing page backend' },
+            },
+            {
+              startDate: '2026-08-19T00:00:00.000Z',
+              jobInfo: { id: '~other-job', title: 'Landing page backend API' },
+            },
+          ],
+        },
+      }),
+    );
+
+    expect(insights?.history.relatedJobs.map((job) => job.id)).toEqual(['~other-job']);
+  });
+
+  test('normalizes negative and fractional activity counts to null', () => {
+    const insights = normalizeJobInsights(
+      payload({
+        opening: {
+          job: {
+            info: { id: 'count-job', title: 'Count test' },
+            clientActivity: {
+              totalApplicants: -1,
+              totalInvitedToInterview: 1.5,
+              totalHired: Number.NaN,
+              numberOfPositionsToHire: 2.5,
+            },
+            qualifications: {},
+          },
+        },
+      }),
+    );
+
+    expect(insights?.activity).toMatchObject({
+      exactProposals: null,
+      interviewed: null,
+      totalHired: null,
+      positionsToHire: null,
+    });
+  });
+
   test('preserves explicit hourly history fields for pay metrics', () => {
     const insights = normalizeJobInsights(
       payload({

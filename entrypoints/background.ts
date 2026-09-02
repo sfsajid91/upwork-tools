@@ -135,7 +135,10 @@ async function persistJobInsights(
   }
   if (state.removed || state.generation !== generation) return;
   try {
-    await putLatestJobCapture({ jobId, capturedAt, insights });
+    await putLatestJobCapture(
+      { jobId, capturedAt, insights },
+      () => !state.removed && state.generation === generation,
+    );
   } catch {
     // IndexedDB failures must not affect session-only capture.
   }
@@ -242,6 +245,8 @@ async function restoreBadge(tabId: number, url?: string): Promise<void> {
 }
 
 async function readJobHistory(tabId: number, jobId: string): Promise<JobHistoryResponse | null> {
+  const state = getTabState(tabId);
+  const generation = state.generation;
   try {
     const normalizedJobId = normalizeJobId(jobId);
     if (!normalizedJobId || (await currentTabJobId(tabId)) !== normalizedJobId) return null;
@@ -256,6 +261,7 @@ async function readJobHistory(tabId: number, jobId: string): Promise<JobHistoryR
       history: insights?.history.recentJobs,
     });
     const conversion = aggregateConversionStats(await listApplications());
+    if (state.removed || state.generation !== generation) return null;
     if (!summary) {
       return {
         jobId: normalizedJobId,
@@ -469,23 +475,23 @@ export default defineBackground(() => {
     }
   });
   browser.tabs.onRemoved.addListener((tabId) => {
-    const state = getTabState(tabId);
+    const targetState = getTabState(tabId);
     const generation = advanceTabGeneration(tabId);
     const cleanup = enqueueTabMutation(tabId, async () => {
-      if (!state.removed || state.generation !== generation) return;
+      if (!targetState.removed || targetState.generation !== generation) return;
       try {
         await browser.storage.session.remove([storageKey(tabId), metadataKey(tabId)]);
       } catch {
         // Session storage must not affect tab cleanup.
       }
-      if (state.removed && state.generation === generation) {
+      if (targetState.removed && targetState.generation === generation) {
         await setBadge(tabId, undefined, '');
       }
     });
-    state.removed = true;
+    targetState.removed = true;
     void cleanup.then(
       () => {
-        if (tabStates.get(tabId) === state && state.generation === generation) {
+        if (tabStates.get(tabId) === targetState && targetState.generation === generation) {
           tabStates.delete(tabId);
         }
       },

@@ -29,6 +29,9 @@ describe('job page identity', () => {
     expect(jobIdFromPageUrl('https://example.com/details/job-1')).toBeNull();
     expect(jobIdFromPageUrl('https://www.upwork.com/nx/find-work/best-matches')).toBeNull();
     expect(jobIdFromPageUrl('https://www.upwork.com/details/')).toBeNull();
+    expect(jobIdFromPageUrl('https://www.upwork.com/jobs/search')).toBeNull();
+    expect(jobIdFromPageUrl('https://www.upwork.com/jobs/')).toBeNull();
+    expect(jobIdFromPageUrl('https://www.upwork.com/jobs')).toBeNull();
     expect(jobIdFromPageUrl('not a url')).toBeNull();
     expect(isJobPage('https://www.upwork.com/jobs/~job-1')).toBe(true);
     expect(isJobPage('https://www.upwork.com/jobs/')).toBe(false);

@@ -84,8 +84,8 @@ function isValidCaptureMetadata(value: unknown): value is TabCaptureMetadata {
     typeof metadata.jobId === 'string' &&
     normalizeJobId(metadata.jobId) === metadata.jobId &&
     typeof metadata.capturedAt === 'number' &&
-    Number.isFinite(metadata.capturedAt) &&
-    metadata.capturedAt >= 0
+    Number.isInteger(metadata.capturedAt) &&
+    metadata.capturedAt > 0
   );
 }
 
@@ -424,6 +424,7 @@ export default defineBackground(() => {
     const wasLoading = state.lastStatus === 'loading';
     const wasNavigating = state.navigating;
     const enqueueNavigationCleanup = (url?: string) => {
+      state.navigating = true;
       const generation = advanceTabGeneration(tabId);
       void enqueueTabMutation(tabId, async () => {
         if (getTabState(tabId).generation !== generation) return;
@@ -454,12 +455,14 @@ export default defineBackground(() => {
     if (changeInfo.url !== undefined) {
       const urlChanged = state.lastUrl !== changeInfo.url;
       state.lastUrl = changeInfo.url;
-      if (wasLoading || wasNavigating) {
+      if (wasLoading) {
         if (urlChanged) {
           void enqueueTabMutation(tabId, () => restoreBadge(tabId, changeInfo.url)).catch(
             () => undefined,
           );
         }
+      } else if (wasNavigating) {
+        if (urlChanged) enqueueNavigationCleanup(changeInfo.url);
       } else if (urlChanged) {
         enqueueNavigationCleanup(changeInfo.url);
       }

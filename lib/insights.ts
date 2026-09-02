@@ -176,8 +176,11 @@ const RELATED_TITLE_STOP_WORDS: Record<string, true> = {
   lead: true,
   developer: true,
   engineer: true,
+  manager: true,
+  consultant: true,
+  specialist: true,
+  designer: true,
 };
-
 function titleTokens(title: string | null): Set<string> {
   if (!title) return new Set();
   return new Set(

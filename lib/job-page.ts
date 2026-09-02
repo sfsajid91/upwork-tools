@@ -20,7 +20,11 @@ export function jobIdFromPageUrl(url: string | undefined): string | null {
     const applyMatch = parsed.pathname.match(/(?:^|\/)freelance-jobs\/apply\/([^/]+)/);
     if (applyMatch) return normalizeJobId(applyMatch[1]);
     const jobsMatch = parsed.pathname.match(/(?:^|\/)jobs\/([^/]+)/);
-    return normalizeJobId(jobsMatch?.[1]);
+    if (jobsMatch) {
+      const id = normalizeJobId(jobsMatch[1]);
+      if (id && id !== 'search') return id;
+    }
+    return null;
   } catch {
     return null;
   }

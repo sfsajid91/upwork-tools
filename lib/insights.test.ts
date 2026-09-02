@@ -233,6 +233,30 @@ describe('normalizeJobInsights', () => {
     );
     expect(roleOnlyOverlap?.history.relatedJobs).toEqual([]);
   });
+  test('filters expanded generic role terms from related history', () => {
+    for (const role of ['manager', 'consultant', 'specialist', 'designer']) {
+      const result = normalizeJobInsights(
+        payload({
+          opening: {
+            job: {
+              status: 'OPEN',
+              info: { id: 'current', title: `${role} ${role}` },
+            },
+            qualifications: {},
+          },
+          buyer: {
+            workHistory: [
+              {
+                startDate: '2026-08-20T00:00:00.000Z',
+                jobInfo: { id: `related-${role}`, title: `${role} ${role}` },
+              },
+            ],
+          },
+        }),
+      );
+      expect(result?.history.relatedJobs).toEqual([]);
+    }
+  });
   test('excludes current history when public and internal IDs differ', () => {
     const insights = normalizeJobInsights(
       payload({

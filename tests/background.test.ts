@@ -361,6 +361,18 @@ describe('background runtime messaging', () => {
 
     expect(values.has(`job-insights:${tabId}`)).toBe(false);
   });
+  test('URL-first navigation does not double-advance around an intermediate STORE', async () => {
+    const tabId = 112;
+    const url = 'https://www.upwork.com/ab/details/job-8';
+    const payload = { ...insights, job: { ...insights.job, id: 'job-8' } };
+
+    updatedListener?.(tabId, { url });
+    await store(tabId, url, payload);
+    updatedListener?.(tabId, { status: 'loading' });
+    await Promise.all([...pendingStorageOperations]);
+
+    expect(values.get(`job-insights:${tabId}`)).toEqual(payload);
+  });
   test('multi-stage navigation advances once and preserves a fresh STORE', async () => {
     const tabId = 111;
     const url = 'https://www.upwork.com/ab/details/job-8';

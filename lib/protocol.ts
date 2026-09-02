@@ -137,8 +137,8 @@ function isReplay(value: unknown): value is PageReplay {
     typeof replay.requestId === 'string' &&
     replay.requestId.trim().length > 0 &&
     typeof replay.capturedAt === 'number' &&
-    Number.isFinite(replay.capturedAt) &&
-    replay.capturedAt >= 0
+    Number.isInteger(replay.capturedAt) &&
+    replay.capturedAt > 0
   );
 }
 
@@ -176,8 +176,8 @@ function isReplayStoreMetadata(value: unknown): value is { capturedAt: number } 
   const metadata = value as Record<string, unknown>;
   return (
     typeof metadata.capturedAt === 'number' &&
-    Number.isFinite(metadata.capturedAt) &&
-    metadata.capturedAt >= 0
+    Number.isInteger(metadata.capturedAt) &&
+    metadata.capturedAt > 0
   );
 }
 

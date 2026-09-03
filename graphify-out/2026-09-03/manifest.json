@@ -1062,9 +1062,9 @@
     "semantic_hash": ""
   },
   "src/lib/interceptor.ts": {
-    "mtime": 1788424669.2215772,
-    "seen": 1788425634.9396403,
-    "ast_hash": "5e12e2825d696005c684ddebefb65bb8",
+    "mtime": 1788428796.2649372,
+    "seen": 1788429151.997859,
+    "ast_hash": "ddf93ff50a96204bc45362c0c8b04ebc",
     "semantic_hash": ""
   },
   "src/lib/job-page.ts": {
@@ -1383,6 +1383,18 @@
     "mtime": 1788413414.95221,
     "seen": 1788425634.9400434,
     "ast_hash": "f545c582882c22e3608d1663a1854cff",
+    "semantic_hash": ""
+  },
+  "src/lib/logger.ts": {
+    "mtime": 1788428902.8097777,
+    "seen": 1788429151.9978752,
+    "ast_hash": "6ec8642fb117da9b9b4bf07dc00835cc",
+    "semantic_hash": ""
+  },
+  "tests/lib/logger.test.ts": {
+    "mtime": 1788428952.139272,
+    "seen": 1788429151.9980643,
+    "ast_hash": "06cce26bc395749cd2676ec58ec5c913",
     "semantic_hash": ""
   }
 }

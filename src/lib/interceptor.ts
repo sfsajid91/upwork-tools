@@ -1,6 +1,7 @@
 import { type JobInsights, normalizeJobInsights } from './insights';
 import { jobIdFromPageUrl, normalizeJobId } from './job-page';
 import { createPageEvent, isPageReplayRequest } from './protocol';
+import { logger } from './logger';
 
 const JOB_DETAILS_ALIASES = [
   'gql-query-get-auth-job-details-v2',
@@ -177,6 +178,9 @@ function installFetchAndResponseHooks(page: InterceptedWindow): void {
     if (wrappedFetches.has(original)) return original;
     const wrapped: typeof window.fetch = function (this: Window, ...args) {
       const url = requestUrl(args[0]);
+      if (url !== null && isSupportedUrl(url)) {
+        logger.log('Found URL:', url);
+      }
       const result = original.apply(this, args);
       if (url !== null) {
         void result
@@ -291,7 +295,11 @@ function installXhrHooks(): void {
       password?: string | null,
     ) => void;
     return function (this: XMLHttpRequest, ...args: Parameters<typeof original>) {
-      urls.set(this, String(args[1]));
+      const url = String(args[1]);
+      urls.set(this, url);
+      if (isSupportedUrl(url)) {
+        logger.log('Found URL:', url);
+      }
       original.apply(this, args);
     } as typeof XMLHttpRequest.prototype.open;
   });
@@ -323,6 +331,7 @@ export function installInterceptors(): void {
   const page = window as InterceptedWindow;
   if (page[INSTALL_FLAG]) return;
   page[INSTALL_FLAG] = true;
+  logger.log('Interceptor initiated');
   installReplayListener();
   try {
     installFetchAndResponseHooks(page);

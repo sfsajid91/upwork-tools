@@ -75,3 +75,13 @@ export function formatRelativeTime(value: string | null): string {
   const days = Math.round(hours / 24);
   return `${days}d ago`;
 }
+
+export function formatRelativeCaptureTime(value: number, now = Date.now()): string {
+  if (!Number.isFinite(value) || value <= 0 || !Number.isFinite(now)) return 'Not available';
+  const elapsedMinutes = Math.max(0, now - value) / 60_000;
+  if (elapsedMinutes < 1) return 'Just now';
+  if (elapsedMinutes < 60) return `${Math.round(elapsedMinutes)}m ago`;
+  const elapsedHours = elapsedMinutes / 60;
+  if (elapsedHours < 24) return `${Math.round(elapsedHours)}h ago`;
+  return `${Math.round(elapsedHours / 24)}d ago`;
+}

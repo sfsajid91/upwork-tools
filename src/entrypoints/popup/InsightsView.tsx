@@ -9,6 +9,7 @@ import {
   formatPercent,
   formatRateContext,
   formatRating,
+  formatRelativeCaptureTime,
   formatRelativeTime,
   formatTrackingSpan,
 } from '../../lib/format';
@@ -763,8 +764,9 @@ export function ApplicantHistoryChart({ captures }: { captures: JobHistoryCaptur
     capture.applicants === null ? [] : [{ capture, applicants: capture.applicants }],
   );
   const chartWidth = 320;
-  const chartHeight = 112;
+  const chartHeight = 104;
   const padding = 14;
+  const baselineY = chartHeight - padding;
   const maxApplicants = Math.max(...points.map((point) => point.applicants), 0);
   const minApplicants = Math.min(...points.map((point) => point.applicants), maxApplicants);
   const applicantRange = maxApplicants - minApplicants;
@@ -775,29 +777,20 @@ export function ApplicantHistoryChart({ captures }: { captures: JobHistoryCaptur
   const yFor = (applicants: number) =>
     applicantRange === 0
       ? chartHeight / 2
-      : padding + ((maxApplicants - applicants) / applicantRange) * (chartHeight - padding * 2);
+      : padding + ((maxApplicants - applicants) / applicantRange) * (baselineY - padding);
   const path = points
     .map((point, index) => `${index === 0 ? 'M' : 'L'} ${xFor(index)} ${yFor(point.applicants)}`)
     .join(' ');
-
+  const areaPath =
+    points.length > 1
+      ? `${path} L ${xFor(points.length - 1)} ${baselineY} L ${xFor(0)} ${baselineY} Z`
+      : '';
+  const firstPoint = points[0] ?? null;
+  const latestPoint = points.at(-1) ?? null;
   return (
-    <figure
-      className="mt-3 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-slate-800 dark:bg-slate-950/40"
-      aria-labelledby="applicant-history-chart-title"
-    >
-      <figcaption
-        id="applicant-history-chart-title"
-        className="mb-1 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-      >
-        <span>Proposal progression</span>
-        <span className="font-medium normal-case tracking-normal">
-          {points.length === captures.length
-            ? `${points.length} points`
-            : `${points.length} of ${captures.length} points`}
-        </span>
-      </figcaption>
+    <div className="mt-3">
       {points.length === 0 ? (
-        <p className="px-1 py-5 text-center text-[11px] text-slate-500 dark:text-slate-400">
+        <p className="py-5 text-center text-[11px] text-slate-500 dark:text-slate-400">
           Applicant counts are not available for these captures.
         </p>
       ) : (
@@ -809,14 +802,32 @@ export function ApplicantHistoryChart({ captures }: { captures: JobHistoryCaptur
             aria-label={`Proposal count progression across ${points.length} captures`}
           >
             <title>Proposal count progression across captures</title>
+            <desc>
+              Each point shows the captured proposal count and change from the prior point.
+            </desc>
+            <defs>
+              <linearGradient id="applicant-history-area" x1="0" x2="0" y1="0" y2="1">
+                <stop
+                  className="stop-emerald-500 dark:stop-emerald-400"
+                  offset="0%"
+                  stopOpacity="0.18"
+                />
+                <stop
+                  className="stop-emerald-500 dark:stop-emerald-400"
+                  offset="100%"
+                  stopOpacity="0.01"
+                />
+              </linearGradient>
+            </defs>
             <line
               x1={padding}
               x2={chartWidth - padding}
-              y1={chartHeight - padding}
-              y2={chartHeight - padding}
+              y1={baselineY}
+              y2={baselineY}
               className="stroke-slate-200 dark:stroke-slate-700"
               strokeWidth="1"
             />
+            {areaPath && <path d={areaPath} fill="url(#applicant-history-area)" stroke="none" />}
             {points.length > 1 && (
               <path
                 d={path}
@@ -828,30 +839,59 @@ export function ApplicantHistoryChart({ captures }: { captures: JobHistoryCaptur
                 vectorEffect="non-scaling-stroke"
               />
             )}
-            {points.map((point, index) => (
-              <circle
-                key={`${point.capture.capturedAt}-${point.applicants}`}
-                cx={xFor(index)}
-                cy={yFor(point.applicants)}
-                r="3.5"
-                className="fill-white stroke-current dark:fill-slate-900"
-                strokeWidth="2"
-                vectorEffect="non-scaling-stroke"
-              >
-                <title>
-                  {`Capture ${formatRelativeTime(new Date(point.capture.capturedAt).toISOString())}: ${formatNumber(point.applicants)} proposals`}
-                </title>
-              </circle>
-            ))}
+            {points.map((point, index) => {
+              const previousApplicants = points[index - 1]?.applicants ?? point.applicants;
+              const delta = index === 0 ? 0 : point.applicants - previousApplicants;
+              const deltaLabel = delta > 0 ? `+${formatNumber(delta)}` : formatNumber(delta);
+              return (
+                <g key={`${point.capture.capturedAt}-${point.applicants}`}>
+                  {index === points.length - 1 && (
+                    <circle
+                      cx={xFor(index)}
+                      cy={yFor(point.applicants)}
+                      r="7"
+                      className="fill-none stroke-emerald-500/30 dark:stroke-emerald-400/40"
+                      strokeWidth="2"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  )}
+                  <circle
+                    cx={xFor(index)}
+                    cy={yFor(point.applicants)}
+                    r="3.5"
+                    className="fill-white stroke-current dark:fill-slate-900"
+                    strokeWidth="2"
+                    vectorEffect="non-scaling-stroke"
+                  >
+                    <title>
+                      {`Capture ${formatRelativeCaptureTime(point.capture.capturedAt)}: ${formatNumber(point.applicants)} proposals (${deltaLabel})`}
+                    </title>
+                  </circle>
+                </g>
+              );
+            })}
           </svg>
+          {firstPoint && latestPoint && (
+            <div className="mt-0.5 flex items-center justify-between gap-3 text-[10px] text-slate-500 dark:text-slate-400">
+              <span>
+                {formatNumber(firstPoint.applicants)} proposals ·{' '}
+                {formatRelativeCaptureTime(firstPoint.capture.capturedAt)}
+              </span>
+              <span className="text-right">
+                {formatNumber(latestPoint.applicants)} proposals ·{' '}
+                {formatRelativeCaptureTime(latestPoint.capture.capturedAt)}
+              </span>
+            </div>
+          )}
+          <p className="mt-1 text-[10.5px] text-slate-400 dark:text-slate-500">
+            Hover over points to view capture details
+          </p>
           {captures.length === 1 && (
-            <p className="px-1 text-[10px] text-slate-500 dark:text-slate-400">
-              First capture recorded
-            </p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400">First capture recorded</p>
           )}
         </>
       )}
-    </figure>
+    </div>
   );
 }
 
@@ -1081,6 +1121,17 @@ export function AvailableState({
       : history?.summary && firstHistoryCapture && latestHistoryCapture
         ? `${historyCaptures.length} captures · ${formatTrackingSpan(firstHistoryCapture.capturedAt, latestHistoryCapture.capturedAt)}`
         : `${history?.summary?.snapshotCount ?? 0} captures`;
+  const historyMetricCount = [
+    history?.summary?.firstSeenDelta,
+    history?.summary?.recentDelta,
+    history?.velocity,
+  ].filter((value) => value !== null && value !== undefined).length;
+  const historyMetricGridClass =
+    historyMetricCount === 1
+      ? 'grid-cols-1'
+      : historyMetricCount === 2
+        ? 'grid-cols-2'
+        : 'grid-cols-3';
 
   return (
     <div className="flex flex-col gap-2.5">
@@ -1264,17 +1315,17 @@ export function AvailableState({
             </span>
           </div>
           <ApplicantHistoryChart captures={historyCaptures} />
-          <div className="mt-2 grid grid-cols-3 gap-2 text-center">
+          <div className={`mt-2 grid ${historyMetricGridClass} gap-2 text-center`}>
             {history.summary.firstSeenDelta !== null && (
               <MetricCell
                 label="Total growth"
-                value={`${history.summary.firstSeenDelta > 0 ? '+' : ''}${formatNumber(history.summary.firstSeenDelta)}`}
+                value={`${history.summary.firstSeenDelta > 0 ? '↑ +' : ''}${formatNumber(history.summary.firstSeenDelta)}`}
               />
             )}
             {history.summary.recentDelta !== null && (
               <MetricCell
                 label="Since last check"
-                value={`${history.summary.recentDelta > 0 ? '+' : ''}${formatNumber(history.summary.recentDelta)}`}
+                value={`${history.summary.recentDelta > 0 ? '↑ +' : ''}${formatNumber(history.summary.recentDelta)}`}
               />
             )}
             {history.velocity !== null && (
@@ -1283,7 +1334,7 @@ export function AvailableState({
             {history.summary.firstSeenDelta === null &&
               history.summary.recentDelta === null &&
               history.velocity === null && (
-                <span className="col-span-3 text-[11px] text-slate-500 dark:text-slate-400">
+                <span className="col-span-full text-[11px] text-slate-500 dark:text-slate-400">
                   No trend yet
                 </span>
               )}

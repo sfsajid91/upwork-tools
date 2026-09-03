@@ -5,6 +5,7 @@ import {
   formatPercent,
   formatRateContext,
   formatRating,
+  formatRelativeCaptureTime,
   formatTrackingSpan,
 } from '../../src/lib/format';
 
@@ -35,6 +36,14 @@ describe('format', () => {
     expect(formatTrackingSpan(1_000, 1_000 + 30 * 60_000)).toBe('30 min');
     expect(formatTrackingSpan(1_000, 1_000)).toBe('Less than a minute');
     expect(formatTrackingSpan(0, 1_000)).toBe('Tracking time unavailable');
+  });
+  test('formats relative capture timestamps', () => {
+    const now = 500_000_000;
+    expect(formatRelativeCaptureTime(now, now)).toBe('Just now');
+    expect(formatRelativeCaptureTime(now - 24 * 60_000, now)).toBe('24m ago');
+    expect(formatRelativeCaptureTime(now - 3 * 3_600_000, now)).toBe('3h ago');
+    expect(formatRelativeCaptureTime(now - 48 * 3_600_000, now)).toBe('2d ago');
+    expect(formatRelativeCaptureTime(0, now)).toBe('Not available');
   });
 
   test('falls back to USD instead of throwing on malformed currency codes', () => {

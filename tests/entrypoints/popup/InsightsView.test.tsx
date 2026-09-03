@@ -158,7 +158,7 @@ describe('InsightsView components', () => {
     expect(html.includes('aria-busy="true"')).toBe(true);
     expect(html.includes('Loading job insights')).toBe(true);
   });
-  test('renders a native SVG chart for one, two, and three captures', () => {
+  test('renders a native SVG chart for one, two, and three captures with hover notes and linear gradient', () => {
     const one = renderToString(
       <ApplicantHistoryChart captures={[{ capturedAt: 1_000, applicants: 4 }]} />,
     );
@@ -166,6 +166,7 @@ describe('InsightsView components', () => {
     expect(one.includes('<circle')).toBe(true);
     expect(one.includes('<path')).toBe(false);
     expect(one.includes('First capture recorded')).toBe(true);
+    expect(one.includes('Hover over points to view capture details')).toBe(true);
 
     const two = renderToString(
       <ApplicantHistoryChart
@@ -176,7 +177,9 @@ describe('InsightsView components', () => {
       />,
     );
     expect(two.includes('<path')).toBe(true);
-    expect((two.match(/<circle/g) ?? []).length).toBe(2);
+    expect(two.includes('linearGradient')).toBe(true);
+    expect(two.includes('fill="url(#applicant-history-area)"')).toBe(true);
+    expect(two.includes('stroke-emerald-500/30')).toBe(true);
     expect(two.includes('proposals')).toBe(true);
 
     const three = renderToString(
@@ -188,8 +191,8 @@ describe('InsightsView components', () => {
         ]}
       />,
     );
-    expect((three.match(/<circle/g) ?? []).length).toBe(3);
     expect(three.includes('dark:text-emerald-400')).toBe(true);
+    expect(three.includes('Capture ')).toBe(true);
   });
   test('renders friendly history labels and tracking span', () => {
     const insights = normalizeJobInsights(samplePayload());
@@ -201,8 +204,10 @@ describe('InsightsView components', () => {
     expect(html.includes('Total growth')).toBe(true);
     expect(html.includes('Since last check')).toBe(true);
     expect(html.includes('Proposals/hour')).toBe(true);
+    expect(html.includes('↑ +2')).toBe(true);
     expect(html.includes('Since first')).toBe(false);
     expect(html.includes('Since prior')).toBe(false);
+    expect(html.includes('Hover over points to view capture details')).toBe(true);
   });
 
   test('renders AvailableState with exact proposals, client quality, and fit', () => {

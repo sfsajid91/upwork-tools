@@ -51,11 +51,11 @@ The product name is **Upwork Tools**. The extension describes itself as showing 
 
 ## Evidence on Hand
 
-- Product and implementation brief: `PROJECT_CONTEXT.md`.
-- Popup implementation: `entrypoints/popup/App.tsx`.
-- Network integration: `entrypoints/interceptor.content.ts`, `entrypoints/content.ts`, and `lib/interceptor.ts`.
-- Background tab storage: `entrypoints/background.ts`.
-- Normalized model, protocol validation, and formatting: `lib/insights.ts`, `lib/protocol.ts`, and `lib/format.ts`.
+- Product and implementation brief: `docs/architecture.md`.
+- Popup implementation: `src/entrypoints/popup/App.tsx`.
+- Network integration: `src/entrypoints/interceptor.content.ts`, `src/entrypoints/content.ts`, and `src/lib/interceptor.ts`.
+- Background tab storage: `src/entrypoints/background.ts`.
+- Normalized model, protocol validation, and formatting: `src/lib/insights.ts`, `src/lib/protocol.ts`, and `src/lib/format.ts`.
 - No testimonials, customer logos, case studies, or external proof assets are present; future work must not fabricate them.
 
 ## Product Principles

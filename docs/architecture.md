@@ -44,11 +44,11 @@ flowchart LR
 
 | Context | File | Runtime responsibility |
 | --- | --- | --- |
-| MAIN world | `entrypoints/interceptor.content.ts` | Install response inspection at `document_start` on Upwork pages. |
-| Isolated content | `entrypoints/content.ts` | Validate same-origin page events, forward captures, and answer replay requests. |
-| Service worker | `entrypoints/background.ts` | Validate messages, serialize tab mutations, persist captures, serve popup reads, and update the action badge. |
-| Popup | `entrypoints/popup/` | Read the active tab and render insights, history, conversion, watchlist, warnings, and fit views. |
-| Options | `entrypoints/options/` | Edit the local profile and portfolio, browse/remove the watchlist, and clear IndexedDB job data. |
+| MAIN world | `src/entrypoints/interceptor.content.ts` | Install response inspection at `document_start` on Upwork pages. |
+| Isolated content | `src/entrypoints/content.ts` | Validate same-origin page events, forward captures, and answer replay requests. |
+| Service worker | `src/entrypoints/background.ts` | Validate messages, serialize tab mutations, persist captures, serve popup reads, and update the action badge. |
+| Popup | `src/entrypoints/popup/` | Read the active tab and render insights, history, conversion, watchlist, warnings, and fit views. |
+| Options | `src/entrypoints/options/` | Edit the local profile and portfolio, browse/remove the watchlist, and clear IndexedDB job data. |
 
 `wxt.config.ts` defines the React module, Manifest V3 metadata, `storage`
 permission, Upwork host permissions, and the Chromium 111 minimum version. WXT
@@ -58,7 +58,7 @@ generates the manifest and build output.
 
 ### 1. Observe an existing response
 
-`lib/interceptor.ts` wraps supported fetch/response/XHR inspection paths. It
+`src/lib/interceptor.ts` wraps supported fetch/response/XHR inspection paths. It
 recognizes the job-details alias
 `gql-query-get-auth-job-details-v2` and checks the expected response markers.
 Matching responses are cloned before parsing. The original response chain is
@@ -75,7 +75,7 @@ Inspection is guarded by host-page safety checks:
 
 ### 2. Normalize the payload
 
-`lib/insights.ts` converts the upstream payload into `JobInsights`:
+`src/lib/insights.ts` converts the upstream payload into `JobInsights`:
 
 - `job`: identity, title, status, type, budget, dates, category, skills, and
   restrictions;
@@ -95,18 +95,18 @@ preserved as zero.
 
 The parser delegates focused behavior to deterministic helpers:
 
-- `lib/qualification.ts` parses meaningful qualification matches;
-- `lib/restrictions.ts` extracts explicit location, JSS, language, hours,
+- `src/lib/qualification.ts` parses meaningful qualification matches;
+- `src/lib/restrictions.ts` extracts explicit location, JSS, language, hours,
   earnings, portfolio, and start requirements;
-- `lib/skills.ts` and `lib/skill-match.ts` normalize and compare skill labels;
-- `lib/portfolio-match.ts` ranks local portfolio entries using explainable title,
+- `src/lib/skills.ts` and `src/lib/skill-match.ts` normalize and compare skill labels;
+- `src/lib/portfolio-match.ts` ranks local portfolio entries using explainable title,
   skill, and tag overlap;
-- `lib/pay-profile.ts`, `lib/applicant-metrics.ts`, and `lib/velocity.ts` derive
+- `src/lib/pay-profile.ts`, `src/lib/applicant-metrics.ts`, and `src/lib/velocity.ts` derive
   factual historical metrics.
 
 ### 3. Cross the page boundary
 
-`lib/protocol.ts` owns the versioned contracts:
+`src/lib/protocol.ts` owns the versioned contracts:
 
 - page source: `upwork-tools`;
 - page event version: `1`;
@@ -155,7 +155,7 @@ writes, and current-job validation prevents stale reads while a new page loads.
 
 ### IndexedDB
 
-`lib/database.ts` opens database `upwork-tools`, version `2`, with these stores:
+`src/lib/database.ts` opens database `upwork-tools`, version `2`, with these stores:
 
 | Store | Contents | Keying |
 | --- | --- | --- |
@@ -196,7 +196,7 @@ key, then persists the validated mode in extension storage.
 
 ## Popup read flow
 
-`entrypoints/popup/App.tsx` starts in `loading`, queries the active tab, and sends
+`src/entrypoints/popup/App.tsx` starts in `loading`, queries the active tab, and sends
 `GET_JOB_INSIGHTS`. It renders:
 
 - `empty` when no validated snapshot is available;
@@ -216,7 +216,7 @@ Upwork hourly rate remains primary; the configured fallback is used only when th
 capture has no freelancer rate. Settings failures leave the core snapshot
 available without personalization.
 
-`InsightsView.tsx` renders the product hierarchy:
+`src/entrypoints/popup/InsightsView.tsx` renders the product hierarchy:
 
 1. job title, status, theme control, watchlist, and observed application state;
 2. warnings and explicit restrictions;
@@ -229,12 +229,12 @@ available without personalization.
 9. matching portfolio work when deterministic overlap exists;
 10. expandable related previous jobs and client hiring history;
 11. posting date, budget, and local-capture provenance.
-The formatter layer (`lib/format.ts`) turns nullable values into stable display
+The formatter layer (`src/lib/format.ts`) turns nullable values into stable display
 strings such as `Not available`; it does not fill missing data.
 
 ## Options flow
 
-`entrypoints/options/App.tsx` reads and validates local profile and portfolio
+`src/entrypoints/options/App.tsx` reads and validates local profile and portfolio
 values and loads the locally saved watchlist collection. It exposes:
 
 - profile skills and fallback hourly rate;
@@ -269,16 +269,16 @@ automatic application flow, or Upwork DOM mutation.
 Behavior is covered by focused Bun tests beside the implementation. Important
 contracts include:
 
-- `tests/interceptor.test.ts`, `tests/content.test.ts`, and
-  `tests/protocol.test.ts` for capture and boundary validation;
-- `tests/background.test.ts` for per-tab storage, replay, navigation, and
+- `tests/entrypoints/interceptor.test.ts`, `tests/entrypoints/content.test.ts`, and
+  `tests/lib/protocol.test.ts` for capture and boundary validation;
+- `tests/entrypoints/background.test.ts` for per-tab storage, replay, navigation, and
   message behavior;
-- `lib/database.test.ts` and `tests/storage-degradation.test.ts` for schema,
+- `tests/lib/database.test.ts` and `tests/lib/storage-degradation.test.ts` for schema,
   retention, deduplication, and graceful storage failure;
-- `lib/insights.test.ts`, `tests/insights.test.ts`, and feature tests for
+- `tests/lib/insights.test.ts`, `tests/lib/insights-contract.test.ts`, and feature tests for
   normalization, warnings, history, matching, and derived metrics;
-- `entrypoints/popup/InsightsView.test.tsx` and
-  `entrypoints/options/App.test.tsx` for user-facing state behavior.
+- `tests/entrypoints/popup/InsightsView.test.tsx` and
+  `tests/entrypoints/options/App.test.tsx` for user-facing state behavior.
 
 Run the project checks with:
 

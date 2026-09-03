@@ -28,6 +28,7 @@ export interface JobRecord {
   jobId: string;
   job: JobInsights['job'];
   client: JobInsights['client'];
+  viewerMode?: JobInsights['viewerMode'];
 }
 
 /** User application state retained locally, keyed by job ID. */
@@ -44,6 +45,7 @@ export interface ApplicationRecord {
 export interface WatchlistRecord {
   jobId: string;
   job: JobInsights['job'];
+  insights?: JobInsights;
   latestSnapshotId: number | null;
   savedAt: number;
 }

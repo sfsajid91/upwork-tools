@@ -1,5 +1,14 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'bun:test';
 import { normalizeJobInsights } from '../../src/lib/insights';
+
+const visitorFixture = JSON.parse(
+  readFileSync(
+    fileURLToPath(new URL('../fixtures/sample-visitor-job-details.json', import.meta.url)),
+    'utf8',
+  ),
+);
 
 function payload(overrides: Record<string, unknown> = {}) {
   return {
@@ -119,6 +128,47 @@ describe('normalizeJobInsights', () => {
     expect(insights?.history.recentJobs.length).toBe(1);
     expect(insights?.history.relatedJobs.length).toBe(1);
     expect(insights?.job.restrictions).toEqual(['90%+ JSS', 'English: FLUENT']);
+  });
+  test('normalizes missing payment verification as null', () => {
+    const insights = normalizeJobInsights(payload({ buyer: { info: {} } }));
+
+    expect(insights?.client.paymentVerified).toBeNull();
+  });
+  test('normalizes the public visitor fixture without personal fields', () => {
+    const insights = normalizeJobInsights(visitorFixture);
+
+    expect(insights).not.toBeNull();
+    expect(insights?.viewerMode).toBe('visitor');
+    expect(insights?.job.id).toBe('~022090578797924892358');
+    expect(insights?.job.title).toBe('Website Developer');
+    expect(insights?.activity.exactProposals).toBe(10);
+    expect(insights?.activity.interviewed).toBe(10);
+    expect(insights?.client.paymentVerified).toBe(true);
+    expect(insights?.client.jobsPosted).toBeNull();
+    expect(insights?.client.hireRate).toBeNull();
+    expect(insights?.fit).toEqual({
+      qualificationsMatched: null,
+      qualificationsTotal: null,
+      qualificationDetails: null,
+      freelancerHourlyRate: null,
+      rateContext: null,
+      applicationState: null,
+    });
+    expect(insights?.job.restrictions).toEqual(['India', 'Philippines']);
+    expect(insights?.similarJobs).toEqual([
+      {
+        id: null,
+        ciphertext: '~022064143618482144543',
+        title: 'Interior Design Website - Experienced Wordpress Developer Needed',
+        description: "We're looking for an experienced and creative developer...",
+        amount: 25,
+        currency: null,
+        contractorTier: 'EXPERT',
+        type: 'FIXED',
+        durationLabel: '1 to 3 months',
+        skills: ['WordPress'],
+      },
+    ]);
   });
   test('normalizes expanded restrictions and count-based hiring warnings', () => {
     const insights = normalizeJobInsights(

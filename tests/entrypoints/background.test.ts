@@ -153,6 +153,7 @@ testGlobals.defineBackground = (callback) => {
 await import(`../../src/entrypoints/background.ts?test=${crypto.randomUUID()}`);
 
 const insights: JobInsights = {
+  viewerMode: 'authenticated',
   job: {
     id: 'job-7',
     title: null,
@@ -206,7 +207,18 @@ const insights: JobInsights = {
     applicationState: null,
   },
   history: { recentJobs: [], relatedJobs: [] },
+  similarJobs: [],
   warnings: [],
+};
+const visitorInsights: JobInsights = {
+  ...insights,
+  viewerMode: 'visitor',
+  fit: {
+    ...insights.fit,
+    freelancerHourlyRate: null,
+    rateContext: null,
+    applicationState: null,
+  },
 };
 beforeEach(() => {
   values.clear();
@@ -435,6 +447,29 @@ describe('background runtime messaging', () => {
     expect(badgeBackgroundCalls.at(-1)).toEqual({ tabId: 7, color: '#152d4f' });
     expect(response).toBe(undefined);
   });
+  test('does not downgrade an authenticated session capture with visitor data', async () => {
+    await store(7, 'https://www.upwork.com/ab/details/job-7', insights);
+    await store(7, 'https://www.upwork.com/ab/details/job-7', visitorInsights);
+
+    expect(values.get('job-insights:7')).toEqual(insights);
+  });
+  test('does not downgrade an authenticated session with a null-ID visitor capture', async () => {
+    await store(7, 'https://www.upwork.com/ab/details/job-7', insights);
+    await store(7, 'https://www.upwork.com/ab/details/job-7', {
+      ...visitorInsights,
+      job: { ...visitorInsights.job, id: null },
+    });
+
+    expect(values.get('job-insights:7')).toEqual(insights);
+  });
+
+  test('upgrades a visitor session capture when authenticated data arrives', async () => {
+    await store(7, 'https://www.upwork.com/ab/details/job-7', visitorInsights);
+    await store(7, 'https://www.upwork.com/ab/details/job-7', insights);
+
+    expect(values.get('job-insights:7')).toEqual(insights);
+  });
+
   test('serializes GET behind an in-flight STORE without replay', async () => {
     const gate = deferred();
     nextSetGate = gate;

@@ -45,6 +45,26 @@ type TabCaptureMetadata = {
   jobId: string;
   capturedAt: number;
 };
+function viewerModeRank(mode: JobInsights['viewerMode']): number {
+  return mode === 'authenticated' ? 2 : 1;
+}
+
+function shouldReplaceSessionCapture(
+  current: unknown,
+  incoming: JobInsights,
+  jobId: string | null,
+): boolean {
+  if (!isJobInsights(current)) return true;
+  if (viewerModeRank(current.viewerMode) > viewerModeRank(incoming.viewerMode)) {
+    return false;
+  }
+  const incomingJobId = normalizeJobId(incoming.job.id) ?? jobId;
+  const currentJobId = normalizeJobId(current.job.id);
+  if (currentJobId !== null && incomingJobId !== null && currentJobId !== incomingJobId) {
+    return true;
+  }
+  return true;
+}
 
 const tabStates = new Map<number, TabState>();
 
@@ -118,6 +138,7 @@ async function persistJobInsights(
     jobId,
     job: { ...insights.job, id: jobId },
     client: { ...insights.client },
+    viewerMode: insights.viewerMode,
   };
   const snapshot: JobSnapshotRecord = {
     jobId,
@@ -142,14 +163,13 @@ async function persistJobInsights(
   } catch {
     // IndexedDB failures must not affect session-only capture.
   }
-
   try {
     let application = transitionApplicationRecord(createApplicationRecord(jobId), {
       type: 'viewed',
       at: capturedAt,
     });
     const observedState = insights.fit.applicationState;
-    if (observedState) {
+    if (insights.viewerMode === 'authenticated' && observedState) {
       application = transitionApplicationRecord(application, {
         type: 'observed-state',
         state: observedState,
@@ -374,15 +394,25 @@ export default defineBackground(() => {
             const metadataJobId = payloadJobId ?? currentJobId;
             const metadata = metadataJobId ? { jobId: metadataJobId, capturedAt } : undefined;
             try {
-              await browser.storage.session.set({
-                [storageKey(tabId)]: message.payload,
-                ...(metadata ? { [metadataKey(tabId)]: metadata } : {}),
-              });
-              if (!metadata) await browser.storage.session.remove(metadataKey(tabId));
+              const stored = await browser.storage.session.get(storageKey(tabId));
+              const current = stored[storageKey(tabId)];
+              const replaceSession = shouldReplaceSessionCapture(
+                current,
+                message.payload,
+                currentJobId,
+              );
+              if (replaceSession) {
+                await browser.storage.session.set({
+                  [storageKey(tabId)]: message.payload,
+                  ...(metadata ? { [metadataKey(tabId)]: metadata } : {}),
+                });
+                if (!metadata) await browser.storage.session.remove(metadataKey(tabId));
+              }
               if (state.removed || state.generation !== generation) return;
-              if (!message.replay) {
+              if (!message.replay && replaceSession) {
                 await persistJobInsights(state, generation, message.payload, capturedAt);
               }
+              if (!replaceSession) return;
               await setBadge(
                 tabId,
                 sender.tab?.url,

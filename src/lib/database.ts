@@ -6,7 +6,7 @@ import type {
   WatchlistRecord,
 } from './storage';
 import { HISTORY_RETENTION_DAYS, MAX_SNAPSHOTS_PER_JOB } from './storage';
-import { isJobInsights } from './insights';
+import { isJobInsights, type JobInsights } from './insights';
 import { normalizeJobId } from './job-page';
 import { mergeApplicationRecords } from './tracker';
 
@@ -310,6 +310,10 @@ async function enforceHistoryRetentionInTransaction(
   }
 }
 
+function viewerModeRank(mode: JobInsights['viewerMode']): number {
+  return mode === 'authenticated' ? 2 : 1;
+}
+
 function isLatestJobCaptureRecord(value: unknown): value is LatestJobCaptureRecord {
   if (typeof value !== 'object' || value === null) return false;
   const record = value as Record<string, unknown>;
@@ -354,9 +358,16 @@ export async function putLatestJobCapture(
     'readwrite',
     async (transaction) => {
       if (shouldWrite && !shouldWrite()) return null;
-      await requestResult(
-        transaction.objectStore(DATABASE_STORES.latestCaptures).put({ ...record, jobId }),
-      );
+      const store = transaction.objectStore(DATABASE_STORES.latestCaptures);
+      const current = await requestResult<LatestJobCaptureRecord | undefined>(store.get(jobId));
+      if (
+        current &&
+        isLatestJobCaptureRecord(current) &&
+        viewerModeRank(current.insights.viewerMode) > viewerModeRank(record.insights.viewerMode)
+      ) {
+        return false;
+      }
+      await requestResult(store.put({ ...record, jobId }));
       await enforceLatestCaptureRetentionInTransaction(transaction, Date.now());
       return true;
     },
@@ -398,13 +409,15 @@ export async function putJob(
   shouldWrite?: () => boolean,
 ): Promise<boolean> {
   if (!hasJobId(record)) return false;
-  const result = await runTransaction(DATABASE_STORES.jobs, 'readwrite', (transaction) => {
+  const result = await runTransaction(DATABASE_STORES.jobs, 'readwrite', async (transaction) => {
     if (shouldWrite && !shouldWrite()) return null;
-    return requestResult(transaction.objectStore(DATABASE_STORES.jobs).put(record));
+    const store = transaction.objectStore(DATABASE_STORES.jobs);
+    const current = await requestResult<JobRecord | undefined>(store.get(record.jobId));
+    if (current?.viewerMode === 'authenticated' && record.viewerMode === 'visitor') return false;
+    return requestResult(store.put(record));
   });
-  return result !== null;
+  return result !== null && result !== false;
 }
-
 export async function getJob(jobId: string | null | undefined): Promise<JobRecord | null> {
   if (typeof jobId !== 'string' || jobId.trim().length === 0) return null;
   return runTransaction(DATABASE_STORES.jobs, 'readonly', (transaction) =>

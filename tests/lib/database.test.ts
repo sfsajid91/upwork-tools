@@ -452,6 +452,19 @@ describe('database retention', () => {
     expect(await putLatestJobCapture(record, () => allowWrite)).toBe(true);
     expect(await getLatestJobCapture('job-latest')).not.toBeNull();
   });
+  test('does not overwrite an authenticated job with a visitor record', async () => {
+    const authenticated = {
+      jobId: 'job-persist',
+      job: { ...latestInsights.job, id: 'job-persist' },
+      client: latestInsights.client,
+      viewerMode: 'authenticated' as const,
+    };
+    const visitor = { ...authenticated, viewerMode: 'visitor' as const };
+
+    expect(await putJob(authenticated)).toBe(true);
+    expect(await putJob(visitor)).toBe(false);
+    expect(await getJob('job-persist')).toEqual(authenticated);
+  });
 });
 
 describe('database clear APIs', () => {

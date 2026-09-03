@@ -151,6 +151,7 @@ describe('storage degradation', () => {
     let runtimeListener: RuntimeListener | undefined;
     let responseCount = 0;
     const payload: JobInsights = {
+      viewerMode: 'authenticated',
       job: {
         id: 'job-1',
         title: null,
@@ -204,6 +205,7 @@ describe('storage degradation', () => {
         applicationState: null,
       },
       history: { recentJobs: [], relatedJobs: [] },
+      similarJobs: [],
       warnings: [],
     };
 

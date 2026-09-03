@@ -30,6 +30,7 @@ function captureRecord(
   return {
     jobId,
     job: { ...capture.job, id: jobId },
+    insights: capture,
     latestSnapshotId: snapshotId === undefined ? (previous?.latestSnapshotId ?? null) : snapshotId,
     savedAt: previous?.savedAt ?? savedAt,
   };
@@ -69,6 +70,14 @@ export async function updateWatchlistFromCapture(
       const store = transaction.objectStore(DATABASE_STORES.watchlist);
       const previous = await requestResult<WatchlistRecord | undefined>(store.get(jobId));
       if (!previous) return false;
+      if (previous.insights?.viewerMode === 'authenticated' && capture.viewerMode === 'visitor') {
+        const snapshotId = snapshotReference(latestSnapshotId);
+        if (snapshotId !== undefined && snapshotId !== previous.latestSnapshotId) {
+          const updated = { ...previous, latestSnapshotId: snapshotId };
+          return requestResult(store.put(updated)).then(() => true);
+        }
+        return false;
+      }
       const record = captureRecord(capture, latestSnapshotId, Date.now(), previous);
       return record ? requestResult(store.put(record)).then(() => true) : false;
     },

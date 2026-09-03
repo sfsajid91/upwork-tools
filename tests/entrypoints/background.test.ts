@@ -453,6 +453,15 @@ describe('background runtime messaging', () => {
 
     expect(values.get('job-insights:7')).toEqual(insights);
   });
+  test('does not downgrade an authenticated session with a null-ID visitor capture', async () => {
+    await store(7, 'https://www.upwork.com/ab/details/job-7', insights);
+    await store(7, 'https://www.upwork.com/ab/details/job-7', {
+      ...visitorInsights,
+      job: { ...visitorInsights.job, id: null },
+    });
+
+    expect(values.get('job-insights:7')).toEqual(insights);
+  });
 
   test('upgrades a visitor session capture when authenticated data arrives', async () => {
     await store(7, 'https://www.upwork.com/ab/details/job-7', visitorInsights);

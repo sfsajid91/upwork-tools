@@ -129,6 +129,11 @@ describe('normalizeJobInsights', () => {
     expect(insights?.history.relatedJobs.length).toBe(1);
     expect(insights?.job.restrictions).toEqual(['90%+ JSS', 'English: FLUENT']);
   });
+  test('normalizes missing payment verification as null', () => {
+    const insights = normalizeJobInsights(payload({ buyer: { info: {} } }));
+
+    expect(insights?.client.paymentVerified).toBeNull();
+  });
   test('normalizes the public visitor fixture without personal fields', () => {
     const insights = normalizeJobInsights(visitorFixture);
 

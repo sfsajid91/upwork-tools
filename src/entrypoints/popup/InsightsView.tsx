@@ -1416,7 +1416,7 @@ export function AvailableState({
         </section>
       )}
 
-      {insights.viewerMode === 'visitor' && <SimilarOpportunities jobs={insights.similarJobs} />}
+      {insights.similarJobs.length > 0 && <SimilarOpportunities jobs={insights.similarJobs} />}
 
       {insights.viewerMode === 'authenticated' && (
         <>

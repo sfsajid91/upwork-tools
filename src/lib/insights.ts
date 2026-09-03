@@ -388,9 +388,7 @@ export function normalizeJobInsights(payload: unknown): JobInsights | null {
     client: {
       topClient: nullableBoolean(details.topClient),
       paymentVerified: nullableBoolean(
-        record(details.buyerExtra)?.isPaymentMethodVerified ??
-          buyer?.isPaymentMethodVerified ??
-          false,
+        record(details.buyerExtra)?.isPaymentMethodVerified ?? buyer?.isPaymentMethodVerified,
       ),
       country: nullableString(location?.country),
       city: nullableString(location?.city),

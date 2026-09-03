@@ -54,8 +54,10 @@ function shouldReplaceSessionCapture(
   incoming: JobInsights,
   jobId: string | null,
 ): boolean {
-  if (!isJobInsights(current) || normalizeJobId(current.job.id) !== jobId) return true;
-  return viewerModeRank(incoming.viewerMode) >= viewerModeRank(current.viewerMode);
+  if (!isJobInsights(current)) return true;
+  const incomingJobId = normalizeJobId(incoming.job.id) ?? jobId;
+  if (normalizeJobId(current.job.id) !== incomingJobId) return true;
+  return viewerModeRank(current.viewerMode) <= viewerModeRank(incoming.viewerMode);
 }
 
 const tabStates = new Map<number, TabState>();
@@ -130,6 +132,7 @@ async function persistJobInsights(
     jobId,
     job: { ...insights.job, id: jobId },
     client: { ...insights.client },
+    viewerMode: insights.viewerMode,
   };
   const snapshot: JobSnapshotRecord = {
     jobId,
@@ -390,7 +393,7 @@ export default defineBackground(() => {
               const replaceSession = shouldReplaceSessionCapture(
                 current,
                 message.payload,
-                payloadJobId,
+                currentJobId,
               );
               if (replaceSession) {
                 await browser.storage.session.set({
@@ -400,7 +403,7 @@ export default defineBackground(() => {
                 if (!metadata) await browser.storage.session.remove(metadataKey(tabId));
               }
               if (state.removed || state.generation !== generation) return;
-              if (!message.replay) {
+              if (!message.replay && replaceSession) {
                 await persistJobInsights(state, generation, message.payload, capturedAt);
               }
               if (!replaceSession) return;

@@ -28,6 +28,7 @@ export interface JobRecord {
   jobId: string;
   job: JobInsights['job'];
   client: JobInsights['client'];
+  viewerMode?: JobInsights['viewerMode'];
 }
 
 /** User application state retained locally, keyed by job ID. */

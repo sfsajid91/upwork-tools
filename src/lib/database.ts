@@ -409,13 +409,15 @@ export async function putJob(
   shouldWrite?: () => boolean,
 ): Promise<boolean> {
   if (!hasJobId(record)) return false;
-  const result = await runTransaction(DATABASE_STORES.jobs, 'readwrite', (transaction) => {
+  const result = await runTransaction(DATABASE_STORES.jobs, 'readwrite', async (transaction) => {
     if (shouldWrite && !shouldWrite()) return null;
-    return requestResult(transaction.objectStore(DATABASE_STORES.jobs).put(record));
+    const store = transaction.objectStore(DATABASE_STORES.jobs);
+    const current = await requestResult<JobRecord | undefined>(store.get(record.jobId));
+    if (current?.viewerMode === 'authenticated' && record.viewerMode === 'visitor') return false;
+    return requestResult(store.put(record));
   });
-  return result !== null;
+  return result !== null && result !== false;
 }
-
 export async function getJob(jobId: string | null | undefined): Promise<JobRecord | null> {
   if (typeof jobId !== 'string' || jobId.trim().length === 0) return null;
   return runTransaction(DATABASE_STORES.jobs, 'readonly', (transaction) =>

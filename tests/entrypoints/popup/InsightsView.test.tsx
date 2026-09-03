@@ -151,6 +151,36 @@ describe('InsightsView components', () => {
     expect(html.includes('Matched')).toBe(true);
     expect(html.includes('Not matched')).toBe(true);
   });
+  test('renders similar opportunities for authenticated insights', () => {
+    const insights = normalizeJobInsights(samplePayload());
+    expect(insights).not.toBeNull();
+    if (!insights) throw new Error('insights should not be null');
+
+    const html = renderToString(
+      <AvailableState
+        insights={{
+          ...insights,
+          similarJobs: [
+            {
+              id: null,
+              ciphertext: 'similar-auth',
+              title: 'Authenticated similar opportunity',
+              description: null,
+              amount: 100,
+              currency: 'USD',
+              contractorTier: null,
+              type: 'FIXED',
+              durationLabel: null,
+              skills: ['TypeScript'],
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(html.includes('Similar Opportunities')).toBe(true);
+    expect(html.includes('Authenticated similar opportunity')).toBe(true);
+  });
   test('renders visitor cards without personal fit or application outcomes', () => {
     const insights = normalizeJobInsights(visitorFixture);
     expect(insights).not.toBeNull();

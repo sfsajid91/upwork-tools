@@ -132,7 +132,7 @@ See [`docs/architecture.md`](docs/architecture.md) for full technical specificat
 
 #### Prerequisites
 - [Bun](https://bun.sh/) (v1.2+ recommended)
-- Chromium 111+ (Chrome, Brave, Edge) or Firefox 115+
+- Chromium 111+ (Chrome, Brave, Edge)
 
 #### Setup & Development
 ```sh
@@ -145,18 +145,12 @@ bun install
 
 # Start development server with live reload (Chromium)
 bun run dev
-
-# Start development server for Firefox
-bun run dev:firefox
 ```
 
 #### Production Builds
 ```sh
 # Build for Chromium (.output/chrome-mv3)
 bun run build
-
-# Build for Firefox (.output/firefox-mv3)
-bun run build:firefox
 
 # Create distributable ZIP package
 bun run zip

@@ -38,15 +38,12 @@ Use Bun because `bun.lock` is committed and the project context specifies Bun.
 ```sh
 bun install                 # install dependencies; postinstall runs wxt prepare
 bun run dev                 # start WXT development mode
-bun run dev:firefox        # start Firefox-targeted development mode
 bun run compile            # TypeScript no-emit check
 bun run test               # run Bun tests
 bun run lint               # run Biome lint
 bun run format:check       # check Biome formatting
 bun run build              # build the default extension
-bun run build:firefox      # build the Firefox extension
 bun run zip                # package the default extension
-bun run zip:firefox        # package the Firefox build
 ```
 
 ## Code Conventions & Common Patterns
@@ -82,7 +79,7 @@ bun run zip:firefox        # package the Firefox build
 - Extension tooling: WXT (`wxt`), with `@wxt-dev/module-react`.
 - Styling: Tailwind CSS v4 via `@tailwindcss/vite` and `@import "tailwindcss"`.
 - Language/UI: TypeScript 5.9 and React 19.
-- Browser target: Chromium 111+; Firefox-specific commands are also provided.
+- Browser target: Chromium 111+ (Chrome, Brave, Edge).
 - WXT owns manifest generation and build orchestration. Keep configuration in `wxt.config.ts` instead of maintaining generated output manually.
 
 ## Testing & QA

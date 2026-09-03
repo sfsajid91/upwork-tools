@@ -8,7 +8,7 @@ web
 
 ## Stack
 
-WXT, Manifest V3, TypeScript, React, and Bun. Chromium 111+ is the primary target; Firefox build commands are also configured.
+WXT, Manifest V3, TypeScript, React, and Bun. Chromium 111+ is the primary target.
 
 ## Users
 

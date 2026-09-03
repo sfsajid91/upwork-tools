@@ -155,7 +155,7 @@ bun run dev:firefox
 # Build for Chromium (.output/chrome-mv3)
 bun run build
 
-# Build for Firefox (.output/firefox-mv2)
+# Build for Firefox (.output/firefox-mv3)
 bun run build:firefox
 
 # Create distributable ZIP package

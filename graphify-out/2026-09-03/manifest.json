@@ -12,9 +12,9 @@
     "semantic_hash": "8299bdd0dd91bd8f968ca0d5b528ba96"
   },
   "wxt.config.ts": {
-    "mtime": 1788412260.4517837,
-    "seen": 1788412381.7815058,
-    "ast_hash": "de9a224f45a16c4acdbf908a3311c717",
+    "mtime": 1788362053.7808785,
+    "seen": 1788362301.995835,
+    "ast_hash": "2dfe160d047d95b629e44269ebd4f862",
     "semantic_hash": ""
   },
   "skills-lock.json": {
@@ -24,10 +24,10 @@
     "semantic_hash": "5e841ecaea1ceffee35febe5697aae06"
   },
   "package.json": {
-    "mtime": 1788412252.3918517,
-    "seen": 1788412381.7813065,
-    "ast_hash": "6c641aa365d97764ef6785771afb42c8",
-    "semantic_hash": ""
+    "mtime": 1788361913.3533347,
+    "seen": 1788362301.9952095,
+    "ast_hash": "46ba5ab63fe1d2e7aa192df0fd234076",
+    "semantic_hash": "46ba5ab63fe1d2e7aa192df0fd234076"
   },
   "tests/bun-test.d.ts": {
     "mtime": 1788361913.3533347,
@@ -684,21 +684,21 @@
     "semantic_hash": "277fcfd789e8d8ea438e4697af88fa8d"
   },
   "README.md": {
-    "mtime": 1788412271.7970958,
-    "seen": 1788412381.7816396,
-    "ast_hash": "1c74d85432f697ed9d68150966980061",
+    "mtime": 1788361913.2493267,
+    "seen": 1788362301.9961717,
+    "ast_hash": "7610ffb08bca13f4c2b934f6e02bf669",
     "semantic_hash": ""
   },
   "PRODUCT.md": {
-    "mtime": 1788412201.528969,
-    "seen": 1788412381.781637,
-    "ast_hash": "36dd8a31eb93c58607ae98703a9f7058",
+    "mtime": 1788361913.2493267,
+    "seen": 1788362301.996163,
+    "ast_hash": "dcda50c94bd4319afd351941723c22ae",
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1788412201.5249686,
-    "seen": 1788412381.7816298,
-    "ast_hash": "bf2a93be0592fd8950cc640e167ecdb3",
+    "mtime": 1788361913.2493267,
+    "seen": 1788362301.9961464,
+    "ast_hash": "eac75ce210dd9422855ff267bb654e07",
     "semantic_hash": ""
   },
   ".agents/skills/impeccable/SKILL.md": {
@@ -946,6 +946,36 @@
     "seen": 1788362301.9959824,
     "ast_hash": "b614ab4f15050946af63a4eb6f507133",
     "semantic_hash": "b614ab4f15050946af63a4eb6f507133"
+  },
+  "docs/PROJECT_CONTEXT.md": {
+    "mtime": 1788361913.2503269,
+    "seen": 1788362301.996203,
+    "ast_hash": "5c9e4b94711644c4ed8207b10d66a495",
+    "semantic_hash": "5c9e4b94711644c4ed8207b10d66a495"
+  },
+  "docs/NEW_FEATURES.md": {
+    "mtime": 1788327006.1027215,
+    "seen": 1788362301.9961884,
+    "ast_hash": "b2e85ce50735ed639d1ff44b5f9ee83a",
+    "semantic_hash": "b2e85ce50735ed639d1ff44b5f9ee83a"
+  },
+  "docs/AUDIT_ISSUES.md": {
+    "mtime": 1788361913.2503269,
+    "seen": 1788362301.9961817,
+    "ast_hash": "5ff62de5d11570f1130a40d2ecb51853",
+    "semantic_hash": "5ff62de5d11570f1130a40d2ecb51853"
+  },
+  "docs/NEW_FEATURES_PLAN.md": {
+    "mtime": 1788361913.2503269,
+    "seen": 1788362301.9961975,
+    "ast_hash": "90bf791f9908ea0950eced343a34adaf",
+    "semantic_hash": "90bf791f9908ea0950eced343a34adaf"
+  },
+  "docs/Upwork Tools - Insights Scope.md": {
+    "mtime": 1788361913.2503269,
+    "seen": 1788362301.9962096,
+    "ast_hash": "9cfbea8aeaf9c2e2a665ea2c1b401df3",
+    "semantic_hash": "9cfbea8aeaf9c2e2a665ea2c1b401df3"
   },
   "public/icon/16.png": {
     "mtime": 1788327006.106252,
@@ -1338,9 +1368,9 @@
     "semantic_hash": ""
   },
   "docs/architecture.md": {
-    "mtime": 1788412201.5329697,
-    "seen": 1788412381.781642,
-    "ast_hash": "d8670d772dad3f2add678ce5506f4d73",
+    "mtime": 1788361913.2503269,
+    "seen": 1788362301.996214,
+    "ast_hash": "b275d51baa0e03219f41fd3cb915cfd0",
     "semantic_hash": ""
   },
   "src/entrypoints/options/index.html": {
@@ -1359,12 +1389,6 @@
     "mtime": 1788361913.3493345,
     "seen": 1788362301.996229,
     "ast_hash": "abb2df1136cd7c663c2741980cae2dad",
-    "semantic_hash": ""
-  },
-  "tests/fixtures/sample-job-auth-details.json": {
-    "mtime": 1788412201.53797,
-    "seen": 1788412381.781415,
-    "ast_hash": "cd427b9d40c7fa0250d546063987f410",
     "semantic_hash": ""
   }
 }

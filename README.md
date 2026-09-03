@@ -32,6 +32,7 @@
 <p align="center">
   <img src="images/preview.webp" alt="Upwork Tools Preview" width="100%" />
 </p>
+
 ---
 
 ## The Problem vs. The Solution

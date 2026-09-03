@@ -684,9 +684,9 @@
     "semantic_hash": "277fcfd789e8d8ea438e4697af88fa8d"
   },
   "README.md": {
-    "mtime": 1788413414.9529672,
-    "seen": 1788425634.9400573,
-    "ast_hash": "23d1f371c83464beddbc926877011c4a",
+    "mtime": 1788438209.0375273,
+    "seen": 1788438253.8162026,
+    "ast_hash": "11c6835845b63fe32ed112c554c96e58",
     "semantic_hash": ""
   },
   "PRODUCT.md": {
@@ -1395,6 +1395,12 @@
     "mtime": 1788428952.139272,
     "seen": 1788429151.9980643,
     "ast_hash": "06cce26bc395749cd2676ec58ec5c913",
+    "semantic_hash": ""
+  },
+  "images/preview.webp": {
+    "mtime": 1788438156.7169611,
+    "seen": 1788438253.8162265,
+    "ast_hash": "a65c548d49986c497bf615cdde995067",
     "semantic_hash": ""
   }
 }

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { ConversionStats } from '../../lib/conversion';
 import {
   formatApplicationState,
   formatDate,
@@ -9,13 +10,13 @@ import {
   formatRateContext,
   formatRating,
   formatRelativeTime,
+  formatTrackingSpan,
 } from '../../lib/format';
 import type { ClientHistoryEntry, JobInsights, JobWarning, SimilarJob } from '../../lib/insights';
-import type { JobHistoryResponse } from '../../lib/protocol';
 import type { PortfolioMatch } from '../../lib/portfolio-match';
-import type { SkillMatchSummary } from '../../lib/skill-match';
-import type { ConversionStats } from '../../lib/conversion';
+import type { JobHistoryCapture, JobHistoryResponse } from '../../lib/protocol';
 import type { QualificationDetail } from '../../lib/qualification';
+import type { SkillMatchSummary } from '../../lib/skill-match';
 import type { ThemeMode } from '../../lib/theme';
 
 // --- Vector Icons ---
@@ -757,8 +758,102 @@ function VisitorQualifications({ restrictions }: { restrictions: string[] }) {
     </section>
   );
 }
+export function ApplicantHistoryChart({ captures }: { captures: JobHistoryCapture[] }) {
+  const points = captures.flatMap((capture) =>
+    capture.applicants === null ? [] : [{ capture, applicants: capture.applicants }],
+  );
+  const chartWidth = 320;
+  const chartHeight = 112;
+  const padding = 14;
+  const maxApplicants = Math.max(...points.map((point) => point.applicants), 0);
+  const minApplicants = Math.min(...points.map((point) => point.applicants), maxApplicants);
+  const applicantRange = maxApplicants - minApplicants;
+  const xFor = (index: number) =>
+    points.length === 1
+      ? chartWidth / 2
+      : padding + (index / (points.length - 1)) * (chartWidth - padding * 2);
+  const yFor = (applicants: number) =>
+    applicantRange === 0
+      ? chartHeight / 2
+      : padding + ((maxApplicants - applicants) / applicantRange) * (chartHeight - padding * 2);
+  const path = points
+    .map((point, index) => `${index === 0 ? 'M' : 'L'} ${xFor(index)} ${yFor(point.applicants)}`)
+    .join(' ');
 
-// --- Main State Views ---
+  return (
+    <figure
+      className="mt-3 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-slate-800 dark:bg-slate-950/40"
+      aria-labelledby="applicant-history-chart-title"
+    >
+      <figcaption
+        id="applicant-history-chart-title"
+        className="mb-1 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+      >
+        <span>Proposal progression</span>
+        <span className="font-medium normal-case tracking-normal">
+          {points.length === captures.length
+            ? `${points.length} points`
+            : `${points.length} of ${captures.length} points`}
+        </span>
+      </figcaption>
+      {points.length === 0 ? (
+        <p className="px-1 py-5 text-center text-[11px] text-slate-500 dark:text-slate-400">
+          Applicant counts are not available for these captures.
+        </p>
+      ) : (
+        <>
+          <svg
+            className="h-24 w-full overflow-visible text-emerald-500 dark:text-emerald-400"
+            viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+            role="img"
+            aria-label={`Proposal count progression across ${points.length} captures`}
+          >
+            <title>Proposal count progression across captures</title>
+            <line
+              x1={padding}
+              x2={chartWidth - padding}
+              y1={chartHeight - padding}
+              y2={chartHeight - padding}
+              className="stroke-slate-200 dark:stroke-slate-700"
+              strokeWidth="1"
+            />
+            {points.length > 1 && (
+              <path
+                d={path}
+                fill="none"
+                className="stroke-current"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                vectorEffect="non-scaling-stroke"
+              />
+            )}
+            {points.map((point, index) => (
+              <circle
+                key={`${point.capture.capturedAt}-${point.applicants}`}
+                cx={xFor(index)}
+                cy={yFor(point.applicants)}
+                r="3.5"
+                className="fill-white stroke-current dark:fill-slate-900"
+                strokeWidth="2"
+                vectorEffect="non-scaling-stroke"
+              >
+                <title>
+                  {`Capture ${formatRelativeTime(new Date(point.capture.capturedAt).toISOString())}: ${formatNumber(point.applicants)} proposals`}
+                </title>
+              </circle>
+            ))}
+          </svg>
+          {captures.length === 1 && (
+            <p className="px-1 text-[10px] text-slate-500 dark:text-slate-400">
+              First capture recorded
+            </p>
+          )}
+        </>
+      )}
+    </figure>
+  );
+}
 
 export function EmptyState({
   title,
@@ -977,6 +1072,15 @@ export function AvailableState({
   );
 
   const subTitleParts = [job.type, job.contractorTier, job.category].filter(Boolean);
+  const historyCaptures = history?.captures ?? [];
+  const firstHistoryCapture = historyCaptures[0];
+  const latestHistoryCapture = historyCaptures.at(-1);
+  const historyTrackingLabel =
+    history?.summary && historyCaptures.length === 1 && firstHistoryCapture
+      ? `1 capture · First tracked ${formatRelativeTime(new Date(firstHistoryCapture.capturedAt).toISOString())}`
+      : history?.summary && firstHistoryCapture && latestHistoryCapture
+        ? `${historyCaptures.length} captures · ${formatTrackingSpan(firstHistoryCapture.capturedAt, latestHistoryCapture.capturedAt)}`
+        : `${history?.summary?.snapshotCount ?? 0} captures`;
 
   return (
     <div className="flex flex-col gap-2.5">
@@ -1151,25 +1255,25 @@ export function AvailableState({
           className="rounded-2xl border border-slate-200/90 bg-white p-3 shadow-xs dark:border-slate-800/90 dark:bg-slate-900"
           aria-label="Applicant history"
         >
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
               Applicant History
             </span>
-            <span className="text-[10px] text-slate-500 dark:text-slate-400">
-              {history.summary.snapshotCount} capture
-              {history.summary.snapshotCount === 1 ? '' : 's'}
+            <span className="text-right text-[10px] text-slate-500 dark:text-slate-400">
+              {historyTrackingLabel}
             </span>
           </div>
+          <ApplicantHistoryChart captures={historyCaptures} />
           <div className="mt-2 grid grid-cols-3 gap-2 text-center">
             {history.summary.firstSeenDelta !== null && (
               <MetricCell
-                label="Since first"
+                label="Total growth"
                 value={`${history.summary.firstSeenDelta > 0 ? '+' : ''}${formatNumber(history.summary.firstSeenDelta)}`}
               />
             )}
             {history.summary.recentDelta !== null && (
               <MetricCell
-                label="Since prior"
+                label="Since last check"
                 value={`${history.summary.recentDelta > 0 ? '+' : ''}${formatNumber(history.summary.recentDelta)}`}
               />
             )}

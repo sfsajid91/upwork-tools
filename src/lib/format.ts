@@ -14,6 +14,20 @@ export function formatMoney(amount: number | null, currency: string | null): str
     maximumFractionDigits: 2,
   }).format(amount);
 }
+export function formatTrackingSpan(startAt: number, endAt: number): string {
+  if (!Number.isInteger(startAt) || !Number.isInteger(endAt) || startAt <= 0 || endAt < startAt) {
+    return 'Tracking time unavailable';
+  }
+  const elapsedHours = (endAt - startAt) / 3_600_000;
+  if (elapsedHours < 1 / 60) return 'Less than a minute';
+  if (elapsedHours < 1) {
+    const minutes = Math.round(elapsedHours * 60);
+    return `${minutes} min`;
+  }
+  if (elapsedHours < 24) return `${elapsedHours.toFixed(1)} hrs`;
+  const days = elapsedHours / 24;
+  return `${days.toFixed(1)} days`;
+}
 
 export function formatPercent(value: number | null): string {
   return value === null || !Number.isFinite(value) ? 'Not available' : `${value.toFixed(1)}%`;

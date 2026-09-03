@@ -1,7 +1,14 @@
 import type { ConversionStats } from './conversion';
 import { isJobInsights, type JobInsights } from './insights';
+
 export type { SimilarJob, ViewerMode } from './insights';
+
 import type { ClientPayProfile } from './pay-profile';
+
+export interface JobHistoryCapture {
+  capturedAt: number;
+  applicants: number | null;
+}
 
 export interface JobHistoryApplicantSummary {
   snapshotCount: number;
@@ -12,6 +19,7 @@ export interface JobHistoryApplicantSummary {
 }
 export interface JobHistoryResponse {
   jobId: string;
+  captures: JobHistoryCapture[];
   summary: JobHistoryApplicantSummary | null;
   velocity: number | null;
   payProfile: ClientPayProfile;
@@ -71,6 +79,17 @@ export function createPageEvent(payload: JobInsights, replay?: PageReplay): Page
 function isNullableFiniteNumber(value: unknown): value is number | null {
   return value === null || (typeof value === 'number' && Number.isFinite(value));
 }
+function isJobHistoryCapture(value: unknown): value is JobHistoryCapture {
+  if (typeof value !== 'object' || value === null) return false;
+  const capture = value as Record<string, unknown>;
+  return (
+    typeof capture.capturedAt === 'number' &&
+    Number.isInteger(capture.capturedAt) &&
+    capture.capturedAt > 0 &&
+    isNullableFiniteNumber(capture.applicants) &&
+    (capture.applicants === null || capture.applicants >= 0)
+  );
+}
 
 function isClientPayProfile(value: unknown): value is ClientPayProfile {
   if (typeof value !== 'object' || value === null) return false;
@@ -104,16 +123,18 @@ function isConversionStats(value: unknown): value is ConversionStats {
     count(stats.interviewToHireDenominator)
   );
 }
-
 export function isJobHistoryResponse(value: unknown): value is JobHistoryResponse {
   if (typeof value !== 'object' || value === null) return false;
   const response = value as Record<string, unknown>;
   if (typeof response.jobId !== 'string' || response.jobId.trim().length === 0) return false;
+  if (!Array.isArray(response.captures) || !response.captures.every(isJobHistoryCapture)) {
+    return false;
+  }
   if (!isNullableFiniteNumber(response.velocity) || !isClientPayProfile(response.payProfile)) {
     return false;
   }
   if (!isConversionStats(response.conversion)) return false;
-  if (response.summary === null) return true;
+  if (response.summary === null) return response.captures.length === 0;
   if (typeof response.summary !== 'object') return false;
   const summary = response.summary as Record<string, unknown>;
   const latestApplicants = summary.latestApplicants;
@@ -121,7 +142,8 @@ export function isJobHistoryResponse(value: unknown): value is JobHistoryRespons
   return (
     typeof summary.snapshotCount === 'number' &&
     Number.isInteger(summary.snapshotCount) &&
-    summary.snapshotCount >= 0 &&
+    summary.snapshotCount > 0 &&
+    summary.snapshotCount === response.captures.length &&
     isNullableFiniteNumber(latestApplicants) &&
     (latestApplicants === null || latestApplicants >= 0) &&
     isNullableFiniteNumber(firstSeenApplicants) &&

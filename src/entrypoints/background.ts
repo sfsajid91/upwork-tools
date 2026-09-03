@@ -1,4 +1,5 @@
 import { deriveApplicantMetrics } from '../lib/applicant-metrics';
+import { aggregateConversionStats } from '../lib/conversion';
 import {
   appendJobSnapshotIfChanged,
   enforceHistoryRetention,
@@ -10,22 +11,21 @@ import {
   putJob,
   putLatestJobCapture,
 } from '../lib/database';
-import { aggregateConversionStats } from '../lib/conversion';
 import { summarizeJobSnapshots } from '../lib/history';
 import { isJobInsights, type JobInsights } from '../lib/insights';
-import { jobIdFromPageUrl, normalizeJobId, isJobPage } from '../lib/job-page';
+import { isJobPage, jobIdFromPageUrl, normalizeJobId } from '../lib/job-page';
 import { deriveClientPayProfile } from '../lib/pay-profile';
 import {
   GET_JOB_HISTORY,
   isRuntimeMessage,
-  REQUEST_JOB_INSIGHTS_REPLAY,
   type JobHistoryResponse,
+  REQUEST_JOB_INSIGHTS_REPLAY,
   STORE_JOB_INSIGHTS,
 } from '../lib/protocol';
 import type { JobRecord, JobSnapshotRecord } from '../lib/storage';
 import { createApplicationRecord, transitionApplicationRecord } from '../lib/tracker';
-import { updateWatchlistFromCapture } from '../lib/watchlist';
 import { calculateProposalVelocity } from '../lib/velocity';
+import { updateWatchlistFromCapture } from '../lib/watchlist';
 
 const BADGE_COLOR = '#152d4f';
 const CAPTURE_DEDUP_WINDOW_MS = 60_000;
@@ -285,6 +285,7 @@ async function readJobHistory(tabId: number, jobId: string): Promise<JobHistoryR
     if (!summary) {
       return {
         jobId: normalizedJobId,
+        captures: [],
         summary: null,
         velocity: null,
         payProfile,
@@ -300,6 +301,7 @@ async function readJobHistory(tabId: number, jobId: string): Promise<JobHistoryR
         : null;
     return {
       jobId: normalizedJobId,
+      captures: summary.snapshots.map(({ capturedAt, applicants }) => ({ capturedAt, applicants })),
       summary: {
         snapshotCount: summary.snapshots.length,
         latestApplicants: metrics.latestApplicantCount,

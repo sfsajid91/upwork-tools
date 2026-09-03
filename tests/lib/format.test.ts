@@ -5,6 +5,7 @@ import {
   formatPercent,
   formatRateContext,
   formatRating,
+  formatTrackingSpan,
 } from '../../src/lib/format';
 
 describe('format', () => {
@@ -28,6 +29,12 @@ describe('format', () => {
     expect(formatRateContext(Number.POSITIVE_INFINITY)).toBe('Not available');
     expect(formatMoney(Number.NaN, 'USD')).toBe('Not available');
     expect(formatMoney(Number.POSITIVE_INFINITY, 'USD')).toBe('Not available');
+  });
+  test('formats elapsed capture spans', () => {
+    expect(formatTrackingSpan(1_000, 1_000 + 3_600_000 * 3.2)).toBe('3.2 hrs');
+    expect(formatTrackingSpan(1_000, 1_000 + 30 * 60_000)).toBe('30 min');
+    expect(formatTrackingSpan(1_000, 1_000)).toBe('Less than a minute');
+    expect(formatTrackingSpan(0, 1_000)).toBe('Tracking time unavailable');
   });
 
   test('falls back to USD instead of throwing on malformed currency codes', () => {

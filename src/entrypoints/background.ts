@@ -1,30 +1,22 @@
-import { deriveApplicantMetrics } from '../lib/applicant-metrics';
-import { aggregateConversionStats } from '../lib/conversion';
+import { createJobHistoryReader } from './background-history';
 import {
   appendJobSnapshotIfChanged,
   enforceHistoryRetention,
   getLatestJobCapture,
-  listApplications,
-  listJobSnapshots,
   mergeApplication,
-  openDatabase,
   putJob,
   putLatestJobCapture,
 } from '../lib/database';
-import { summarizeJobSnapshots } from '../lib/history';
 import { isJobInsights, type JobInsights } from '../lib/insights';
 import { isJobPage, jobIdFromPageUrl, normalizeJobId } from '../lib/job-page';
-import { deriveClientPayProfile } from '../lib/pay-profile';
 import {
   GET_JOB_HISTORY,
   isRuntimeMessage,
-  type JobHistoryResponse,
   REQUEST_JOB_INSIGHTS_REPLAY,
   STORE_JOB_INSIGHTS,
 } from '../lib/protocol';
 import type { JobRecord, JobSnapshotRecord } from '../lib/storage';
 import { createApplicationRecord, transitionApplicationRecord } from '../lib/tracker';
-import { calculateProposalVelocity } from '../lib/velocity';
 import { updateWatchlistFromCapture } from '../lib/watchlist';
 
 const BADGE_COLOR = '#152d4f';
@@ -227,6 +219,12 @@ async function readVerifiedSession(
     return null;
   }
 }
+
+const readJobHistory = createJobHistoryReader({
+  getTabState,
+  currentTabJobId,
+  readVerifiedSession,
+});
 async function restoreBadge(tabId: number, url?: string): Promise<void> {
   let currentUrl = url;
   if (!currentUrl) {
@@ -261,65 +259,6 @@ async function restoreBadge(tabId: number, url?: string): Promise<void> {
     );
   } catch {
     await setBadge(tabId, currentUrl, '');
-  }
-}
-
-async function readJobHistory(tabId: number, jobId: string): Promise<JobHistoryResponse | null> {
-  const state = getTabState(tabId);
-  const generation = state.generation;
-  try {
-    const normalizedJobId = normalizeJobId(jobId);
-    if (!normalizedJobId || (await currentTabJobId(tabId)) !== normalizedJobId) return null;
-    await enforceHistoryRetention();
-    const database = await openDatabase();
-    if (!database) return null;
-    const snapshots = await listJobSnapshots(normalizedJobId);
-    const summary = summarizeJobSnapshots(snapshots, normalizedJobId);
-    const insights = await readVerifiedSession(tabId, normalizedJobId);
-    const payProfile = deriveClientPayProfile({
-      client: insights?.client,
-      history: insights?.history.recentJobs,
-    });
-    const conversion = aggregateConversionStats(await listApplications());
-    if (state.removed || state.generation !== generation) return null;
-    if (!summary) {
-      return {
-        jobId: normalizedJobId,
-        captures: [],
-        summary: null,
-        velocity: null,
-        payProfile,
-        conversion,
-      };
-    }
-    const metrics = deriveApplicantMetrics(summary.snapshots);
-    const firstSeenApplicants =
-      typeof summary.firstSeen?.applicants === 'number' &&
-      Number.isFinite(summary.firstSeen.applicants) &&
-      summary.firstSeen.applicants >= 0
-        ? summary.firstSeen.applicants
-        : null;
-    return {
-      jobId: normalizedJobId,
-      captures: summary.snapshots.map(({ capturedAt, applicants }) => ({ capturedAt, applicants })),
-      summary: {
-        snapshotCount: summary.snapshots.length,
-        latestApplicants: metrics.latestApplicantCount,
-        firstSeenApplicants,
-        firstSeenDelta: metrics.firstSeenDelta,
-        recentDelta: metrics.recentDelta,
-      },
-      velocity: calculateProposalVelocity(
-        summary.velocityBaseline?.applicants,
-        summary.latest?.applicants,
-        summary.velocityBaseline?.capturedAt,
-        summary.latest?.capturedAt,
-      ),
-      payProfile,
-      conversion,
-    };
-  } catch {
-    return null;
   }
 }
 

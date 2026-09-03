@@ -1428,9 +1428,9 @@
     "semantic_hash": ""
   },
   "src/entrypoints/popup/AvailableState.tsx": {
-    "mtime": 1788479038.8312058,
-    "seen": 1788479090.445018,
-    "ast_hash": "e5abde18a570616968b5928ba4e2c5ca",
+    "mtime": 1788478926.3878691,
+    "seen": 1788479004.113085,
+    "ast_hash": "fb534627ae8425b82161ed2789be68f1",
     "semantic_hash": ""
   },
   "src/entrypoints/popup/PopupComponents.tsx": {

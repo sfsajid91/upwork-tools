@@ -15,7 +15,7 @@
   <a href="#react"><img src="https://img.shields.io/badge/React-19-61dafb?style=flat-square&logo=react&logoColor=white&labelColor=18181b" alt="React 19" /></a>
   <a href="#typescript"><img src="https://img.shields.io/badge/TypeScript-5.9-3178c6?style=flat-square&logo=typescript&logoColor=white&labelColor=18181b" alt="TypeScript" /></a>
   <a href="#tailwind"><img src="https://img.shields.io/badge/Tailwind-v4-38bdf8?style=flat-square&logo=tailwindcss&logoColor=white&labelColor=18181b" alt="Tailwind CSS" /></a>
-  <a href="#tests"><img src="https://img.shields.io/badge/Tests-176%20passing-22c55e?style=flat-square&labelColor=18181b" alt="176 Tests Passing" /></a>
+  <a href="#tests"><img src="https://img.shields.io/badge/Tests-186%20passing-22c55e?style=flat-square&labelColor=18181b" alt="186 Tests Passing" /></a>
   <a href="#license"><img src="https://img.shields.io/badge/License-MIT-eab308?style=flat-square&labelColor=18181b" alt="MIT License" /></a>
 </p>
 
@@ -28,6 +28,10 @@
   <a href="#contributing">Contributing</a>
 </p>
 
+
+<p align="center">
+  <img src="images/preview.webp" alt="Upwork Tools Preview" width="100%" />
+</p>
 ---
 
 ## The Problem vs. The Solution

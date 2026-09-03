@@ -45,6 +45,7 @@ export interface ApplicationRecord {
 export interface WatchlistRecord {
   jobId: string;
   job: JobInsights['job'];
+  insights?: JobInsights;
   latestSnapshotId: number | null;
   savedAt: number;
 }

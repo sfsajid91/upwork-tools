@@ -55,9 +55,15 @@ function shouldReplaceSessionCapture(
   jobId: string | null,
 ): boolean {
   if (!isJobInsights(current)) return true;
+  if (viewerModeRank(current.viewerMode) > viewerModeRank(incoming.viewerMode)) {
+    return false;
+  }
   const incomingJobId = normalizeJobId(incoming.job.id) ?? jobId;
-  if (normalizeJobId(current.job.id) !== incomingJobId) return true;
-  return viewerModeRank(current.viewerMode) <= viewerModeRank(incoming.viewerMode);
+  const currentJobId = normalizeJobId(current.job.id);
+  if (currentJobId !== null && incomingJobId !== null && currentJobId !== incomingJobId) {
+    return true;
+  }
+  return true;
 }
 
 const tabStates = new Map<number, TabState>();

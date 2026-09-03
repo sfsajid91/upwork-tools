@@ -270,6 +270,28 @@ describe('watchlist persistence', () => {
     expect(await updateWatchlistFromCapture(capture('not-saved'))).toBe(false);
     expect(await getWatchlistedJob('not-saved')).toBeNull();
   });
+  test('preserves authenticated bookmark insights on visitor refresh', async () => {
+    const authenticated = capture('job-authenticated');
+    expect(await bookmarkJob(authenticated, 3)).toBe(true);
+
+    const visitor = {
+      ...authenticated,
+      viewerMode: 'visitor' as const,
+      job: { ...authenticated.job, title: 'Visitor title' },
+      fit: {
+        ...authenticated.fit,
+        freelancerHourlyRate: null,
+        rateContext: null,
+        applicationState: null,
+      },
+    };
+    expect(await updateWatchlistFromCapture(visitor, 9)).toBe(true);
+    expect(await getWatchlistedJob('job-authenticated')).toMatchObject({
+      job: { title: 'Job job-authenticated' },
+      insights: authenticated,
+      latestSnapshotId: 9,
+    });
+  });
 
   test('clearWatchlist clears bookmarks without clearing another local store', async () => {
     const retainedJob: JobRecord = {

@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upwork Tools — LinkedIn Carousel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800;900&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #050811;
+      color: #ffffff;
+      -webkit-font-smoothing: antialiased;
+    }
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .slide-canvas {
+      width: 1200px;
+      height: 1500px;
+      transform: scale(0.48);
+      transform-origin: top center;
+      margin-bottom: -740px;
+    }
+    .deck-grid .slide-canvas {
+      transform: scale(0.42);
+      margin-bottom: -820px;
+    }
+    @media print {
+      @page {
+        size: 1200px 1500px;
+        margin: 0;
+      }
+      body {
+        background: transparent !important;
+        padding: 0 !important;
+      }
+      .nav-bar {
+        display: none !important;
+      }
+      .slide-canvas {
+        transform: none !important;
+        margin: 0 !important;
+        page-break-after: always;
+        border-radius: 0 !important;
+        border: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="p-6 flex flex-col items-center min-h-screen">
+
+  <!-- Top Navigation Controls -->
+  <nav class="nav-bar sticky top-4 z-50 flex items-center gap-2 bg-zinc-900/90 border border-zinc-700/80 backdrop-blur-xl px-4 py-2 rounded-full shadow-2xl mb-8">
+    <button class="nav-tab px-4 py-1.5 rounded-full text-sm font-semibold transition bg-emerald-500 text-zinc-950 font-bold shadow-lg shadow-emerald-500/30" onclick="showSlide('slide-1')">01 · The Hook</button>
+    <button class="nav-tab px-4 py-1.5 rounded-full text-sm font-semibold text-zinc-300 hover:text-white transition" onclick="showSlide('slide-2')">02 · Velocity</button>
+    <button class="nav-tab px-4 py-1.5 rounded-full text-sm font-semibold text-zinc-300 hover:text-white transition" onclick="showSlide('slide-3')">03 · Client Reality</button>
+    <button class="nav-tab px-4 py-1.5 rounded-full text-sm font-semibold text-zinc-300 hover:text-white transition" onclick="showSlide('slide-4')">04 · Zero-Trust</button>
+    <button class="nav-tab px-4 py-1.5 rounded-full text-sm font-semibold text-zinc-300 hover:text-white transition" onclick="showSlide('slide-5')">05 · Free & Open</button>
+    <div class="w-px h-5 bg-zinc-700 mx-1"></div>
+    <button class="nav-tab px-4 py-1.5 rounded-full text-sm font-semibold text-zinc-300 hover:text-white transition" onclick="showAll()">View All Deck</button>
+    <button class="px-4 py-1.5 rounded-full text-sm font-bold bg-zinc-800 border border-zinc-600 text-emerald-400 hover:bg-zinc-700 transition flex items-center gap-2" onclick="window.print()">
+      🖨️ Export PDF (1200x1500)
+    </button>
+  </nav>
+
+  <!-- Deck Container -->
+  <main id="deck" class="flex flex-col items-center gap-12 w-full max-w-6xl">
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 01: THE HOOK                                                        -->
+    <!-- ========================================================================= -->
+    <article id="slide-1" class="slide-canvas relative bg-[#090d16] border-2 border-zinc-800/80 rounded-[44px] p-24 flex flex-col justify-between overflow-hidden shadow-2xl shrink-0">
+      <div class="absolute top-0 right-0 w-[650px] h-[650px] bg-emerald-500/10 rounded-full blur-[140px] pointer-events-none"></div>
+
+      <!-- Header -->
+      <header class="flex items-center justify-between z-10">
+        <div class="flex items-center gap-4">
+          <img src="images/upwork-tools.webp" alt="Logo" class="w-14 h-14 rounded-2xl border-2 border-emerald-500/60 object-cover shadow-lg shadow-emerald-500/20" />
+          <div class="font-black text-2xl tracking-wider text-white uppercase">UPWORK TOOLS</div>
+        </div>
+        <span class="mono text-lg px-5 py-2 rounded-full bg-zinc-900/80 border border-zinc-700 text-zinc-400 font-bold">01 / 05</span>
+      </header>
+
+      <!-- Headline -->
+      <div class="space-y-4 z-10 mt-6">
+        <h1 class="text-[84px] font-black tracking-tight text-white leading-[1.05] uppercase">
+          STOP GUESSING<br />
+          BEFORE SPENDING<br />
+          <span class="text-[#10b981]">CONNECTS.</span>
+        </h1>
+        <p class="text-3xl text-zinc-400 font-medium">
+          Upwork shows a range. Upwork Tools shows the exact truth.
+        </p>
+      </div>
+
+      <!-- Hero Images Pair -->
+      <div class="z-10 my-auto w-full">
+        <div class="p-8 rounded-[32px] bg-[#0c1322]/90 border border-zinc-800/80 shadow-2xl">
+          <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-8 mb-4">
+            <span class="text-sm uppercase font-extrabold tracking-widest text-zinc-500">BEFORE</span>
+            <div></div>
+            <span class="text-sm uppercase font-extrabold tracking-widest text-emerald-400">WITH UPWORK TOOLS</span>
+          </div>
+
+          <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-6">
+            <div class="p-2 rounded-2xl bg-[#131924] border border-zinc-800 shadow-2xl flex flex-col items-center justify-between overflow-hidden">
+              <img src="images/pic-1.png" alt="Upwork 50+ Proposals" class="w-full h-auto object-cover rounded-xl" />
+              <div class="py-2.5">
+                <span class="px-5 py-1.5 rounded-full bg-rose-950/80 border border-rose-800 text-rose-400 text-sm font-bold uppercase tracking-wider">
+                  Vague Range (50+)
+                </span>
+              </div>
+            </div>
+
+            <div class="text-6xl text-emerald-400 font-black flex items-center justify-center">➔</div>
+
+            <div class="p-2 rounded-2xl bg-[#0e1c24] border-2 border-emerald-500/80 shadow-[0_0_70px_-10px_rgba(16,185,129,0.4)] flex flex-col items-center justify-between overflow-hidden">
+              <img src="images/pic-2-proposals.png" alt="Upwork Tools Exact Proposals: 70" class="w-full h-auto object-cover rounded-xl" />
+              <div class="py-2.5">
+                <span class="px-5 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-700 text-emerald-300 text-sm font-mono font-extrabold uppercase tracking-wider">
+                  Verified: 70 (1/1 Hired)
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <footer class="flex items-center justify-between pt-6 border-t border-zinc-900 text-lg z-10">
+        <span class="text-emerald-400 font-semibold font-mono">github.com/sfsajid91/upwork-tools</span>
+        <span class="text-zinc-500 font-medium flex items-center gap-2">Swipe for Velocity Curve 👉</span>
+      </footer>
+    </article>
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 02: VELOCITY (Minimalist: Picture is the Hero, Zero Redundant Text) -->
+    <!-- ========================================================================= -->
+    <article id="slide-2" class="slide-canvas relative bg-[#090d16] border-2 border-zinc-800/80 rounded-[44px] p-24 flex flex-col justify-between overflow-hidden shadow-2xl shrink-0" style="display:none;">
+      <div class="absolute top-0 right-0 w-[650px] h-[650px] bg-emerald-500/10 rounded-full blur-[140px] pointer-events-none"></div>
+
+      <!-- Header -->
+      <header class="flex items-center justify-between z-10">
+        <div class="flex items-center gap-4">
+          <img src="images/upwork-tools.webp" alt="Logo" class="w-14 h-14 rounded-2xl border-2 border-emerald-500/60 object-cover shadow-lg shadow-emerald-500/20" />
+          <div class="font-black text-2xl tracking-wider text-white uppercase">UPWORK TOOLS</div>
+        </div>
+        <span class="mono text-lg px-5 py-2 rounded-full bg-zinc-900/80 border border-zinc-700 text-zinc-400 font-bold">02 / 05</span>
+      </header>
+
+      <!-- Headline -->
+      <div class="space-y-4 z-10 mt-6">
+        <h2 class="text-[84px] font-black tracking-tight text-white leading-[1.05] uppercase">
+          TRACK PROPOSAL<br />
+          VELOCITY IN<br />
+          <span class="text-[#10b981]">REAL TIME.</span>
+        </h2>
+        <p class="text-3xl text-zinc-400 font-medium">
+          Know if applicants are flooding in before you spend a bid.
+        </p>
+      </div>
+
+      <!-- Hero Visual Anchor: Zoomed Picture Only (Zero Clutter) -->
+      <div class="z-10 my-auto w-full">
+        <div class="rounded-3xl border-2 border-emerald-500/80 p-0 bg-[#080d17] shadow-[0_0_80px_-15px_rgba(16,185,129,0.35)] overflow-hidden">
+          <img src="images/pic-2-velocity.png" alt="Real-time Applicant History & Velocity Graph" class="w-full h-auto object-cover" />
+        </div>
+      </div>
+
+      <!-- Simple Takeaway & Footer -->
+      <footer class="flex items-center justify-between pt-6 border-t border-zinc-900 text-lg z-10">
+        <span class="text-emerald-400 font-semibold font-mono">github.com/sfsajid91/upwork-tools</span>
+        <span class="text-zinc-500 font-medium flex items-center gap-2">Swipe for Client Reality 👉</span>
+      </footer>
+    </article>
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 03: CLIENT REALITY                                                  -->
+    <!-- ========================================================================= -->
+    <article id="slide-3" class="slide-canvas relative bg-[#090d16] border-2 border-zinc-800/80 rounded-[44px] p-24 flex flex-col justify-between overflow-hidden shadow-2xl shrink-0" style="display:none;">
+      <div class="absolute top-0 right-0 w-[650px] h-[650px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none"></div>
+
+      <!-- Header -->
+      <header class="flex items-center justify-between z-10">
+        <div class="flex items-center gap-4">
+          <img src="images/upwork-tools.webp" alt="Logo" class="w-14 h-14 rounded-2xl border-2 border-emerald-500/60 object-cover shadow-lg shadow-emerald-500/20" />
+          <div class="font-black text-2xl tracking-wider text-white uppercase">UPWORK TOOLS</div>
+        </div>
+        <span class="mono text-lg px-5 py-2 rounded-full bg-zinc-900/80 border border-zinc-700 text-zinc-400 font-bold">03 / 05</span>
+      </header>
+
+      <!-- Headline -->
+      <div class="space-y-4 z-10 mt-6">
+        <h2 class="text-[84px] font-black tracking-tight text-white leading-[1.05] uppercase">
+          SPOT SERIAL<br />
+          TIME-WASTERS<br />
+          <span class="text-amber-400">IN 3 SECONDS.</span>
+        </h2>
+        <p class="text-3xl text-zinc-400 font-medium">
+          A 5-star rating means nothing if the client never hires.
+        </p>
+      </div>
+
+      <!-- Hero Visual -->
+      <div class="z-10 my-auto w-full space-y-6">
+        <div class="grid grid-cols-2 gap-8">
+          <div class="p-10 rounded-3xl bg-[#0c1322]/90 border border-zinc-800 space-y-2">
+            <span class="text-sm uppercase font-extrabold tracking-wider text-zinc-400">TRUE HIRE RATE</span>
+            <div class="text-8xl font-black text-amber-400 leading-none">12%</div>
+            <p class="text-lg text-zinc-400 font-medium pt-2">Only 4 hires / 32 jobs posted</p>
+          </div>
+          <div class="p-10 rounded-3xl bg-[#0c1322]/90 border border-zinc-800 space-y-2">
+            <span class="text-sm uppercase font-extrabold tracking-wider text-zinc-400">MEDIAN HOURLY PAID</span>
+            <div class="text-8xl font-black text-white leading-none">$12.50<span class="text-3xl text-zinc-500">/hr</span></div>
+            <p class="text-lg text-zinc-400 font-medium pt-2">Headline budget said $50/hr</p>
+          </div>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-amber-950/40 border border-amber-600/60 text-amber-300 text-2xl font-bold flex items-center gap-4">
+          <span class="text-3xl">⚠️</span>
+          <span>High Ghost Risk: Client regularly posts without hiring.</span>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <footer class="flex items-center justify-between pt-6 border-t border-zinc-900 text-lg z-10">
+        <span class="text-emerald-400 font-semibold font-mono">github.com/sfsajid91/upwork-tools</span>
+        <span class="text-zinc-500 font-medium flex items-center gap-2">Swipe for Zero-Trust Privacy 👉</span>
+      </footer>
+    </article>
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 04: ZERO-TRUST PRIVACY                                              -->
+    <!-- ========================================================================= -->
+    <article id="slide-4" class="slide-canvas relative bg-[#090d16] border-2 border-zinc-800/80 rounded-[44px] p-24 flex flex-col justify-between overflow-hidden shadow-2xl shrink-0" style="display:none;">
+      <div class="absolute top-0 right-0 w-[650px] h-[650px] bg-blue-500/10 rounded-full blur-[140px] pointer-events-none"></div>
+
+      <!-- Header -->
+      <header class="flex items-center justify-between z-10">
+        <div class="flex items-center gap-4">
+          <img src="images/upwork-tools.webp" alt="Logo" class="w-14 h-14 rounded-2xl border-2 border-emerald-500/60 object-cover shadow-lg shadow-emerald-500/20" />
+          <div class="font-black text-2xl tracking-wider text-white uppercase">UPWORK TOOLS</div>
+        </div>
+        <span class="mono text-lg px-5 py-2 rounded-full bg-zinc-900/80 border border-zinc-700 text-zinc-400 font-bold">04 / 05</span>
+      </header>
+
+      <!-- Headline -->
+      <div class="space-y-4 z-10 mt-6">
+        <h2 class="text-[84px] font-black tracking-tight text-white leading-[1.05] uppercase">
+          100% LOCAL.<br />
+          ZERO ACCOUNT<br />
+          <span class="text-blue-400">RISK.</span>
+        </h2>
+        <p class="text-3xl text-zinc-400 font-medium">
+          No backend servers. No bots. No scraping.
+        </p>
+      </div>
+
+      <!-- 3 Minimal Pillars -->
+      <div class="z-10 my-auto w-full space-y-6">
+        <div class="p-8 rounded-3xl bg-[#0c1322]/90 border border-zinc-800 flex items-center gap-8">
+          <div class="w-20 h-20 rounded-2xl bg-blue-950 border border-blue-600 flex items-center justify-center text-4xl shrink-0">⚡</div>
+          <div>
+            <div class="text-3xl font-bold text-white">Stream Cloning</div>
+            <p class="text-xl text-zinc-400 mt-1">Clones responses in memory. Zero duplicate API requests.</p>
+          </div>
+        </div>
+
+        <div class="p-8 rounded-3xl bg-[#0c1322]/90 border border-zinc-800 flex items-center gap-8">
+          <div class="w-20 h-20 rounded-2xl bg-emerald-950 border border-emerald-600 flex items-center justify-center text-4xl shrink-0">🔒</div>
+          <div>
+            <div class="text-3xl font-bold text-white">Zero Cloud Tracking</div>
+            <p class="text-xl text-zinc-400 mt-1">No remote databases, no telemetry, no analytics pixels.</p>
+          </div>
+        </div>
+
+        <div class="p-8 rounded-3xl bg-[#0c1322]/90 border border-zinc-800 flex items-center gap-8">
+          <div class="w-20 h-20 rounded-2xl bg-purple-950 border border-purple-600 flex items-center justify-center text-4xl shrink-0">🌐</div>
+          <div>
+            <div class="text-3xl font-bold text-white">Dual-Mode Intelligence</div>
+            <p class="text-xl text-zinc-400 mt-1">Works on authenticated jobs and public visitor links logged out.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <footer class="flex items-center justify-between pt-6 border-t border-zinc-900 text-lg z-10">
+        <span class="text-emerald-400 font-semibold font-mono">github.com/sfsajid91/upwork-tools</span>
+        <span class="text-zinc-500 font-medium flex items-center gap-2">Swipe for Free Access 👉</span>
+      </footer>
+    </article>
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 05: CALL TO ACTION                                                  -->
+    <!-- ========================================================================= -->
+    <article id="slide-5" class="slide-canvas relative bg-[#090d16] border-2 border-zinc-800/80 rounded-[44px] p-24 flex flex-col justify-between overflow-hidden shadow-2xl shrink-0" style="display:none;">
+      <div class="absolute top-0 right-0 w-[650px] h-[650px] bg-emerald-500/10 rounded-full blur-[140px] pointer-events-none"></div>
+
+      <!-- Header -->
+      <header class="flex items-center justify-between z-10">
+        <div class="flex items-center gap-4">
+          <img src="images/upwork-tools.webp" alt="Logo" class="w-14 h-14 rounded-2xl border-2 border-emerald-500/60 object-cover shadow-lg shadow-emerald-500/20" />
+          <div class="font-black text-2xl tracking-wider text-white uppercase">UPWORK TOOLS</div>
+        </div>
+        <span class="mono text-lg px-5 py-2 rounded-full bg-zinc-900/80 border border-zinc-700 text-zinc-400 font-bold">05 / 05</span>
+      </header>
+
+      <!-- Headline -->
+      <div class="space-y-4 z-10 mt-6 text-center">
+        <h2 class="text-[84px] font-black tracking-tight text-white leading-[1.05] uppercase">
+          LEVEL THE<br />
+          PLAYING FIELD.<br />
+          <span class="text-[#10b981]">FREE FOR ALL.</span>
+        </h2>
+        <p class="text-3xl text-zinc-400 font-medium max-w-2xl mx-auto">
+          No $15/month subscriptions. Built for the community.
+        </p>
+      </div>
+
+      <!-- Hero GitHub Card -->
+      <div class="z-10 my-auto w-full">
+        <div class="p-14 rounded-[36px] bg-[#0c1322] border-2 border-emerald-500 shadow-[0_0_80px_-20px_rgba(16,185,129,0.3)] space-y-8 text-center">
+          <div class="flex justify-center gap-4">
+            <span class="px-6 py-2 rounded-full bg-zinc-900 border border-zinc-700 text-zinc-300 text-lg font-bold">Manifest V3</span>
+            <span class="px-6 py-2 rounded-full bg-emerald-950 border border-emerald-700 text-emerald-300 text-lg font-bold">186 Tests Passing</span>
+            <span class="px-6 py-2 rounded-full bg-zinc-900 border border-zinc-700 text-zinc-300 text-lg font-bold">MIT License</span>
+          </div>
+
+          <div class="p-8 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
+            <span class="text-xs uppercase font-extrabold tracking-widest text-emerald-400">OPEN SOURCE REPOSITORY</span>
+            <div class="text-4xl font-mono font-black text-white">github.com/sfsajid91/upwork-tools</div>
+          </div>
+
+          <p class="text-zinc-400 text-2xl font-medium max-w-xl mx-auto">
+            Clone and load unpacked into Chrome, Brave, or Edge in 60 seconds.
+          </p>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <footer class="flex items-center justify-between pt-6 border-t border-zinc-900 text-lg z-10">
+        <span class="text-emerald-400 font-semibold font-mono">github.com/sfsajid91/upwork-tools</span>
+        <span class="text-zinc-500 font-medium">Download link in comments below! 👇</span>
+      </footer>
+    </article>
+
+  </main>
+
+  <script>
+    function showSlide(id) {
+      document.querySelectorAll('.slide-canvas').forEach(s => s.style.display = s.id === id ? 'flex' : 'none');
+      document.querySelectorAll('.nav-tab').forEach(b => {
+        b.classList.remove('bg-emerald-500', 'text-zinc-950', 'shadow-lg', 'shadow-emerald-500/30', 'font-bold');
+        b.classList.add('text-zinc-300');
+        if (b.getAttribute('onclick')?.includes(id)) {
+          b.classList.add('bg-emerald-500', 'text-zinc-950', 'shadow-lg', 'shadow-emerald-500/30', 'font-bold');
+          b.classList.remove('text-zinc-300');
+        }
+      });
+      document.getElementById('deck').classList.remove('deck-grid');
+    }
+
+    function showAll() {
+      document.querySelectorAll('.slide-canvas').forEach(s => s.style.display = 'flex');
+      document.querySelectorAll('.nav-tab').forEach(b => {
+        b.classList.remove('bg-emerald-500', 'text-zinc-950', 'shadow-lg', 'shadow-emerald-500/30', 'font-bold');
+        b.classList.add('text-zinc-300');
+      });
+      const allBtn = Array.from(document.querySelectorAll('.nav-tab')).find(b => b.getAttribute('onclick')?.includes('showAll'));
+      if (allBtn) {
+        allBtn.classList.add('bg-emerald-500', 'text-zinc-950', 'shadow-lg', 'shadow-emerald-500/30', 'font-bold');
+        allBtn.classList.remove('text-zinc-300');
+      }
+      document.getElementById('deck').classList.add('deck-grid');
+    }
+
+    document.addEventListener('keydown', (e) => {
+      const active = document.querySelector('.slide-canvas[style*="display: flex"]')?.id || 'slide-1';
+      const num = parseInt(active.replace('slide-', ''), 10);
+      if (e.key === 'ArrowRight' && num < 5) showSlide(`slide-${num + 1}`);
+      if (e.key === 'ArrowLeft' && num > 1) showSlide(`slide-${num - 1}`);
+    });
+  </script>
+</body>
+</html>

@@ -46,6 +46,71 @@ bun run build              # build the default extension
 bun run zip                # package the default extension
 ```
 
+## Strict Clean Code & Engineering Guidelines
+
+All contributors and AI agents must follow these strict clean code principles:
+
+### 1. File & Module Size Limits (Strict Rule)
+- **Maximum 500 Lines per File**: No single source code or test file should exceed 500 lines. Files approaching or exceeding 500 lines must be proactively decomposed into smaller, single-responsibility modules, subcomponents, custom hooks, or utility files.
+- **Function/Method Length**: Functions must stay focused and concise (ideally under 30–50 lines). If a function requires complex branching or multi-step orchestration, break it down into well-named helper functions maintaining a Single Level of Abstraction (SLAP).
+- **Component Decomposition**: React components must avoid massive monolithic JSX trees. Split complex views into reusable, isolated subcomponents and extract complex state/effects into custom hooks (`use*`).
+- **Function Parameter Count**: Keep function parameter counts low (preferably 1–3 parameters). When a function requires 4 or more parameters, group them into a well-typed options or configuration object.
+
+### 2. SOLID Design Principles
+- **Single Responsibility Principle (SRP)**: Every module, class, hook, and function must have exactly one reason to change. Separate data parsing, business calculations, storage orchestration, and UI rendering into distinct layers.
+- **Open/Closed Principle (OCP)**: Code should be open for extension but closed for modification. Favor composition, configuration objects, and strategy patterns over complex cascading switch/if-else ladders.
+- **Liskov Substitution Principle (LSP)**: Derived implementations or subtype structures must conform strictly to expected interface contracts without surprising behavior, phantom errors, or breaking invariants.
+- **Interface Segregation Principle (ISP)**: Design small, cohesive, client-specific interfaces. Do not force modules or components to depend on large, monolithic types containing fields they do not use.
+- **Dependency Inversion Principle (DIP)**: Depend on abstractions (interfaces, types, protocols), not volatile concrete implementations. Domain logic must remain independent of external browser APIs (e.g., wrap `chrome.storage` / `browser.storage` behind storage abstractions).
+
+### 3. Core Software Principles: KISS, YAGNI, and DRY
+- **KISS (Keep It Simple, Stupid)**: Write straightforward, readable code. Avoid clever tricks, premature micro-optimizations, and unnecessary architectural layers. The clearest implementation is the best implementation.
+- **YAGNI (You Aren't Gonna Need It)**: Do not write speculative code, unused parameters, or anticipatory abstractions for hypothetical future features. Implement only what is immediately required.
+- **DRY (Don't Repeat Yourself) with Rule of Three**: Avoid duplicating core domain logic, metric formulas, and validation rules. Extract shared logic into `src/lib/`. Avoid hasty abstractions across superficially similar code that serves fundamentally different business domains.
+- **Boy Scout Rule**: Leave the codebase cleaner than you found it. Proactively clean up minor dead code, inconsistent types, or outdated comments in files you touch.
+
+### 4. Naming Conventions & Expressiveness
+- **Intention-Revealing & Searchable**: Variable, function, type, and file names must clearly explain *what* they represent and *why* they exist. Avoid ambiguous abbreviations (`ctx`, `tmp`, `val`, `res`, `d`).
+- **Boolean Prefixes**: Booleans must be prefixed with auxiliary verbs: `is`, `has`, `should`, `can`, `did` (e.g., `isClientVerified`, `hasHireHistory`, `shouldDisplayWarning`).
+- **Action-Oriented Functions**: Functions and methods must begin with active verbs describing their operation (e.g., `calculateDerivedRates`, `formatCurrency`, `parseJobDetails`, `normalizePayload`).
+- **Domain Consistency**: Use established domain terminology consistently across all layers (`JobInsights`, `ClientHistory`, `RuntimeMessage`, `PageEvent`).
+
+### 5. Functions & Control Flow
+- **Guard Clauses & Early Exits**: Return early to eliminate nested `if/else` ladders and "arrow anti-patterns" (pyramids of doom). Handle precondition checks, invalid states, and edge cases at the top of the function.
+- **Pure Functions & Immutability**: Core calculations, aggregations, and formatting must be pure functions with deterministic outputs and zero side effects.
+- **No Hidden Side Effects**: Functions must not silently mutate input arguments or global state. Always return new immutable data structures.
+
+### 6. Strict TypeScript & Type Safety
+- **Strict Typing (Zero `any`)**: The `any` type is strictly forbidden. Use `unknown` with runtime type narrowing, exhaustive type guards, or validation schemas.
+- **Explicit Boundary Typing**: Always provide explicit return types and parameter types on exported functions, library modules, and API boundaries.
+- **Discriminated Unions**: Model multi-state workflows (e.g., `type ViewState = { status: 'idle' } | { status: 'loading' } | { status: 'success'; data: JobInsights } | { status: 'error'; message: string }`) instead of multiple independent boolean flags (`isLoading`, `isError`, `isSuccess`).
+- **Nullable Rigor**: Distinguish clearly between `null` (explicit absence or unknown upstream field) and `undefined` (optional property). Avoid unsafe non-null assertions (`!`) unless strictly proven by preceding compiler invariants.
+- **Immutability Modifiers**: Use `readonly`, `ReadonlyArray`, and `as const` for fixed configurations, protocol constants, and lookup maps.
+
+### 7. Error Handling & Defensive Boundaries
+- **Graceful Boundary Isolation**: Extension entrypoints (interceptor, content scripts, background worker) must never throw uncaught exceptions into the host page context or crash the background service worker.
+- **Defensive Ingestion**: Validate all external inputs at trust boundaries (GraphQL payloads, DOM events, `chrome.runtime` messages, `storage` reads) using schema validators or type guards before processing.
+- **No Swallowed Exceptions**: Never use empty `catch {}` blocks. Log handled errors with structured diagnostics via internal logging helpers (`src/lib/logger.ts`).
+
+### 8. UI & Component Architecture (React & Tailwind)
+- **Separation of Presentation & Logic**: Keep UI components focused on layout and rendering. Extract state management, asynchronous data fetching, and business computations into custom hooks and utility modules.
+- **Unidirectional Data Flow**: Pass data down via props and bubble events up via explicit callbacks. Maintain local component state where possible and avoid unnecessary global stores.
+- **Semantic & Accessible Markup**: Use native, semantic HTML elements (e.g., `<details>`, `<button>`, `<section>`, `<nav>`) with appropriate ARIA attributes.
+- **Clean Tailwind Usage**: Use Tailwind utility classes consistently. Avoid arbitrary ad-hoc pixel values and inline styles unless strictly necessary for dynamic runtime values.
+
+### 9. Code Cleanliness, Formatting & Linting
+- **Clean Code Base**: Remove commented-out code, dead code, unused imports, and console debugging statements before submitting changes.
+- **Biome Compliance**: All code must conform to project Biome formatting and linting rules (2-space indent, LF line endings, 100-column width, semicolons, single quotes in TS, double quotes in JSX).
+- **Self-Documenting Code**: Prefer expressive code and clear naming over redundant comments. Use comments only to document non-obvious domain rationale, edge-case workarounds, or upstream quirks.
+
+### 10. Testing & Verification Rigor
+- **Test Behavior, Not Implementation**: Write unit and integration tests verifying user-observable behavior, business logic accuracy, and edge-case handling rather than internal implementation details.
+- **Mandatory Quality Gates**: Every change must cleanly pass:
+  1. `bun run compile` (TypeScript type check)
+  2. `bun run lint` (Biome linting)
+  3. `bun run format:check` (Biome formatting)
+  4. `bun run test` (Full Bun test suite)
+
 ## Code Conventions & Common Patterns
 
 - Use TypeScript ES modules (`"type": "module"`) and WXT APIs such as `defineConfig`, `defineBackground`, and `defineContentScript`.
@@ -84,7 +149,7 @@ bun run zip                # package the default extension
 
 ## Testing & QA
 
-Product tests live in `tests/`. Use Bun's built-in test runner (`bun run test`) to verify behavior across all layers (176+ tests). Test parser boundary validation, nullable normalization, derived rates, warning precedence, related-history matching, and per-tab state behavior rather than implementation details.
+Product tests live in `tests/`. Use Bun's built-in test runner (`bun run test`) to verify behavior across all layers (188+ tests). Test parser boundary validation, nullable normalization, derived rates, warning precedence, related-history matching, and per-tab state behavior rather than implementation details.
 
 For current changes, run `bun run compile`, `bun run lint`, and `bun run format:check`. Manually smoke-test the affected extension context with `bun run dev` in a browser. For popup changes, open the generated extension popup in a Chromium tab containing the supported Upwork response; for content/background changes, exercise the matching page and inspect extension consoles. Run `bun run build` for a production bundle check before shipping.
 

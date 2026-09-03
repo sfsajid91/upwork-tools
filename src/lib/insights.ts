@@ -4,7 +4,21 @@ import { deriveHiringWarnings } from './hiring-warnings';
 import { restrictionLabels } from './restrictions';
 
 export type ApplicationState = 'applied' | 'invited' | 'hired';
+export type ViewerMode = 'authenticated' | 'visitor';
 export type JobWarning = 'position-filled' | 'already-hired' | 'already-applied' | 'client-invited';
+
+export interface SimilarJob {
+  id: string | null;
+  ciphertext: string | null;
+  title: string | null;
+  description: string | null;
+  amount: number | null;
+  currency: string | null;
+  contractorTier: string | null;
+  type: string | null;
+  durationLabel: string | null;
+  skills: string[];
+}
 
 export interface ClientHistoryEntry {
   id: string | null;
@@ -19,6 +33,7 @@ export interface ClientHistoryEntry {
 }
 
 export interface JobInsights {
+  viewerMode: ViewerMode;
   job: {
     id: string | null;
     title: string | null;
@@ -75,6 +90,7 @@ export interface JobInsights {
     recentJobs: ClientHistoryEntry[];
     relatedJobs: ClientHistoryEntry[];
   };
+  similarJobs: SimilarJob[];
   warnings: JobWarning[];
 }
 
@@ -239,27 +255,59 @@ function applicationState(freelancerInfo: RecordValue | null): ApplicationState 
     return 'invited';
   return null;
 }
+function normalizeSimilarJobs(value: unknown): SimilarJob[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    const object = record(item);
+    if (!object) return [];
+    const amount = record(object.amount);
+    return [
+      {
+        id: nullableString(object.id),
+        ciphertext: nullableString(object.ciphertext),
+        title: nullableString(object.title),
+        description: nullableString(object.description),
+        amount: nullableNumber(amount?.amount ?? object.amount),
+        currency: nullableString(amount?.currencyCode ?? object.currencyCode),
+        contractorTier: nullableString(object.contractorTier),
+        type: nullableString(object.type),
+        durationLabel: nullableString(object.durationLabel),
+        skills: skillNames(object.ontologySkills),
+      },
+    ];
+  });
+}
 
 export function normalizeJobInsights(payload: unknown): JobInsights | null {
   const payloadObject = record(payload);
   const data = record(payloadObject?.data);
-  const details = record(data?.jobAuthDetails ?? payloadObject?.jobAuthDetails);
-  if (!details) return null;
+  const authDetails = record(data?.jobAuthDetails ?? payloadObject?.jobAuthDetails);
+  const pubDetails = record(data?.jobPubDetails ?? payloadObject?.jobPubDetails);
+  if (!authDetails && !pubDetails) return null;
 
-  const job = record(valueAt(details, 'opening', 'job'));
-  const info = record(valueAt(job, 'info'));
-  const budget = record(valueAt(job, 'budget'));
-  const activity = record(valueAt(job, 'clientActivity'));
-  const qualifications = record(valueAt(details, 'opening', 'qualifications'));
-  const buyer = record(valueAt(details, 'buyer'));
-  const buyerInfo = record(valueAt(buyer, 'info'));
-  const buyerStats = record(valueAt(buyerInfo, 'stats'));
-  const buyerJobs = record(valueAt(buyerInfo, 'jobs'));
-  const buyerCompany = record(valueAt(buyerInfo, 'company'));
-  const location = record(valueAt(buyerInfo, 'location'));
-  const hourlyRate = record(valueAt(buyerInfo, 'avgHourlyJobsRate'));
-  const extendedBudget = record(valueAt(job, 'extendedBudgetInfo'));
-  const freelancerInfo = record(valueAt(details, 'currentUserInfo', 'freelancerInfo'));
+  const viewerMode: ViewerMode = authDetails ? 'authenticated' : 'visitor';
+  const details = authDetails ?? pubDetails;
+  if (!details) return null;
+  const openingJob =
+    record(valueAt(authDetails, 'opening', 'job')) ?? record(valueAt(pubDetails, 'opening'));
+  const info = record(openingJob?.info);
+  const budget = record(openingJob?.budget);
+  const activity = record(openingJob?.clientActivity);
+  const qualifications =
+    record(valueAt(authDetails, 'opening', 'qualifications')) ??
+    record(valueAt(pubDetails, 'qualifications'));
+  const buyer = record(details.buyer);
+  const buyerInfo = record(buyer?.info);
+  const buyerStats = record(buyerInfo?.stats) ?? record(buyer?.stats);
+  const buyerJobs = record(buyerInfo?.jobs) ?? record(buyer?.jobs);
+  const buyerCompany = record(buyerInfo?.company) ?? record(buyer?.company);
+  const location = record(buyerInfo?.location) ?? record(buyer?.location);
+  const hourlyRate = record(buyerInfo?.avgHourlyJobsRate) ?? record(buyer?.avgHourlyJobsRate);
+  const extendedBudget = record(openingJob?.extendedBudgetInfo);
+  const freelancerInfo =
+    viewerMode === 'authenticated'
+      ? record(valueAt(details, 'currentUserInfo', 'freelancerInfo'))
+      : null;
   const qualificationMatches = valueAt(freelancerInfo, 'qualificationsMatches', 'matches');
   const qualificationSummary = Array.isArray(qualificationMatches)
     ? summarizeQualificationMatches(qualificationMatches)
@@ -269,14 +317,14 @@ export function normalizeJobInsights(payload: unknown): JobInsights | null {
   );
   const currentJobId = firstString(
     info?.ciphertext,
-    job?.ciphertext,
+    openingJob?.ciphertext,
     info?.uid,
-    job?.uid,
+    openingJob?.uid,
     info?.id,
-    job?.id,
+    openingJob?.id,
   );
   const currentTitle = nullableString(info?.title);
-  const currentStatus = nullableString(job?.status);
+  const currentStatus = nullableString(openingJob?.status);
   const exactProposals = nonNegativeInteger(activity?.totalApplicants);
   const interviewed = nonNegativeInteger(activity?.totalInvitedToInterview);
   const totalHired = nonNegativeInteger(activity?.totalHired);
@@ -299,26 +347,30 @@ export function normalizeJobInsights(payload: unknown): JobInsights | null {
     recentJobs,
     relatedJobs: relatedHistory(currentJobId, currentTitle, recentJobs),
   };
+  const jobsPosted = nullableNumber(buyerJobs?.postedCount);
+  const totalJobsWithHires = nullableNumber(buyerStats?.totalJobsWithHires);
+  const similarJobs = normalizeSimilarJobs(details.similarJobs);
 
   return {
+    viewerMode,
     job: {
       id: currentJobId,
       title: currentTitle,
-      description: nullableString(job?.description),
+      description: nullableString(openingJob?.description),
       status: currentStatus,
       type: nullableString(info?.type),
-      postedOn: nullableString(job?.postedOn ?? info?.createdOn),
-      publishTime: nullableString(job?.publishTime),
-      workload: nullableString(job?.workload),
-      contractorTier: nullableString(job?.contractorTier),
+      postedOn: nullableString(openingJob?.postedOn ?? info?.createdOn),
+      publishTime: nullableString(openingJob?.publishTime),
+      workload: nullableString(openingJob?.workload),
+      contractorTier: nullableString(openingJob?.contractorTier),
       budgetAmount: nullableNumber(budget?.amount),
       budgetCurrency: nullableString(budget?.currencyCode),
       hourlyBudgetMin: nullableNumber(extendedBudget?.hourlyBudgetMin),
       hourlyBudgetMax: nullableNumber(extendedBudget?.hourlyBudgetMax),
-      duration: nullableString(valueAt(job, 'engagementDuration', 'label')),
-      category: nullableString(valueAt(job, 'category', 'name')),
-      skills: skillNames(valueAt(job, 'sandsData', 'ontologySkills')).concat(
-        skillNames(valueAt(job, 'sandsData', 'additionalSkills')),
+      duration: nullableString(valueAt(openingJob, 'engagementDuration', 'label')),
+      category: nullableString(valueAt(openingJob, 'category', 'name')),
+      skills: skillNames(valueAt(openingJob, 'sandsData', 'ontologySkills')).concat(
+        skillNames(valueAt(openingJob, 'sandsData', 'additionalSkills')),
       ),
       restrictions: restrictionLabels(qualifications),
     },
@@ -335,7 +387,11 @@ export function normalizeJobInsights(payload: unknown): JobInsights | null {
     },
     client: {
       topClient: nullableBoolean(details.topClient),
-      paymentVerified: nullableBoolean(buyer?.isPaymentMethodVerified),
+      paymentVerified: nullableBoolean(
+        record(details.buyerExtra)?.isPaymentMethodVerified ??
+          buyer?.isPaymentMethodVerified ??
+          false,
+      ),
       country: nullableString(location?.country),
       city: nullableString(location?.city),
       totalAssignments: nullableNumber(buyerStats?.totalAssignments),
@@ -343,15 +399,11 @@ export function normalizeJobInsights(payload: unknown): JobInsights | null {
       hours: nullableNumber(buyerStats?.hoursCount),
       feedbackCount: nullableNumber(buyerStats?.feedbackCount),
       rating: nullableNumber(buyerStats?.score),
-      totalJobsWithHires: nullableNumber(buyerStats?.totalJobsWithHires),
-      jobsPosted: nullableNumber(buyerJobs?.postedCount),
+      totalJobsWithHires,
+      jobsPosted,
       hireRate:
-        nullableNumber(buyerStats?.totalJobsWithHires) !== null &&
-        nullableNumber(buyerJobs?.postedCount) !== null &&
-        (nullableNumber(buyerJobs?.postedCount) as number) > 0
-          ? ((nullableNumber(buyerStats?.totalJobsWithHires) as number) /
-              (nullableNumber(buyerJobs?.postedCount) as number)) *
-            100
+        jobsPosted !== null && jobsPosted > 0 && totalJobsWithHires !== null
+          ? (totalJobsWithHires / jobsPosted) * 100
           : null,
       totalCharges: nullableNumber(valueAt(buyerStats, 'totalCharges', 'amount')),
       averageHourlyRate: clientAverageHourlyRate,
@@ -361,16 +413,18 @@ export function normalizeJobInsights(payload: unknown): JobInsights | null {
       qualificationsMatched: qualificationSummary?.matched ?? null,
       qualificationsTotal: qualificationSummary?.total ?? null,
       qualificationDetails: qualificationSummary?.details ?? null,
-      freelancerHourlyRate,
+      freelancerHourlyRate: viewerMode === 'visitor' ? null : freelancerHourlyRate,
       rateContext:
-        freelancerHourlyRate !== null &&
-        clientAverageHourlyRate !== null &&
-        clientAverageHourlyRate > 0
-          ? freelancerHourlyRate / clientAverageHourlyRate
-          : null,
-      applicationState: currentApplicationState,
+        viewerMode === 'visitor' ||
+        freelancerHourlyRate === null ||
+        clientAverageHourlyRate === null ||
+        clientAverageHourlyRate <= 0
+          ? null
+          : freelancerHourlyRate / clientAverageHourlyRate,
+      applicationState: viewerMode === 'visitor' ? null : currentApplicationState,
     },
     history,
+    similarJobs,
     warnings,
   };
 }
@@ -412,6 +466,24 @@ function isQualificationDetail(value: unknown): value is QualificationDetail {
     typeof detail.matched === 'boolean'
   );
 }
+function isSimilarJob(value: unknown): value is SimilarJob {
+  const job = record(value);
+  if (!job || !Array.isArray(job.skills)) return false;
+  return (
+    [
+      'id',
+      'ciphertext',
+      'title',
+      'description',
+      'currency',
+      'contractorTier',
+      'type',
+      'durationLabel',
+    ].every((key) => isNullableStringValue(key, job)) &&
+    isNullableNumberValue('amount', job) &&
+    job.skills.every((skill) => typeof skill === 'string')
+  );
+}
 
 export function isJobInsights(value: unknown): value is JobInsights {
   const object = record(value);
@@ -420,8 +492,11 @@ export function isJobInsights(value: unknown): value is JobInsights {
   const client = record(object?.client);
   const fit = record(object?.fit);
   const history = record(object?.history);
+  const similarJobs = object?.similarJobs;
   const warnings = object?.warnings;
   if (
+    !object ||
+    (object.viewerMode !== 'authenticated' && object.viewerMode !== 'visitor') ||
     !job ||
     !activity ||
     !client ||
@@ -431,6 +506,7 @@ export function isJobInsights(value: unknown): value is JobInsights {
     !Array.isArray(job.restrictions) ||
     !Array.isArray(history.recentJobs) ||
     !Array.isArray(history.relatedJobs) ||
+    !Array.isArray(similarJobs) ||
     !Array.isArray(warnings)
   ) {
     return false;
@@ -441,6 +517,7 @@ export function isJobInsights(value: unknown): value is JobInsights {
     job.restrictions.every((restriction) => typeof restriction === 'string') &&
     history.recentJobs.every(isHistoryEntry) &&
     history.relatedJobs.every(isHistoryEntry) &&
+    similarJobs.every(isSimilarJob) &&
     warnings.every((warning): warning is JobWarning =>
       ['position-filled', 'already-hired', 'already-applied', 'client-invited'].includes(
         warning as string,

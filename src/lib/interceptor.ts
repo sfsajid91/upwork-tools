@@ -2,9 +2,17 @@ import { type JobInsights, normalizeJobInsights } from './insights';
 import { jobIdFromPageUrl, normalizeJobId } from './job-page';
 import { createPageEvent, isPageReplayRequest } from './protocol';
 
-const JOB_DETAILS_ALIAS = 'gql-query-get-auth-job-details-v2';
+const JOB_DETAILS_ALIASES = [
+  'gql-query-get-auth-job-details-v2',
+  'gql-query-get-visitor-job-details',
+] as const;
 const INSTALL_FLAG = '__UPWORK_TOOLS_INTERCEPTOR__';
-const TARGET_MARKERS = ['jobAuthDetails', 'totalApplicants', JOB_DETAILS_ALIAS];
+const TARGET_MARKERS = [
+  'jobAuthDetails',
+  'jobPubDetails',
+  'totalApplicants',
+  ...JOB_DETAILS_ALIASES,
+];
 
 type InterceptedWindow = Window & {
   [INSTALL_FLAG]?: boolean;
@@ -25,7 +33,12 @@ function isSupportedUrl(value: string): boolean {
   try {
     const url = new URL(value, window.location.href);
     const isUpwork = url.hostname === 'upwork.com' || url.hostname.endsWith('.upwork.com');
-    return isUpwork && url.searchParams.get('alias') === JOB_DETAILS_ALIAS;
+    return (
+      isUpwork &&
+      JOB_DETAILS_ALIASES.includes(
+        url.searchParams.get('alias') as (typeof JOB_DETAILS_ALIASES)[number],
+      )
+    );
   } catch {
     return false;
   }

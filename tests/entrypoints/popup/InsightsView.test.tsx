@@ -1,3 +1,5 @@
+import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
 import { describe, expect, test } from 'bun:test';
 import { renderToString } from 'react-dom/server';
 import { normalizeJobInsights } from '../../../src/lib/insights';
@@ -8,6 +10,13 @@ import {
   LoadingState,
   ThemeToggle,
 } from '../../../src/entrypoints/popup/InsightsView';
+
+const visitorFixture = JSON.parse(
+  readFileSync(
+    fileURLToPath(new URL('../../fixtures/sample-visitor-job-details.json', import.meta.url)),
+    'utf8',
+  ),
+);
 
 function samplePayload() {
   return {
@@ -141,6 +150,30 @@ describe('InsightsView components', () => {
     expect(html.includes('Freelancer:')).toBe(true);
     expect(html.includes('Matched')).toBe(true);
     expect(html.includes('Not matched')).toBe(true);
+  });
+  test('renders visitor cards without personal fit or application outcomes', () => {
+    const insights = normalizeJobInsights(visitorFixture);
+    expect(insights).not.toBeNull();
+    if (!insights) throw new Error('visitor insights should not be null');
+
+    const html = renderToString(<AvailableState insights={insights} />);
+    expect(html.includes('Public Job View')).toBe(true);
+    expect(html.includes('Exact Proposals')).toBe(true);
+    expect(html.includes('Interviews')).toBe(true);
+    expect(html.includes('Client Track Record')).toBe(true);
+    expect(html.includes('Qualifications')).toBe(true);
+    expect(html.includes('India')).toBe(true);
+    expect(html.includes('Similar Opportunities')).toBe(true);
+    expect(html.includes('WordPress')).toBe(true);
+    expect(html.includes('Personal Fit')).toBe(true);
+    expect(
+      html.includes(
+        'Log in to Upwork to view personal skill match %, portfolio ranking, and rate comparison.',
+      ),
+    ).toBe(true);
+    expect(html.includes('Application Outcomes')).toBe(false);
+    expect(html.includes('Client Hiring History')).toBe(false);
+    expect(html.includes('Public GraphQL snapshot')).toBe(true);
   });
   test('renders local personalization and fallback rate context', () => {
     const insights = normalizeJobInsights(samplePayload());

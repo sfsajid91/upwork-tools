@@ -1,0 +1,232 @@
+{
+  "data": {
+    "jobPubDetails": {
+      "opening": {
+        "status": "ACTIVE",
+        "postedOn": "2026-08-20T23:16:41.379Z",
+        "publishTime": "2026-08-20T23:18:05.226Z",
+        "sourcingTime": null,
+        "startDate": null,
+        "deliveryDate": null,
+        "workload": null,
+        "contractorTier": "EXPERT",
+        "description": "Web Systems & GoHighLevel (GHL) Developer\n\nCompany: OnePoint Insurance Agency / Innovate iHub\nDepartment: Technology & Digital Systems\nEmployment Type: Full-Time\nPosition Type: Web Development, CRM & Automation\nExperience Level: Mid-Level to Senior\n\nPosition Overview\nOnePoint Insurance Agency and Innovate iHub are seeking an experienced Web Systems & GoHighLevel (GHL) Developer to design, develop, integrate, maintain, and continuously improve modern web-based systems, business applications, websites, CRM environments, and digital automation solutions.\n\nThe ideal candidate combines strong web systems development experience with practical expertise in GoHighLevel (GHL). This role is suited for a developer who understands both software development and business automation and can build solutions that connect websites, CRM platforms, APIs, databases, communication systems, forms, and third-party services.\n\nThe successful candidate should be comfortable working across multiple domains and industries, developing both customer-facing and internal systems, troubleshooting complex integrations, and taking projects from requirements through development, testing, deployment, and ongoing improvement.\n\nKey Responsibilities\nWeb Systems Development\nDesign, develop, maintain, and improve modern web applications, business systems, portals, dashboards, websites, and digital platforms.\n\nDevelop responsive, secure, and user-friendly interfaces for desktop, tablet, and mobile devices.\n\nBuild both customer-facing and internal web applications based on business and operational requirements.\n\nDevelop reusable, scalable components and maintain clean, organized, maintainable codebases.\nWork with modern frontend and backend technologies to create reliable full-stack applications.\n\nDevelop and maintain authentication, user accounts, role-based access, dashboards, forms, reporting interfaces, administrative tools, and other business-system functionality.\n\nMaintain existing applications while introducing improvements without unnecessarily disrupting established functionality.\n\nMulti-Domain Development\nWork across websites and applications serving different business domains and operational requirements.\nTranslate business processes from different industries into practical digital systems.\n\nUnderstand that each domain may have different workflows, terminology, data structures, security requirements, integrations, and user experiences.\n\nDevelop flexible systems that can support business-specific requirements rather than forcing every organization into the same generic workflow.\n\nConduct research where necessary to understand unfamiliar business domains and translate requirements into appropriate technical solutions.\n\nGoHighLevel (GHL) Development & Administration\nConfigure, develop, maintain, and optimize GoHighLevel environments.\n\nWork extensively with:\nCRM contacts and customer records\nOpportunities and pipelines\nWorkflows and automations\nForms and surveys\nCustom fields and values\nTags and segmentation\nEmail and SMS\nCalling and conversations\nCalendars and appointment scheduling\nTriggers and workflow conditions\nLanding pages and funnels\nWebhooks\nUser accounts and permissions\nReporting\nAI and chatbot capabilities\nThird-party integrations\n\nBuild automated workflows that improve lead management, customer communication, follow-up, internal notifications, appointment scheduling, sales operations, and other business processes.\n\nTroubleshoot GHL workflows, automation failures, field mappings, contact synchronization, webhooks, and integration issues.\n\nStay current with GHL platform developments and apply relevant new capabilities to business systems.\nAPI & Systems Integration\n\nDesign and implement integrations between web applications, GHL, CRM platforms, third-party services, and internal business systems.\n\nWork with REST APIs, webhooks, JSON payloads, authentication mechanisms, and external services.\nDevelop reliable data synchronization between connected systems.\n\nTroubleshoot API failures, synchronization problems, malformed payloads, authentication errors, rate limitations, and integration inconsistencies.\n\nImplement appropriate validation, logging, error handling, retries, and monitoring for integrations.\n\nUnderstand and document which connected system is responsible for specific data and business functions.\n\nFrontend Development\nDevelop modern, responsive, accessible, and aesthetically polished user interfaces.\n\nExperience with technologies such as:\nReact, Next.js, JavaScript, TypeScript, HTML5, CSS3, Tailwind CSS, or comparable modern frontend technologies is preferred.\n\nTranslate designs, wireframes, business requirements, and prototypes into functional interfaces.\n\nCreate dashboards, tables, forms, cards, navigation systems, timelines, workflows, data-management interfaces, and responsive layouts.\n\nMaintain consistent visual identity and reusable design-system components across applications.\nEnsure interfaces are usable across desktop, tablet, and mobile devices.\n\nBackend Development\nDevelop and maintain backend services, APIs, business logic, authentication systems, database interactions, and integrations.\n\nExperience with technologies such as Node.js, TypeScript, Python, or comparable backend environments is desirable.\nBuild secure APIs and application services that support frontend applications and third-party integrations.\n\nImplement appropriate authorization, validation, logging, error handling, and data-governance controls.\n\nDatabase & Data Management\nWork with relational and/or NoSQL databases used by modern web applications.\n\nExperience with technologies such as PostgreSQL, MySQL, Prisma ORM, or comparable database technologies is desirable.\n\nDesign and maintain appropriate data models and relationships.\n\nWrite queries, migrations, validations, and data-processing routines where required.\n\nProtect production data and avoid unsafe destructive changes.\n\nSupport data migration, synchronization, deduplication, reconciliation, and quality improvement initiatives.\nWebsite Development & Management\nDevelop and maintain professional company websites, landing pages, customer portals, forms, and web-based services.\n\nConnect website functionality to CRM systems, APIs, databases, payment/billing services, communication platforms, and automation workflows.\n\nEnsure forms and calls-to-action route information to the correct systems.\n\nPerform responsive testing and cross-browser testing.\nTroubleshoot broken links, forms, integrations, navigation, performance, and other website issues.\n\nSupport domain, DNS, SSL, hosting, and deployment requirements where necessary.\n\nAutomation & AI Integration\nIdentify opportunities to automate repetitive business processes.\n\nDevelop and configure workflow automation using GHL and other approved automation technologies.\n\nSupport implementation of AI-powered functionality such as chatbots, virtual assistants, intelligent routing, content assistance, and workflow support where appropriate.\n\nIntegrate automated systems with CRM and web applications while maintaining appropriate security, privacy, and human oversight.\n\nTesting & Quality Assurance\nPerform thorough testing before releasing changes.\nTesting responsibilities may include:\nFunctional testing\nIntegration testing\nAPI testing\nRegression testing\nResponsive testing\nCross-browser testing\nUser-access testing\nRole/permission testing\nForm-submission testing\nAutomation testing\nEnd-to-end workflow testing\nIdentify defects, determine root causes, implement corrections, and retest before deployment.\nWork with other team members and business users during User Acceptance Testing (UAT).\n\nDeployment & Production Support\nSupport applications through development, staging, deployment, and production operation.\n\nWork with modern cloud and deployment environments.\nExperience with AWS, Azure, Vercel, Docker, CI/CD pipelines, or comparable infrastructure is beneficial.\n\nUse Git and structured version-control practices.\nSupport branch management, code reviews, releases, rollback procedures, and production troubleshooting.\n\nMonitor deployed systems and respond appropriately to application, integration, or infrastructure issues.\nSecurity & Privacy\nFollow secure software-development practices.\nImplement and maintain appropriate:\nAuthentication\nAuthorization\nRole-based access\nMFA/2FA integrations\nSecure API communication\nData validation\nFile-upload protection\nSecure document handling\nEncryption practices\nAudit logging\nSession management\nConsider privacy and security requirements when designing customer-facing and internal systems.\nProtect sensitive business and customer information from unauthorized access or exposure.\nTechnical Documentation\nMaintain clear documentation covering:\nSystem architecture\nAPIs\nIntegrations\nGHL workflows\nAutomation logic\nDatabase structures\nDeployment procedures\nConfiguration\nTroubleshooting\nTechnical dependencies\nTesting procedures\nDocument significant changes so systems can be maintained effectively by other technical team members.\n\nRequired Qualifications\nCandidates should demonstrate professional experience in web application or web systems development and hands-on experience working with GoHighLevel (GHL).\n\nStrong candidates will have experience with modern frontend development, backend/API development, databases, third-party integrations, automation, Git/version control, responsive web development, debugging, testing, and production deployment.\n\nCandidates should also demonstrate the ability to understand business requirements and independently translate them into practical technical solutions.\n\nPreferred Technical Skills\nExperience with several of the following is highly desirable:\nFrontend: React, Next.js, TypeScript, JavaScript, HTML5, CSS3, Tailwind CSS.\nBackend: Node.js, TypeScript, Python, REST APIs, webhooks, server-side application development.\nDatabase: PostgreSQL, MySQL, Prisma or similar ORM/database technologies.\nCRM & Automation: GoHighLevel, CRM architecture, workflows, pipelines, automation, email/SMS, webhooks, forms, calendars, AI/chatbot functionality.\nCloud & DevOps: AWS, Azure, Vercel, Docker, CI/CD, DNS, domains, SSL, cloud deployments.\nDevelopment Tools: Git, GitHub or comparable version-control platforms, API testing tools, browser developer tools, debugging and monitoring tools.\n\nProfessional Skills\nThe successful candidate should have strong analytical and problem-solving abilities, attention to detail, technical curiosity, and the ability to work independently while collaborating effectively with management, developers, designers, marketing teams, and operational users.\n\nThe role requires strong written communication and documentation skills, good time management, the ability to manage multiple technical priorities, and a willingness to continuously learn new technologies.\n\nCandidates should be comfortable taking ownership of a technical problem from investigation through implementation, testing, deployment, and post-release support.\n\nIdeal Candidate Profile\nWe are looking for someone who is more than a website designer or GHL administrator.\nThe ideal candidate is a systems-minded developer who can build a modern web application, configure sophisticated GHL automation, connect systems through APIs and webhooks, troubleshoot data synchronization, work with databases, deploy applications, and understand how technology supports real business operations.\n\nThe candidate should be comfortable moving between web development, CRM configuration, integrations, automation, data, testing, and production support while maintaining high standards for security, reliability, usability, and code quality.\nExperience developing web systems across multiple business domains, combined with strong practical GoHighLevel experience, will be a significant advantage.",
+        "info": {
+          "ciphertext": "~022090578797924892358",
+          "id": "2090578797924892358",
+          "type": "FIXED",
+          "access": "PUBLIC_INDEX",
+          "title": "Website Developer",
+          "hideBudget": false,
+          "createdOn": "2026-08-20T23:16:41.379Z",
+          "notSureProjectDuration": false,
+          "notSureFreelancersToHire": false,
+          "notSureExperienceLevel": false,
+          "notSureLocationPreference": false,
+          "premium": false
+        },
+        "segmentationData": [
+          {
+            "customValue": null,
+            "label": "Complex project",
+            "name": "Employment",
+            "sortOrder": 2,
+            "type": "EMPLOYMENT",
+            "value": "EMPLOYMENT_COMPLEX_PROJECT",
+            "skill": null
+          }
+        ],
+        "sandsData": {
+          "occupation": {
+            "freeText": null,
+            "ontologyId": "upworkOccupation:webdesign",
+            "prefLabel": "Web Design",
+            "id": "1044578476142100494",
+            "uid": "1044578476142100494"
+          },
+          "ontologySkills": [
+            {
+              "groupId": "1225465963622928384",
+              "id": "996364628025274385",
+              "freeText": null,
+              "prefLabel": "PHP",
+              "groupPrefLabel": "Web Design Languages",
+              "relevance": "MANDATORY"
+            }
+          ],
+          "additionalSkills": [
+            {
+              "groupId": null,
+              "id": "1031626795211276288",
+              "freeText": null,
+              "prefLabel": "Web Development",
+              "relevance": "MANDATORY"
+            },
+            {
+              "groupId": null,
+              "id": "1549040414804021248",
+              "freeText": null,
+              "prefLabel": "HighLevel",
+              "relevance": "MANDATORY"
+            },
+            {
+              "groupId": null,
+              "id": "1270387293991190528",
+              "freeText": null,
+              "prefLabel": "AWS Amplify",
+              "relevance": "MANDATORY"
+            },
+            {
+              "groupId": null,
+              "id": "1031626718199660544",
+              "freeText": null,
+              "prefLabel": "AWS AppSync",
+              "relevance": "MANDATORY"
+            },
+            {
+              "groupId": null,
+              "id": "1484275088473378816",
+              "freeText": null,
+              "prefLabel": "Website Builder",
+              "relevance": "MANDATORY"
+            }
+          ]
+        },
+        "category": {
+          "name": "Web & Mobile Design",
+          "urlSlug": "web-mobile-design"
+        },
+        "categoryGroup": {
+          "name": "Web, Mobile & Software Dev",
+          "urlSlug": "web-mobile-software-dev"
+        },
+        "budget": {
+          "amount": 500.0,
+          "currencyCode": "USD"
+        },
+        "annotations": {
+          "customFields": {
+            "siteSource": "desktop_no_email_instant",
+            "publishTime": "2026-08-20T23:18:05.226Z",
+            "sourcingUpdateCount": "0",
+            "sourcingUpdateForbidden": "false",
+            "type": "FJP",
+            "optInDescriptionAIv2": "no",
+            "browser": "Chrome",
+            "device": "Windows",
+            "flowType": "FJP"
+          },
+          "tags": [
+            "jsi_contractToHire",
+            "contractToHireSet",
+            "firstJobPost",
+            "searchable",
+            "C2HJobsOptInEducation"
+          ]
+        },
+        "engagementDuration": {
+          "label": "1 to 3 months",
+          "weeks": 9
+        },
+        "extendedBudgetInfo": {
+          "hourlyBudgetMin": null,
+          "hourlyBudgetMax": null,
+          "hourlyBudgetType": null
+        },
+        "clientActivity": {
+          "lastBuyerActivity": "2026-09-01T15:05:29.608Z",
+          "totalApplicants": 10,
+          "totalHired": 0,
+          "totalInvitedToInterview": 10,
+          "unansweredInvites": 0,
+          "invitationsSent": 0,
+          "numberOfPositionsToHire": 1
+        },
+        "deliverables": null,
+        "deadline": null,
+        "tools": []
+      },
+      "qualifications": {
+        "countries": ["India", "Philippines"],
+        "earnings": null,
+        "groupRecno": null,
+        "languages": null,
+        "localDescription": null,
+        "localFlexibilityDescription": null,
+        "localMarket": true,
+        "minJobSuccessScore": 0,
+        "minOdeskHours": 0,
+        "onSiteType": null,
+        "prefEnglishSkill": "ANY",
+        "regions": null,
+        "risingTalent": false,
+        "shouldHavePortfolio": false,
+        "states": null,
+        "tests": null,
+        "timezones": null,
+        "type": "ANY",
+        "locationCheckRequired": false,
+        "group": null,
+        "location": null,
+        "locations": null,
+        "minHoursWeek": null,
+        "readyToStartToday": null
+      },
+      "buyer": {
+        "location": {
+          "offsetFromUtcMillis": -18000000,
+          "countryTimezone": "America/Chicago (UTC-05:00)",
+          "city": null,
+          "country": "United States"
+        },
+        "stats": {
+          "totalAssignments": 0,
+          "activeAssignmentsCount": 0,
+          "hoursCount": 0.0,
+          "feedbackCount": 0,
+          "score": 0.0,
+          "totalJobsWithHires": 0,
+          "totalCharges": null
+        },
+        "company": {
+          "isEDCReplicated": null,
+          "contractDate": "2026-08-20T00:00:00.000Z",
+          "profile": {
+            "industry": null,
+            "size": null
+          }
+        },
+        "jobs": {}
+      },
+      "similarJobs": [
+        {
+          "id": null,
+          "ciphertext": "~022064143618482144543",
+          "title": "Interior Design Website - Experienced Wordpress Developer Needed",
+          "description": "We're looking for an experienced and creative developer...",
+          "engagement": null,
+          "durationLabel": "1 to 3 months",
+          "contractorTier": "EXPERT",
+          "type": "FIXED",
+          "createdOn": "2026-06-09T00:32:43+0000",
+          "renewedOn": null,
+          "amount": {
+            "amount": 25.0
+          },
+          "maxAmount": null,
+          "ontologySkills": [
+            {
+              "id": null,
+              "prefLabel": "WordPress"
+            }
+          ],
+          "hourlyBudgetMin": 0.0,
+          "hourlyBudgetMax": 0.0
+        }
+      ],
+      "buyerExtra": {
+        "isPaymentMethodVerified": true
+      }
+    }
+  }
+}

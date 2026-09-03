@@ -45,6 +45,18 @@ type TabCaptureMetadata = {
   jobId: string;
   capturedAt: number;
 };
+function viewerModeRank(mode: JobInsights['viewerMode']): number {
+  return mode === 'authenticated' ? 2 : 1;
+}
+
+function shouldReplaceSessionCapture(
+  current: unknown,
+  incoming: JobInsights,
+  jobId: string | null,
+): boolean {
+  if (!isJobInsights(current) || normalizeJobId(current.job.id) !== jobId) return true;
+  return viewerModeRank(incoming.viewerMode) >= viewerModeRank(current.viewerMode);
+}
 
 const tabStates = new Map<number, TabState>();
 
@@ -142,14 +154,13 @@ async function persistJobInsights(
   } catch {
     // IndexedDB failures must not affect session-only capture.
   }
-
   try {
     let application = transitionApplicationRecord(createApplicationRecord(jobId), {
       type: 'viewed',
       at: capturedAt,
     });
     const observedState = insights.fit.applicationState;
-    if (observedState) {
+    if (insights.viewerMode === 'authenticated' && observedState) {
       application = transitionApplicationRecord(application, {
         type: 'observed-state',
         state: observedState,
@@ -374,15 +385,25 @@ export default defineBackground(() => {
             const metadataJobId = payloadJobId ?? currentJobId;
             const metadata = metadataJobId ? { jobId: metadataJobId, capturedAt } : undefined;
             try {
-              await browser.storage.session.set({
-                [storageKey(tabId)]: message.payload,
-                ...(metadata ? { [metadataKey(tabId)]: metadata } : {}),
-              });
-              if (!metadata) await browser.storage.session.remove(metadataKey(tabId));
+              const stored = await browser.storage.session.get(storageKey(tabId));
+              const current = stored[storageKey(tabId)];
+              const replaceSession = shouldReplaceSessionCapture(
+                current,
+                message.payload,
+                payloadJobId,
+              );
+              if (replaceSession) {
+                await browser.storage.session.set({
+                  [storageKey(tabId)]: message.payload,
+                  ...(metadata ? { [metadataKey(tabId)]: metadata } : {}),
+                });
+                if (!metadata) await browser.storage.session.remove(metadataKey(tabId));
+              }
               if (state.removed || state.generation !== generation) return;
               if (!message.replay) {
                 await persistJobInsights(state, generation, message.payload, capturedAt);
               }
+              if (!replaceSession) return;
               await setBadge(
                 tabId,
                 sender.tab?.url,

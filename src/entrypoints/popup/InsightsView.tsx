@@ -10,7 +10,7 @@ import {
   formatRating,
   formatRelativeTime,
 } from '../../lib/format';
-import type { ClientHistoryEntry, JobInsights, JobWarning } from '../../lib/insights';
+import type { ClientHistoryEntry, JobInsights, JobWarning, SimilarJob } from '../../lib/insights';
 import type { JobHistoryResponse } from '../../lib/protocol';
 import type { PortfolioMatch } from '../../lib/portfolio-match';
 import type { SkillMatchSummary } from '../../lib/skill-match';
@@ -678,6 +678,85 @@ function HistoryDetails({
     </details>
   );
 }
+function SimilarOpportunities({ jobs }: { jobs: SimilarJob[] }) {
+  if (jobs.length === 0) return null;
+
+  return (
+    <details
+      className="group mb-2.5 overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-xs dark:border-slate-800/90 dark:bg-slate-900"
+      aria-label="Similar Opportunities"
+    >
+      <summary className="flex cursor-pointer list-none items-center justify-between px-3.5 py-3 text-xs font-semibold text-slate-800 select-none hover:bg-slate-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-slate-200 dark:hover:bg-slate-800/60">
+        <span>Similar Opportunities</span>
+        <span className="flex items-center gap-2">
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 tabular-nums dark:bg-slate-800 dark:text-slate-300">
+            {jobs.length}
+          </span>
+          <ChevronDownIcon className="size-3.5 text-slate-400 transition-transform duration-200 group-open:rotate-180 dark:text-slate-500" />
+        </span>
+      </summary>
+      <ul className="m-0 list-none border-t border-slate-100 bg-slate-50/40 px-3.5 py-2 dark:border-slate-800 dark:bg-slate-900/50">
+        {jobs.map((job, index) => (
+          <li
+            key={job.id ?? job.ciphertext ?? `${job.title ?? 'untitled'}-${index}`}
+            className="border-b border-slate-100 py-2.5 last:border-b-0 dark:border-slate-800"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <span className="text-xs font-medium text-slate-900 leading-tight dark:text-slate-200">
+                {job.title ?? 'Untitled job'}
+              </span>
+              <span className="shrink-0 text-xs font-semibold tabular-nums text-slate-900 dark:text-slate-200">
+                {formatMoney(job.amount, job.currency)}
+              </span>
+            </div>
+            <div className="mt-1 flex flex-wrap gap-1">
+              {job.skills.map((skill) => (
+                <span
+                  key={skill}
+                  className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                >
+                  {skill}
+                </span>
+              ))}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
+function VisitorQualifications({ restrictions }: { restrictions: string[] }) {
+  return (
+    <section
+      className="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-xs dark:border-slate-800/90 dark:bg-slate-900"
+      aria-labelledby="qualifications-heading"
+    >
+      <div className="mb-2 border-b border-slate-100 pb-2 dark:border-slate-800">
+        <h2
+          id="qualifications-heading"
+          className="text-xs font-bold text-slate-900 dark:text-slate-100"
+        >
+          Qualifications
+        </h2>
+      </div>
+      {restrictions.length > 0 ? (
+        <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
+          {restrictions.map((restriction) => (
+            <li
+              key={restriction}
+              className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            >
+              {restriction}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <span className="text-[11px] text-slate-500 dark:text-slate-400">Not available</span>
+      )}
+    </section>
+  );
+}
 
 // --- Main State Views ---
 
@@ -915,6 +994,14 @@ export function AvailableState({
               <ThemeToggle mode={themeMode} onToggle={onToggleTheme} />
             )}
             {statusBadge}
+            {insights.viewerMode === 'visitor' && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400"
+                role="status"
+              >
+                Public Job View
+              </span>
+            )}
           </div>
         </div>
 
@@ -977,18 +1064,20 @@ export function AvailableState({
               </span>
             </button>
           </div>
-          <div
-            className="mt-2 flex items-center justify-between border-t border-slate-200/70 pt-2 text-[10.5px] dark:border-slate-700/70"
-            role="status"
-            aria-label={observedApplicationLabel}
-          >
-            <span className="font-medium text-slate-500 dark:text-slate-400">
-              Observed application
-            </span>
-            <span className="font-semibold text-slate-700 dark:text-slate-200">
-              {formatApplicationState(fit.applicationState)}
-            </span>
-          </div>
+          {insights.viewerMode === 'authenticated' && (
+            <div
+              className="mt-2 flex items-center justify-between border-t border-slate-200/70 pt-2 text-[10.5px] dark:border-slate-700/70"
+              role="status"
+              aria-label={observedApplicationLabel}
+            >
+              <span className="font-medium text-slate-500 dark:text-slate-400">
+                Observed application
+              </span>
+              <span className="font-semibold text-slate-700 dark:text-slate-200">
+                {formatApplicationState(fit.applicationState)}
+              </span>
+            </div>
+          )}
         </section>
       </header>
 
@@ -1009,7 +1098,7 @@ export function AvailableState({
           </h2>
           <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-950/60 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
             <LockIcon className="size-2.5" />
-            <span>Authenticated</span>
+            <span>{insights.viewerMode === 'visitor' ? 'Public snapshot' : 'Authenticated'}</span>
           </div>
         </div>
 
@@ -1031,7 +1120,7 @@ export function AvailableState({
 
         <div className="grid grid-cols-3 gap-2 border-t border-slate-800/90 pt-3 text-center">
           <div className="flex flex-col items-center">
-            <span className="text-[10px] font-medium text-slate-400">Interviewed</span>
+            <span className="text-[10px] font-medium text-slate-400">Interviews</span>
             <span className="text-xs font-bold tabular-nums text-white">
               {formatNumber(activity.interviewed)}
             </span>
@@ -1098,7 +1187,9 @@ export function AvailableState({
         </section>
       )}
 
-      {history && <ConversionSummary stats={history.conversion} />}
+      {insights.viewerMode === 'authenticated' && history && (
+        <ConversionSummary stats={history.conversion} />
+      )}
       {/* Client Track Record */}
       <section
         className="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-xs dark:border-slate-800/90 dark:bg-slate-900"
@@ -1187,7 +1278,10 @@ export function AvailableState({
           </div>
         </div>
       </section>
-      {history && (
+      {insights.viewerMode === 'visitor' && (
+        <VisitorQualifications restrictions={job.restrictions} />
+      )}
+      {insights.viewerMode === 'authenticated' && history && (
         <section
           className="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-xs dark:border-slate-800/90 dark:bg-slate-900"
           aria-labelledby="pay-profile-heading"
@@ -1224,104 +1318,121 @@ export function AvailableState({
         </section>
       )}
 
-      {/* Your Fit & Rate Dynamics */}
-      <section
-        className="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-xs dark:border-slate-800/90 dark:bg-slate-900"
-        aria-labelledby="fit-heading"
-      >
-        <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-2 dark:border-slate-800">
-          <div className="flex items-center gap-1.5">
-            <TargetIcon className="size-3.5 text-slate-500 dark:text-slate-400" />
-            <h2 id="fit-heading" className="text-xs font-bold text-slate-900 dark:text-slate-100">
-              Your Fit & Rates
-            </h2>
-          </div>
-          {fit.applicationState && (
-            <span className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-              {formatApplicationState(fit.applicationState)}
-            </span>
-          )}
-        </div>
-
-        <div className="space-y-3">
-          {/* Qualifications Match */}
-          <div className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 p-2.5 dark:border-slate-800 dark:bg-slate-800/60">
-            <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-              Qualifications Matched
-            </span>
-            <span className="rounded-md border border-slate-200/90 bg-white px-2 py-0.5 text-xs font-bold tabular-nums text-slate-900 shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
-              {qualificationSummary ?? 'Not available'}
-            </span>
-          </div>
-          <QualificationDetails details={fit.qualificationDetails ?? []} />
-          {personalization.skillMatch && (
-            <div className="rounded-xl border border-slate-100 bg-slate-50 p-2.5 dark:border-slate-800 dark:bg-slate-800/60">
-              <MetricCell
-                label="Profile skill match"
-                value={`${personalization.skillMatch.matched}/${personalization.skillMatch.total}`}
-              />
-              {personalization.skillMatch.matchedSkills.length > 0 && (
-                <p className="mt-1 text-[10.5px] text-slate-500 dark:text-slate-400">
-                  Matched: {personalization.skillMatch.matchedSkills.join(' · ')}
-                </p>
-              )}
+      {insights.viewerMode === 'visitor' ? (
+        <section
+          className="rounded-2xl border border-amber-200 bg-amber-50 p-3.5 shadow-xs dark:border-amber-900/70 dark:bg-amber-950/30"
+          aria-labelledby="fit-heading"
+        >
+          <h2 id="fit-heading" className="text-xs font-bold text-amber-950 dark:text-amber-200">
+            Personal Fit
+          </h2>
+          <p className="mt-2 text-xs leading-relaxed text-amber-900 dark:text-amber-300">
+            Log in to Upwork to view personal skill match %, portfolio ranking, and rate comparison.
+          </p>
+        </section>
+      ) : (
+        <section
+          className="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-xs dark:border-slate-800/90 dark:bg-slate-900"
+          aria-labelledby="fit-heading"
+        >
+          <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-2 dark:border-slate-800">
+            <div className="flex items-center gap-1.5">
+              <TargetIcon className="size-3.5 text-slate-500 dark:text-slate-400" />
+              <h2 id="fit-heading" className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                Your Fit & Rates
+              </h2>
             </div>
-          )}
-
-          {/* Rate Comparison Box */}
-          <div className="rounded-xl border border-slate-100 bg-slate-50 p-2.5 dark:border-slate-800 dark:bg-slate-800/60">
-            <div className="grid grid-cols-2 gap-2 pb-2">
-              <div>
-                <span className="block text-[10.5px] font-medium text-slate-500 dark:text-slate-400">
-                  Your Hourly Rate
-                </span>
-                <span className="text-xs font-bold tabular-nums text-slate-900 dark:text-slate-100">
-                  {formatMoney(effectiveFreelancerHourlyRate, 'USD')}
-                </span>
-                {usesFallbackHourlyRate && (
-                  <span className="mt-0.5 block text-[10px] text-slate-500 dark:text-slate-400">
-                    Local fallback
-                  </span>
-                )}
-              </div>
-              <div>
-                <span className="block text-[10.5px] font-medium text-slate-500 dark:text-slate-400">
-                  Client Avg Rate
-                </span>
-                <span className="text-xs font-bold tabular-nums text-slate-900 dark:text-slate-100">
-                  {formatMoney(client.averageHourlyRate, 'USD')}
-                </span>
-              </div>
-            </div>
-
-            {effectiveRateContext !== null && (
-              <div className="flex items-center justify-between border-t border-slate-200/60 pt-2 dark:border-slate-700/60">
-                <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                  Rate Comparison
-                </span>
-                <span className="rounded bg-slate-200/80 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-slate-800 dark:bg-slate-700 dark:text-slate-200">
-                  {formatRateContext(effectiveRateContext)}
-                </span>
-              </div>
+            {fit.applicationState && (
+              <span className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                {formatApplicationState(fit.applicationState)}
+              </span>
             )}
           </div>
-          <PortfolioMatches matches={personalization.portfolioMatches} />
-        </div>
-      </section>
 
-      {/* Expandable History Sections */}
-      <HistoryDetails
-        title="Related Previous Jobs"
-        jobs={clientHistory.relatedJobs}
-        badgeText="Repeat Context"
-        defaultOpen={true}
-      />
+          <div className="space-y-3">
+            {/* Qualifications Match */}
+            <div className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 p-2.5 dark:border-slate-800 dark:bg-slate-800/60">
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                Qualifications Matched
+              </span>
+              <span className="rounded-md border border-slate-200/90 bg-white px-2 py-0.5 text-xs font-bold tabular-nums text-slate-900 shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
+                {qualificationSummary ?? 'Not available'}
+              </span>
+            </div>
+            <QualificationDetails details={fit.qualificationDetails ?? []} />
+            {personalization.skillMatch && (
+              <div className="rounded-xl border border-slate-100 bg-slate-50 p-2.5 dark:border-slate-800 dark:bg-slate-800/60">
+                <MetricCell
+                  label="Profile skill match"
+                  value={`${personalization.skillMatch.matched}/${personalization.skillMatch.total}`}
+                />
+                {personalization.skillMatch.matchedSkills.length > 0 && (
+                  <p className="mt-1 text-[10.5px] text-slate-500 dark:text-slate-400">
+                    Matched: {personalization.skillMatch.matchedSkills.join(' · ')}
+                  </p>
+                )}
+              </div>
+            )}
 
-      <HistoryDetails
-        title="Client Hiring History"
-        jobs={clientHistory.recentJobs}
-        defaultOpen={false}
-      />
+            {/* Rate Comparison Box */}
+            <div className="rounded-xl border border-slate-100 bg-slate-50 p-2.5 dark:border-slate-800 dark:bg-slate-800/60">
+              <div className="grid grid-cols-2 gap-2 pb-2">
+                <div>
+                  <span className="block text-[10.5px] font-medium text-slate-500 dark:text-slate-400">
+                    Your Hourly Rate
+                  </span>
+                  <span className="text-xs font-bold tabular-nums text-slate-900 dark:text-slate-100">
+                    {formatMoney(effectiveFreelancerHourlyRate, 'USD')}
+                  </span>
+                  {usesFallbackHourlyRate && (
+                    <span className="mt-0.5 block text-[10px] text-slate-500 dark:text-slate-400">
+                      Local fallback
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <span className="block text-[10.5px] font-medium text-slate-500 dark:text-slate-400">
+                    Client Avg Rate
+                  </span>
+                  <span className="text-xs font-bold tabular-nums text-slate-900 dark:text-slate-100">
+                    {formatMoney(client.averageHourlyRate, 'USD')}
+                  </span>
+                </div>
+              </div>
+
+              {effectiveRateContext !== null && (
+                <div className="flex items-center justify-between border-t border-slate-200/60 pt-2 dark:border-slate-700/60">
+                  <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                    Rate Comparison
+                  </span>
+                  <span className="rounded bg-slate-200/80 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-slate-800 dark:bg-slate-700 dark:text-slate-200">
+                    {formatRateContext(effectiveRateContext)}
+                  </span>
+                </div>
+              )}
+            </div>
+            <PortfolioMatches matches={personalization.portfolioMatches} />
+          </div>
+        </section>
+      )}
+
+      {insights.viewerMode === 'visitor' && <SimilarOpportunities jobs={insights.similarJobs} />}
+
+      {insights.viewerMode === 'authenticated' && (
+        <>
+          <HistoryDetails
+            title="Related Previous Jobs"
+            jobs={clientHistory.relatedJobs}
+            badgeText="Repeat Context"
+            defaultOpen={true}
+          />
+          <HistoryDetails
+            title="Client Hiring History"
+            jobs={clientHistory.recentJobs}
+            defaultOpen={false}
+          />
+        </>
+      )}
 
       {/* Footer */}
       <footer className="mt-1 flex flex-col gap-1 rounded-xl bg-slate-200/50 p-2.5 text-[10.5px] text-slate-500 dark:bg-slate-900/60 dark:text-slate-400">
@@ -1334,7 +1445,9 @@ export function AvailableState({
           </span>
         </div>
         <div className="text-center text-[10px] text-slate-400 dark:text-slate-500">
-          Local session insights · Authenticated GraphQL snapshot
+          {insights.viewerMode === 'visitor'
+            ? 'Local session insights · Public GraphQL snapshot'
+            : 'Local session insights · Authenticated GraphQL snapshot'}
         </div>
       </footer>
     </div>

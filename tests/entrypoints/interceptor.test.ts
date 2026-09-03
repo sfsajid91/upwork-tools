@@ -1,3 +1,5 @@
+import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
 import { afterAll, beforeEach, describe, expect, test } from 'bun:test';
 import {
   isPageEvent,
@@ -8,6 +10,7 @@ import {
 
 const supportedUrl =
   'https://www.upwork.com/api/graphql/v2?alias=gql-query-get-auth-job-details-v2';
+const visitorUrl = 'https://www.upwork.com/api/graphql/v2?alias=gql-query-get-visitor-job-details';
 const unsupportedUrl = 'https://www.upwork.com/api/graphql/v2?alias=other-query';
 const rejectedUrl = 'https://www.upwork.com/api/graphql/v2?alias=reject-query';
 
@@ -24,6 +27,12 @@ const payload = {
     },
   },
 };
+const visitorPayload = JSON.parse(
+  readFileSync(
+    fileURLToPath(new URL('../fixtures/sample-visitor-job-details.json', import.meta.url)),
+    'utf8',
+  ),
+);
 
 const globals = globalThis as unknown as { window?: unknown };
 const hadWindow = 'window' in globalThis;
@@ -137,6 +146,19 @@ describe('interceptor inspection', () => {
     expect(isPageEvent(events[0])).toBe(true);
     if (!isPageEvent(events[0])) throw new Error('expected a page event');
     expect(events[0].payload.job.id).toBe(captureId);
+  });
+  test('captures a supported visitor response through the visitor alias', async () => {
+    fetchBody = JSON.stringify(visitorPayload);
+    const captured = waitForCapture();
+    const response = await wrappedFetch(visitorUrl);
+    expect(await response.json()).toEqual(visitorPayload);
+    await captured;
+
+    expect(events).toHaveLength(1);
+    expect(isPageEvent(events[0])).toBe(true);
+    if (!isPageEvent(events[0])) throw new Error('expected page event');
+    expect(events[0].payload.viewerMode).toBe('visitor');
+    expect(events[0].payload.job.title).toBe('Website Developer');
   });
 
   test('captures matching marker JSON and ignores mismatched job IDs', async () => {

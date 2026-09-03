@@ -15,6 +15,7 @@ import {
 } from '../../src/lib/protocol';
 
 const insights: JobInsights = {
+  viewerMode: 'authenticated',
   job: {
     id: 'job-1',
     title: null,
@@ -68,6 +69,7 @@ const insights: JobInsights = {
     applicationState: null,
   },
   history: { recentJobs: [], relatedJobs: [] },
+  similarJobs: [],
   warnings: [],
 };
 test('requires valid conversion stats in job history responses', () => {

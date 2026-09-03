@@ -160,6 +160,7 @@ const {
 } = await import('../../src/lib/watchlist');
 
 const capture = (id: string): JobInsights => ({
+  viewerMode: 'authenticated',
   job: {
     id,
     title: `Job ${id}`,
@@ -213,6 +214,7 @@ const capture = (id: string): JobInsights => ({
     applicationState: null,
   },
   history: { recentJobs: [], relatedJobs: [] },
+  similarJobs: [],
   warnings: [],
 });
 

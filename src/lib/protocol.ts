@@ -1,5 +1,6 @@
 import type { ConversionStats } from './conversion';
 import { isJobInsights, type JobInsights } from './insights';
+export type { SimilarJob, ViewerMode } from './insights';
 import type { ClientPayProfile } from './pay-profile';
 
 export interface JobHistoryApplicantSummary {

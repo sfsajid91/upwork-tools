@@ -6,7 +6,7 @@ import type {
   WatchlistRecord,
 } from './storage';
 import { HISTORY_RETENTION_DAYS, MAX_SNAPSHOTS_PER_JOB } from './storage';
-import { isJobInsights } from './insights';
+import { isJobInsights, type JobInsights } from './insights';
 import { normalizeJobId } from './job-page';
 import { mergeApplicationRecords } from './tracker';
 
@@ -310,6 +310,10 @@ async function enforceHistoryRetentionInTransaction(
   }
 }
 
+function viewerModeRank(mode: JobInsights['viewerMode']): number {
+  return mode === 'authenticated' ? 2 : 1;
+}
+
 function isLatestJobCaptureRecord(value: unknown): value is LatestJobCaptureRecord {
   if (typeof value !== 'object' || value === null) return false;
   const record = value as Record<string, unknown>;
@@ -354,9 +358,16 @@ export async function putLatestJobCapture(
     'readwrite',
     async (transaction) => {
       if (shouldWrite && !shouldWrite()) return null;
-      await requestResult(
-        transaction.objectStore(DATABASE_STORES.latestCaptures).put({ ...record, jobId }),
-      );
+      const store = transaction.objectStore(DATABASE_STORES.latestCaptures);
+      const current = await requestResult<LatestJobCaptureRecord | undefined>(store.get(jobId));
+      if (
+        current &&
+        isLatestJobCaptureRecord(current) &&
+        viewerModeRank(current.insights.viewerMode) > viewerModeRank(record.insights.viewerMode)
+      ) {
+        return false;
+      }
+      await requestResult(store.put({ ...record, jobId }));
       await enforceLatestCaptureRetentionInTransaction(transaction, Date.now());
       return true;
     },

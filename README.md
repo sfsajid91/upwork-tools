@@ -269,17 +269,6 @@ Contributions are welcome! To contribute:
 4. **Commit with conventional commits** and open a Pull Request.
 
 ---
-
-## Roadmap
-
-- [x] **v0.1 - Core Engine:** Document-start interception, exact proposal count, client stats.
-- [x] **v0.2 - Intelligence & Workflow:** Proposal velocity, client pay profile, qualification matcher, watchlist, application tracker.
-- [ ] **v0.3 - Data Portability:** Export local application history and watchlist to CSV / JSON.
-- [ ] **v0.4 - Firefox WebExtension Store:** Complete Mozilla add-on review submission.
-- [ ] **v0.5 - Custom Alert Thresholds:** Configurable visual badges when proposals exceed a custom number.
-
----
-
 ## License
 
 This project is licensed under the [MIT License](LICENSE).  

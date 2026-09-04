@@ -1,7 +1,7 @@
 # Graph Report - upwork-tools  (2026-09-04)
 
 ## Corpus Check
-- 236 files · ~445,514 words
+- 236 files · ~445,520 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `02ad8b24`
+- Built from commit: `83ef8e48`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -936,11 +936,11 @@ Nodes (5): Adaptation Strategies, Orientation & foldables, Phone → Tablet (iPa
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `isGeneratedFile()` connect `live-manual-edit-evidence.mjs` to `live-wrap.mjs`, `live-commit-manual-edits.mjs`, `live-accept.mjs`?**
-  _High betweenness centrality (0.006) - this node is a cross-community bridge._
-- **Why does `loadContext()` connect `runHook` to `context.mjs`, `live-server.mjs`, `hook-lib.mjs`, `resolveProject`, `context-signals.mjs`, `doctor.mjs`, `surface-briefs.mjs`?**
   _High betweenness centrality (0.005) - this node is a cross-community bridge._
-- **Why does `enterLiveRoot()` connect `roots.mjs` to `live-wrap.mjs`, `live-status.mjs`, `live-server.mjs`, `live-inject.mjs`, `live-complete.mjs`, `live-accept.mjs`, `live-poll.mjs`?**
+- **Why does `loadContext()` connect `runHook` to `context.mjs`, `live-server.mjs`, `hook-lib.mjs`, `resolveProject`, `context-signals.mjs`, `doctor.mjs`, `surface-briefs.mjs`?**
   _High betweenness centrality (0.004) - this node is a cross-community bridge._
+- **Why does `createManualApplyController()` connect `manual-apply.mjs` to `live-server.mjs`?**
+  _High betweenness centrality (0.003) - this node is a cross-community bridge._
 - **What connects `The Problem vs. The Solution`, `1. 🎯 Competition Intelligence`, `2. 🔍 Client Quality & Payment Reality` to the rest of the system?**
   _938 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `live-browser.js` be split into smaller, more focused modules?**

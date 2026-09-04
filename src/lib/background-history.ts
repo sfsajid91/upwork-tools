@@ -8,9 +8,9 @@ import {
 } from '../lib/database';
 import { summarizeJobSnapshots } from '../lib/history';
 import type { JobInsights } from '../lib/insights';
+import { normalizeJobId } from '../lib/job-page';
 import { deriveClientPayProfile } from '../lib/pay-profile';
 import type { JobHistoryResponse } from '../lib/protocol';
-import { normalizeJobId } from '../lib/job-page';
 import { calculateProposalVelocity } from '../lib/velocity';
 
 export interface BackgroundHistoryState {

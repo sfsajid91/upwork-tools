@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 import {
-  DATABASE_STORES,
   appendJobSnapshotIfChanged,
   clearAllLocalData,
   clearHistory,
+  DATABASE_STORES,
   enforceHistoryRetention,
   getApplication,
   getJob,

@@ -158,7 +158,7 @@ describe('InsightsView components', () => {
     expect(html.includes('aria-busy="true"')).toBe(true);
     expect(html.includes('Loading job insights')).toBe(true);
   });
-  test('renders a native SVG chart for one, two, and three captures with hover notes and linear gradient', () => {
+  test('renders a native SVG chart for one, two, and three captures with interaction notes and gradient', () => {
     const one = renderToString(
       <ApplicantHistoryChart captures={[{ capturedAt: 1_000, applicants: 4 }]} />,
     );
@@ -166,7 +166,8 @@ describe('InsightsView components', () => {
     expect(one.includes('<circle')).toBe(true);
     expect(one.includes('<path')).toBe(false);
     expect(one.includes('First capture recorded')).toBe(true);
-    expect(one.includes('Hover over points to view capture details')).toBe(true);
+    expect(one.includes('Hover or tap points to view capture details')).toBe(true);
+    expect(one.match(/proposals ·/g)?.length).toBe(1);
 
     const two = renderToString(
       <ApplicantHistoryChart
@@ -178,7 +179,7 @@ describe('InsightsView components', () => {
     );
     expect(two.includes('<path')).toBe(true);
     expect(two.includes('linearGradient')).toBe(true);
-    expect(two.includes('fill="url(#applicant-history-area)"')).toBe(true);
+    expect(two.includes('fill="url(#')).toBe(true);
     expect(two.includes('stroke-emerald-500/30')).toBe(true);
     expect(two.includes('proposals')).toBe(true);
 
@@ -207,7 +208,7 @@ describe('InsightsView components', () => {
     expect(html.includes('↑ +2')).toBe(true);
     expect(html.includes('Since first')).toBe(false);
     expect(html.includes('Since prior')).toBe(false);
-    expect(html.includes('Hover over points to view capture details')).toBe(true);
+    expect(html.includes('Hover or tap points to view capture details')).toBe(true);
   });
 
   test('renders AvailableState with exact proposals, client quality, and fit', () => {

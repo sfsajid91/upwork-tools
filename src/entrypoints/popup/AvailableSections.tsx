@@ -1,19 +1,19 @@
 import {
-  HistoryDetails,
-  MetricCell,
-  PortfolioMatches,
-  QualificationDetails,
-  SimilarOpportunities,
-  type PopupPersonalization,
-} from './PopupComponents';
-import { TargetIcon } from './PopupIcons';
-import {
   formatApplicationState,
   formatDate,
   formatMoney,
   formatRateContext,
 } from '../../lib/format';
 import type { ClientHistoryEntry, JobInsights } from '../../lib/insights';
+import {
+  HistoryDetails,
+  MetricCell,
+  type PopupPersonalization,
+  PortfolioMatches,
+  QualificationDetails,
+  SimilarOpportunities,
+} from './PopupComponents';
+import { TargetIcon } from './PopupIcons';
 
 export function FitSection({
   insights,

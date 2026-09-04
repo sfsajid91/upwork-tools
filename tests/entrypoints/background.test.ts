@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { GET_JOB_HISTORY, GET_JOB_INSIGHTS, STORE_JOB_INSIGHTS } from '../../src/lib/protocol';
 import {
   badgeBackgroundCalls,
   badgeTextCalls,
@@ -7,18 +8,18 @@ import {
   listener,
   pendingStorageOperations,
   removedListener,
-  store,
-  tabUrls,
-  updatedListener,
-  values,
-  visitorInsights,
   setNextGetGate,
   setNextRemoveGate,
   setNextSetGate,
   setReplayResponder,
   setResolveBadgeTextApplied,
+  store,
+  tabUrls,
+  updatedListener,
+  values,
+  visitorInsights,
 } from './background.test-support';
-import { GET_JOB_HISTORY, GET_JOB_INSIGHTS, STORE_JOB_INSIGHTS } from '../../src/lib/protocol';
+
 describe('background runtime messaging', () => {
   test('GET responds asynchronously with the stored snapshot', async () => {
     values.set('job-insights:7', insights);

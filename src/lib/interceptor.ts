@@ -1,7 +1,7 @@
 import { type JobInsights, normalizeJobInsights } from './insights';
 import { jobIdFromPageUrl, normalizeJobId } from './job-page';
-import { createPageEvent, isPageReplayRequest } from './protocol';
 import { logger } from './logger';
+import { createPageEvent, isPageReplayRequest } from './protocol';
 
 const JOB_DETAILS_ALIASES = [
   'gql-query-get-auth-job-details-v2',

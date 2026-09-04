@@ -1,6 +1,6 @@
 import { afterAll, beforeEach, expect } from 'bun:test';
 import { clearAllLocalData, openDatabase } from '../../src/lib/database';
-import { normalizeJobInsights, type JobInsights } from '../../src/lib/insights';
+import { type JobInsights, normalizeJobInsights } from '../../src/lib/insights';
 import type { JobSnapshotRecord } from '../../src/lib/storage';
 
 class FakeRequest<T = unknown> {

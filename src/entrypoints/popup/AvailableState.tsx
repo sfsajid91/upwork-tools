@@ -1,14 +1,29 @@
 import {
+  formatApplicationState,
+  formatDate,
+  formatJobStatus,
+  formatMoney,
+  formatNumber,
+  formatPercent,
+  formatRating,
+  formatRelativeCaptureTime,
+  formatRelativeTime,
+  formatTrackingSpan,
+} from '../../lib/format';
+import type { JobInsights } from '../../lib/insights';
+import type { JobHistoryResponse } from '../../lib/protocol';
+import type { ThemeMode } from '../../lib/theme';
+import { ApplicantHistoryChart } from './ApplicantHistoryChart';
+import { AvailableTail, FitSection } from './AvailableSections';
+import {
   ConversionSummary,
   MetricCell,
+  type PopupPersonalization,
   ThemeToggle,
   VisitorQualifications,
   WarningStrip,
-  type PopupPersonalization,
   type WatchlistStatus,
 } from './PopupComponents';
-import { AvailableTail, FitSection } from './AvailableSections';
-import { ApplicantHistoryChart } from './ApplicantHistoryChart';
 import {
   BuildingIcon,
   CheckCircleIcon,
@@ -17,20 +32,6 @@ import {
   MapPinIcon,
   StarIcon,
 } from './PopupIcons';
-import {
-  formatApplicationState,
-  formatDate,
-  formatJobStatus,
-  formatMoney,
-  formatNumber,
-  formatPercent,
-  formatRating,
-  formatRelativeTime,
-  formatTrackingSpan,
-} from '../../lib/format';
-import type { JobInsights } from '../../lib/insights';
-import type { JobHistoryResponse } from '../../lib/protocol';
-import type { ThemeMode } from '../../lib/theme';
 
 const EMPTY_POPUP_PERSONALIZATION: PopupPersonalization = {
   fallbackHourlyRate: null,
@@ -114,7 +115,7 @@ export function AvailableState({
   const latestHistoryCapture = historyCaptures.at(-1);
   const historyTrackingLabel =
     history?.summary && historyCaptures.length === 1 && firstHistoryCapture
-      ? `1 capture · First tracked ${formatRelativeTime(new Date(firstHistoryCapture.capturedAt).toISOString())}`
+      ? `1 capture · First tracked ${formatRelativeCaptureTime(firstHistoryCapture.capturedAt)}`
       : history?.summary && firstHistoryCapture && latestHistoryCapture
         ? `${historyCaptures.length} captures · ${formatTrackingSpan(firstHistoryCapture.capturedAt, latestHistoryCapture.capturedAt)}`
         : `${history?.summary?.snapshotCount ?? 0} captures`;

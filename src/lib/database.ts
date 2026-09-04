@@ -1,3 +1,12 @@
+import {
+  DATABASE_STORES,
+  type DatabaseStoreName,
+  iterateCursor,
+  requestResult,
+  runTransaction,
+} from './database-core';
+import { isJobInsights, type JobInsights } from './insights';
+import { normalizeJobId } from './job-page';
 import type {
   ApplicationRecord,
   JobRecord,
@@ -6,16 +15,8 @@ import type {
   WatchlistRecord,
 } from './storage';
 import { HISTORY_RETENTION_DAYS, MAX_SNAPSHOTS_PER_JOB } from './storage';
-import { isJobInsights, type JobInsights } from './insights';
-import { normalizeJobId } from './job-page';
 import { mergeApplicationRecords } from './tracker';
-import {
-  DATABASE_STORES,
-  iterateCursor,
-  requestResult,
-  runTransaction,
-  type DatabaseStoreName,
-} from './database-core';
+
 export {
   configureDatabaseSchema,
   DATABASE_NAME,
@@ -24,6 +25,7 @@ export {
   openDatabase,
   runTransaction,
 } from './database-core';
+
 const ALL_STORES = Object.values(DATABASE_STORES) as DatabaseStoreName[];
 const HISTORY_STORES = [
   DATABASE_STORES.jobSnapshots,

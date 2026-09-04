@@ -1,6 +1,6 @@
+import { deriveHiringWarnings } from './hiring-warnings';
 import { normalizeJobId } from './job-page';
 import { type QualificationDetail, summarizeQualificationMatches } from './qualification';
-import { deriveHiringWarnings } from './hiring-warnings';
 import { restrictionLabels } from './restrictions';
 
 export type ApplicationState = 'applied' | 'invited' | 'hired';

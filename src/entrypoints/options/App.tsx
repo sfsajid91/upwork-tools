@@ -3,9 +3,9 @@ import { browser } from 'wxt/browser';
 import { clearAllLocalData } from '../../lib/database';
 import { createPortfolio, removePortfolio, updatePortfolio } from '../../lib/portfolio';
 import { isPortfolioEntry, isUserProfile, setUserProfile } from '../../lib/settings';
-import { listWatchlistedJobs, removeWatchlistedJob } from '../../lib/watchlist';
-import { useTheme } from '../../lib/theme';
 import type { PortfolioEntry, UserProfile, WatchlistRecord } from '../../lib/storage';
+import { useTheme } from '../../lib/theme';
+import { listWatchlistedJobs, removeWatchlistedJob } from '../../lib/watchlist';
 import { OptionsContent } from './OptionsContent';
 
 type Status = { tone: 'success' | 'error'; message: string } | null;

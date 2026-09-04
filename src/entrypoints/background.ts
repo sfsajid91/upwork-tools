@@ -1,4 +1,4 @@
-import { createJobHistoryReader } from './background-history';
+import { createJobHistoryReader } from '../lib/background-history';
 import {
   appendJobSnapshotIfChanged,
   enforceHistoryRetention,

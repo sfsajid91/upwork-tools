@@ -1,9 +1,12 @@
+import { useId } from 'react';
 import { formatNumber, formatRelativeCaptureTime } from '../../lib/format';
 import type { JobHistoryCapture } from '../../lib/protocol';
 
 export function ApplicantHistoryChart({ captures }: { captures: JobHistoryCapture[] }) {
   const points = captures.flatMap((capture) =>
-    capture.applicants === null ? [] : [{ capture, applicants: capture.applicants }],
+    typeof capture?.applicants === 'number' && Number.isFinite(capture.applicants)
+      ? [{ capture, applicants: capture.applicants }]
+      : [],
   );
   const chartWidth = 320;
   const chartHeight = 104;
@@ -29,6 +32,7 @@ export function ApplicantHistoryChart({ captures }: { captures: JobHistoryCaptur
       : '';
   const firstPoint = points[0] ?? null;
   const latestPoint = points.at(-1) ?? null;
+  const gradientId = useId();
   return (
     <div className="mt-3">
       {points.length === 0 ? (
@@ -38,7 +42,7 @@ export function ApplicantHistoryChart({ captures }: { captures: JobHistoryCaptur
       ) : (
         <>
           <svg
-            className="h-24 w-full overflow-visible text-emerald-500 dark:text-emerald-400"
+            className="w-full aspect-[320/104] overflow-visible text-emerald-500 dark:text-emerald-400"
             viewBox={`0 0 ${chartWidth} ${chartHeight}`}
             role="img"
             aria-label={`Proposal count progression across ${points.length} captures`}
@@ -48,17 +52,9 @@ export function ApplicantHistoryChart({ captures }: { captures: JobHistoryCaptur
               Each point shows the captured proposal count and change from the prior point.
             </desc>
             <defs>
-              <linearGradient id="applicant-history-area" x1="0" x2="0" y1="0" y2="1">
-                <stop
-                  className="stop-emerald-500 dark:stop-emerald-400"
-                  offset="0%"
-                  stopOpacity="0.18"
-                />
-                <stop
-                  className="stop-emerald-500 dark:stop-emerald-400"
-                  offset="100%"
-                  stopOpacity="0.01"
-                />
+              <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stopColor="#10b981" stopOpacity="0.18" />
+                <stop offset="100%" stopColor="#10b981" stopOpacity="0.01" />
               </linearGradient>
             </defs>
             <line
@@ -69,7 +65,7 @@ export function ApplicantHistoryChart({ captures }: { captures: JobHistoryCaptur
               className="stroke-slate-200 dark:stroke-slate-700"
               strokeWidth="1"
             />
-            {areaPath && <path d={areaPath} fill="url(#applicant-history-area)" stroke="none" />}
+            {areaPath && <path d={areaPath} fill={`url(#${gradientId})`} stroke="none" />}
             {points.length > 1 && (
               <path
                 d={path}
@@ -85,8 +81,9 @@ export function ApplicantHistoryChart({ captures }: { captures: JobHistoryCaptur
               const previousApplicants = points[index - 1]?.applicants ?? point.applicants;
               const delta = index === 0 ? 0 : point.applicants - previousApplicants;
               const deltaLabel = delta > 0 ? `+${formatNumber(delta)}` : formatNumber(delta);
+              const pointKey = `${point.capture.capturedAt}-${point.applicants}-${index}`;
               return (
-                <g key={`${point.capture.capturedAt}-${point.applicants}`}>
+                <g key={pointKey}>
                   {index === points.length - 1 && (
                     <circle
                       cx={xFor(index)}
@@ -113,22 +110,31 @@ export function ApplicantHistoryChart({ captures }: { captures: JobHistoryCaptur
               );
             })}
           </svg>
-          {firstPoint && latestPoint && (
-            <div className="mt-0.5 flex items-center justify-between gap-3 text-[10px] text-slate-500 dark:text-slate-400">
-              <span>
-                {formatNumber(firstPoint.applicants)} proposals ·{' '}
-                {formatRelativeCaptureTime(firstPoint.capture.capturedAt)}
-              </span>
-              <span className="text-right">
-                {formatNumber(latestPoint.applicants)} proposals ·{' '}
-                {formatRelativeCaptureTime(latestPoint.capture.capturedAt)}
-              </span>
-            </div>
-          )}
-          <p className="mt-1 text-[10.5px] text-slate-400 dark:text-slate-500">
-            Hover over points to view capture details
+          {firstPoint &&
+            latestPoint &&
+            (points.length === 1 ? (
+              <div className="mt-0.5 text-center text-[10px] text-slate-500 dark:text-slate-400">
+                <span>
+                  {formatNumber(firstPoint.applicants)} proposals ·{' '}
+                  {formatRelativeCaptureTime(firstPoint.capture.capturedAt)}
+                </span>
+              </div>
+            ) : (
+              <div className="mt-0.5 flex items-center justify-between gap-3 text-[10px] text-slate-500 dark:text-slate-400">
+                <span>
+                  {formatNumber(firstPoint.applicants)} proposals ·{' '}
+                  {formatRelativeCaptureTime(firstPoint.capture.capturedAt)}
+                </span>
+                <span className="text-right">
+                  {formatNumber(latestPoint.applicants)} proposals ·{' '}
+                  {formatRelativeCaptureTime(latestPoint.capture.capturedAt)}
+                </span>
+              </div>
+            ))}
+          <p className="mt-1 text-[10.5px] text-slate-500 dark:text-slate-400">
+            Hover or tap points to view capture details
           </p>
-          {captures.length === 1 && (
+          {points.length === 1 && (
             <p className="text-[10px] text-slate-500 dark:text-slate-400">First capture recorded</p>
           )}
         </>

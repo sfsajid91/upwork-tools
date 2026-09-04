@@ -1,6 +1,7 @@
 import { afterAll, afterEach, beforeEach, expect } from 'bun:test';
 import type { JobInsights } from '../../src/lib/insights';
 import { STORE_JOB_INSIGHTS } from '../../src/lib/protocol';
+
 type RuntimeListener = (
   message: unknown,
   sender: { tab?: { id?: number; url?: string } },

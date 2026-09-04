@@ -9,8 +9,8 @@ import type { ThemeMode } from '../../lib/theme';
 import {
   AlertTriangleIcon,
   ChevronDownIcon,
-  MoonIcon,
   MonitorIcon,
+  MoonIcon,
   StarIcon,
   SunIcon,
 } from './PopupIcons';

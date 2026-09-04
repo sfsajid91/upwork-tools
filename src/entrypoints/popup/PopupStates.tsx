@@ -1,6 +1,6 @@
-import { AlertTriangleIcon, RadarIcon, ShieldCheckIcon } from './PopupIcons';
-import { ThemeToggle } from './PopupComponents';
 import type { ThemeMode } from '../../lib/theme';
+import { ThemeToggle } from './PopupComponents';
+import { AlertTriangleIcon, RadarIcon, ShieldCheckIcon } from './PopupIcons';
 
 export function EmptyState({
   title,

@@ -10,6 +10,7 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/sfsajid91/upwork-tools/releases/latest"><img src="https://img.shields.io/github/v/release/sfsajid91/upwork-tools?style=flat-square&color=10b981&labelColor=18181b" alt="Latest Release" /></a>
   <a href="#manifest-v3"><img src="https://img.shields.io/badge/Manifest-V3-3b82f6?style=flat-square&labelColor=18181b" alt="Manifest V3" /></a>
   <a href="#bun"><img src="https://img.shields.io/badge/Bun-1.4+-f472b6?style=flat-square&logo=bun&logoColor=white&labelColor=18181b" alt="Bun" /></a>
   <a href="#react"><img src="https://img.shields.io/badge/React-19-61dafb?style=flat-square&logo=react&logoColor=white&labelColor=18181b" alt="React 19" /></a>
@@ -120,7 +121,7 @@ See [`docs/architecture.md`](docs/architecture.md) for full technical specificat
 
 ### 🚀 For Freelancers & Users (No Coding Required)
 
-[![Download Extension](https://img.shields.io/badge/📦_Download_Latest_Release-v0.3.0_ZIP-10b981?style=for-the-badge&labelColor=18181b)](https://github.com/sfsajid91/upwork-tools/releases/latest)
+[![Download Extension](https://img.shields.io/github/v/release/sfsajid91/upwork-tools?style=for-the-badge&label=📦%20Download%20Latest%20Release&color=10b981&labelColor=18181b)](https://github.com/sfsajid91/upwork-tools/releases/latest)
 
 1. **Download & Extract:**
    - Download the latest **`upwork-tools-*.zip`** from [GitHub Releases](https://github.com/sfsajid91/upwork-tools/releases/latest).

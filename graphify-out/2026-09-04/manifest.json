@@ -696,9 +696,9 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1788413414.95221,
-    "seen": 1788425634.9400399,
-    "ast_hash": "8ec2967e568d6d0f550f609b6c86f528",
+    "mtime": 1788478396.3050108,
+    "seen": 1788478479.5370631,
+    "ast_hash": "4a34d0212c6dff54a700338e9843c9e1",
     "semantic_hash": ""
   },
   ".agents/skills/impeccable/SKILL.md": {
@@ -1332,9 +1332,9 @@
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1788361504.5084484,
-    "seen": 1788425634.9400475,
-    "ast_hash": "e5e89fe5eff3ecde7ced55cb04c49380",
+    "mtime": 1788478406.9291024,
+    "seen": 1788478479.5370798,
+    "ast_hash": "37d3b22ca86adaed7587edc2c40fb4e4",
     "semantic_hash": ""
   },
   "docs/architecture.md": {
@@ -1401,6 +1401,72 @@
     "mtime": 1788438156.7169611,
     "seen": 1788438253.8162265,
     "ast_hash": "a65c548d49986c497bf615cdde995067",
+    "semantic_hash": ""
+  },
+  "carousel.html": {
+    "mtime": 1788453205.1311898,
+    "seen": 1788478479.5371003,
+    "ast_hash": "f12605b98901d960e93928e8200f87d4",
+    "semantic_hash": ""
+  },
+  "images/upwork-tools-carousel.pdf": {
+    "mtime": 1788440485.660562,
+    "seen": 1788478479.5371296,
+    "ast_hash": "e76e5bf6e27c41e41131e724f2373379",
+    "semantic_hash": ""
+  },
+  "images/carousel/slide-1.png": {
+    "mtime": 1788440482.6632895,
+    "seen": 1788478479.5371356,
+    "ast_hash": "3e08d3dc7e97afd76be65b6328b02dff",
+    "semantic_hash": ""
+  },
+  "images/carousel/slide-2.png": {
+    "mtime": 1788440483.3913558,
+    "seen": 1788478479.5371413,
+    "ast_hash": "ab51fe402e660927595fe5ae7fb4ca10",
+    "semantic_hash": ""
+  },
+  "images/carousel/slide-3.png": {
+    "mtime": 1788440484.3374417,
+    "seen": 1788478479.5371473,
+    "ast_hash": "821bf77c471fecca41183041f37c5e47",
+    "semantic_hash": ""
+  },
+  "images/carousel/slide-4.png": {
+    "mtime": 1788440484.856489,
+    "seen": 1788478479.5371525,
+    "ast_hash": "6d9e1a6fe50fe213b682460d2ac69698",
+    "semantic_hash": ""
+  },
+  "images/carousel/slide-5.png": {
+    "mtime": 1788440485.5025475,
+    "seen": 1788478479.5371575,
+    "ast_hash": "eaa0064da627c6cd0265b8b0c5a23a04",
+    "semantic_hash": ""
+  },
+  "images/slides/slide-1-hero.webp": {
+    "mtime": 1788452526.6979208,
+    "seen": 1788478479.5371742,
+    "ast_hash": "5845f6b26f3fc90763d2376ae038bc92",
+    "semantic_hash": ""
+  },
+  "images/slides/slide-2-competition.webp": {
+    "mtime": 1788452526.7549257,
+    "seen": 1788478479.5371814,
+    "ast_hash": "93cb45b0b07d195c41e14b46b92fd7be",
+    "semantic_hash": ""
+  },
+  "images/slides/slide-3-client.webp": {
+    "mtime": 1788452526.8109303,
+    "seen": 1788478479.5371869,
+    "ast_hash": "ce6008de5459de862d34a648ae7ac868",
+    "semantic_hash": ""
+  },
+  "images/slides/slide-4-dualmode.webp": {
+    "mtime": 1788452526.9149392,
+    "seen": 1788478479.5371914,
+    "ast_hash": "bed5f088e8cffa545d84b3b4b421cbc5",
     "semantic_hash": ""
   }
 }

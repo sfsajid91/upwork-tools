@@ -1,6 +1,6 @@
-import { fileURLToPath } from 'node:url';
-import { readFileSync } from 'node:fs';
 import { afterAll, beforeEach, describe, expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import {
   isPageEvent,
   PAGE_EVENT_SOURCE,

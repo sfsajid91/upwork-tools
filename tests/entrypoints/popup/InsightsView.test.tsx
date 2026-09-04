@@ -1,15 +1,17 @@
-import { fileURLToPath } from 'node:url';
-import { readFileSync } from 'node:fs';
 import { describe, expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { renderToString } from 'react-dom/server';
-import { normalizeJobInsights } from '../../../src/lib/insights';
 import { mergePopupReadResult, type ViewState } from '../../../src/entrypoints/popup/App';
 import {
+  ApplicantHistoryChart,
   AvailableState,
   EmptyState,
   LoadingState,
   ThemeToggle,
 } from '../../../src/entrypoints/popup/InsightsView';
+import { normalizeJobInsights } from '../../../src/lib/insights';
+import type { JobHistoryResponse } from '../../../src/lib/protocol';
 
 const visitorFixture = JSON.parse(
   readFileSync(
@@ -104,6 +106,37 @@ function samplePayload() {
     },
   };
 }
+const historyFixture: JobHistoryResponse = {
+  jobId: 'job-1',
+  captures: [
+    { capturedAt: 1_000, applicants: 4 },
+    { capturedAt: 11_520_000, applicants: 6 },
+  ],
+  summary: {
+    snapshotCount: 2,
+    latestApplicants: 6,
+    firstSeenApplicants: 4,
+    firstSeenDelta: 2,
+    recentDelta: 2,
+  },
+  velocity: 1.2,
+  payProfile: {
+    totalCharges: null,
+    averageHourlyRate: null,
+    medianRecentFixedPayment: null,
+    averageRecentFixedPayment: null,
+    historicalHourlyRates: null,
+  },
+  conversion: {
+    applications: 0,
+    interviews: 0,
+    hires: 0,
+    applyToInterviewRate: null,
+    applyToInterviewDenominator: 0,
+    interviewToHireRate: null,
+    interviewToHireDenominator: 0,
+  },
+};
 
 describe('InsightsView components', () => {
   test('renders EmptyState in default and error tones', () => {
@@ -124,6 +157,58 @@ describe('InsightsView components', () => {
     const html = renderToString(<LoadingState />);
     expect(html.includes('aria-busy="true"')).toBe(true);
     expect(html.includes('Loading job insights')).toBe(true);
+  });
+  test('renders a native SVG chart for one, two, and three captures with interaction notes and gradient', () => {
+    const one = renderToString(
+      <ApplicantHistoryChart captures={[{ capturedAt: 1_000, applicants: 4 }]} />,
+    );
+    expect(one.includes('<svg')).toBe(true);
+    expect(one.includes('<circle')).toBe(true);
+    expect(one.includes('<path')).toBe(false);
+    expect(one.includes('First capture recorded')).toBe(true);
+    expect(one.includes('Hover or tap points to view capture details')).toBe(true);
+    expect(one.match(/proposals ·/g)?.length).toBe(1);
+
+    const two = renderToString(
+      <ApplicantHistoryChart
+        captures={[
+          { capturedAt: 1_000, applicants: 4 },
+          { capturedAt: 7_200_000, applicants: 6 },
+        ]}
+      />,
+    );
+    expect(two.includes('<path')).toBe(true);
+    expect(two.includes('linearGradient')).toBe(true);
+    expect(two.includes('fill="url(#')).toBe(true);
+    expect(two.includes('stroke-emerald-500/30')).toBe(true);
+    expect(two.includes('proposals')).toBe(true);
+
+    const three = renderToString(
+      <ApplicantHistoryChart
+        captures={[
+          { capturedAt: 1_000, applicants: 4 },
+          { capturedAt: 3_600_000, applicants: 5 },
+          { capturedAt: 7_200_000, applicants: 8 },
+        ]}
+      />,
+    );
+    expect(three.includes('dark:text-emerald-400')).toBe(true);
+    expect(three.includes('Capture ')).toBe(true);
+  });
+  test('renders friendly history labels and tracking span', () => {
+    const insights = normalizeJobInsights(samplePayload());
+    expect(insights).not.toBeNull();
+    if (!insights) throw new Error('insights should not be null');
+
+    const html = renderToString(<AvailableState insights={insights} history={historyFixture} />);
+    expect(html.includes('2 captures · 3.2 hrs')).toBe(true);
+    expect(html.includes('Total growth')).toBe(true);
+    expect(html.includes('Since last check')).toBe(true);
+    expect(html.includes('Proposals/hour')).toBe(true);
+    expect(html.includes('↑ +2')).toBe(true);
+    expect(html.includes('Since first')).toBe(false);
+    expect(html.includes('Since prior')).toBe(false);
+    expect(html.includes('Hover or tap points to view capture details')).toBe(true);
   });
 
   test('renders AvailableState with exact proposals, client quality, and fit', () => {
@@ -255,6 +340,7 @@ describe('InsightsView components', () => {
         insights={insights}
         history={{
           jobId: 'job-1',
+          captures: [],
           summary: null,
           velocity: null,
           payProfile: {
@@ -293,6 +379,7 @@ describe('InsightsView components', () => {
         insights={insights}
         history={{
           jobId: 'job-1',
+          captures: [],
           summary: null,
           velocity: null,
           payProfile: {

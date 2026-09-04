@@ -972,9 +972,9 @@
     "semantic_hash": "10e887b11852c796c5361f7e5d2a5b43"
   },
   "src/entrypoints/background.ts": {
-    "mtime": 1788482319.904089,
-    "seen": 1788482598.7322872,
-    "ast_hash": "a62afe929a42336ab6ab5be9bc0c4753",
+    "mtime": 1788478870.8563185,
+    "seen": 1788479004.113063,
+    "ast_hash": "c079df6a90e11f2a8097157f9e3ee9c3",
     "semantic_hash": ""
   },
   "src/entrypoints/content.ts": {
@@ -990,9 +990,9 @@
     "semantic_hash": ""
   },
   "src/entrypoints/options/App.tsx": {
-    "mtime": 1788482408.25698,
-    "seen": 1788482598.732297,
-    "ast_hash": "a634aa4ee5dff2a86100c8583007cb4a",
+    "mtime": 1788478410.3464537,
+    "seen": 1788479004.1130702,
+    "ast_hash": "82fc36efcf3fd86da2ed7d173209e457",
     "semantic_hash": ""
   },
   "src/entrypoints/options/main.tsx": {
@@ -1008,9 +1008,9 @@
     "semantic_hash": ""
   },
   "src/entrypoints/popup/InsightsView.tsx": {
-    "mtime": 1788482408.315986,
-    "seen": 1788482598.7323153,
-    "ast_hash": "95bae3191a744b7e7eb3f67729f74f17",
+    "mtime": 1788478211.069329,
+    "seen": 1788479004.1130874,
+    "ast_hash": "b71bcab0c511acae4078447dce5bc8a0",
     "semantic_hash": ""
   },
   "src/entrypoints/popup/main.tsx": {
@@ -1032,9 +1032,9 @@
     "semantic_hash": ""
   },
   "src/lib/database.ts": {
-    "mtime": 1788482409.0190566,
-    "seen": 1788482598.7323403,
-    "ast_hash": "a3b2313711d72902da92acf0c34ac661",
+    "mtime": 1788478934.6966996,
+    "seen": 1788479004.1131053,
+    "ast_hash": "fb9189eb1e5c45690fa382ffd548ec5d",
     "semantic_hash": ""
   },
   "src/lib/format.ts": {
@@ -1056,15 +1056,15 @@
     "semantic_hash": ""
   },
   "src/lib/insights.ts": {
-    "mtime": 1788482409.24908,
-    "seen": 1788482598.732356,
-    "ast_hash": "47c293f07e2a6795b0d64fe4a4b38218",
+    "mtime": 1788478870.9173245,
+    "seen": 1788479004.1131182,
+    "ast_hash": "46e70df84b6bfd31b4e0abdd27d0cfce",
     "semantic_hash": ""
   },
   "src/lib/interceptor.ts": {
-    "mtime": 1788482409.15007,
-    "seen": 1788482598.7323587,
-    "ast_hash": "74a74f4514372eb4abd44385ef34b29e",
+    "mtime": 1788459804.084321,
+    "seen": 1788479004.1131206,
+    "ast_hash": "ddf93ff50a96204bc45362c0c8b04ebc",
     "semantic_hash": ""
   },
   "src/lib/job-page.ts": {
@@ -1158,9 +1158,9 @@
     "semantic_hash": ""
   },
   "tests/entrypoints/background.test.ts": {
-    "mtime": 1788482410.135169,
-    "seen": 1788482598.732407,
-    "ast_hash": "184f26a970466673c33a41bbe77f9188",
+    "mtime": 1788478945.6267922,
+    "seen": 1788479004.1131644,
+    "ast_hash": "054bb41355a97a1f20065eca2eaad21d",
     "semantic_hash": ""
   },
   "tests/entrypoints/content.test.ts": {
@@ -1170,9 +1170,9 @@
     "semantic_hash": ""
   },
   "tests/entrypoints/interceptor.test.ts": {
-    "mtime": 1788482410.185484,
-    "seen": 1788482598.7324128,
-    "ast_hash": "5547a818bb21acd6cb877a269ff303ce",
+    "mtime": 1788459804.0893214,
+    "seen": 1788479004.1131692,
+    "ast_hash": "5881c468ab7fdba2b1b8643ab35808d6",
     "semantic_hash": ""
   },
   "tests/entrypoints/options/App.test.tsx": {
@@ -1182,9 +1182,9 @@
     "semantic_hash": ""
   },
   "tests/entrypoints/popup/InsightsView.test.tsx": {
-    "mtime": 1788482522.1854448,
-    "seen": 1788482598.7324178,
-    "ast_hash": "d2d50d21e1475dc8c4663c270c5f16d7",
+    "mtime": 1788459675.0619464,
+    "seen": 1788479004.1131735,
+    "ast_hash": "288bf2d7bce2a87e8dd4bb4555cc52af",
     "semantic_hash": ""
   },
   "tests/lib/applicant-metrics.test.ts": {
@@ -1200,9 +1200,9 @@
     "semantic_hash": ""
   },
   "tests/lib/database.test.ts": {
-    "mtime": 1788482409.808136,
-    "seen": 1788482598.7324326,
-    "ast_hash": "33b87512c1fa79efdf8725718ae919a8",
+    "mtime": 1788478870.8473175,
+    "seen": 1788479004.1131904,
+    "ast_hash": "65589596fca5f9b7800e2646742b3fcf",
     "semantic_hash": ""
   },
   "tests/lib/format.test.ts": {
@@ -1230,9 +1230,9 @@
     "semantic_hash": ""
   },
   "tests/lib/insights.test.ts": {
-    "mtime": 1788482409.1970747,
-    "seen": 1788482598.7324452,
-    "ast_hash": "0fb32a60f6ac5f32a540a162af60400b",
+    "mtime": 1788459804.0903213,
+    "seen": 1788479004.1132023,
+    "ast_hash": "76e10ba14e3033bc3fd2db0da54b3777",
     "semantic_hash": ""
   },
   "tests/lib/job-page.test.ts": {
@@ -1403,6 +1403,12 @@
     "ast_hash": "a65c548d49986c497bf615cdde995067",
     "semantic_hash": ""
   },
+  "src/entrypoints/background-history.ts": {
+    "mtime": 1788478940.80231,
+    "seen": 1788479004.1130598,
+    "ast_hash": "2085ac5e93c2cc5902ec39a0c9e52e07",
+    "semantic_hash": ""
+  },
   "src/entrypoints/options/OptionsContent.tsx": {
     "mtime": 1788478397.4491284,
     "seen": 1788479004.1130729,
@@ -1410,27 +1416,27 @@
     "semantic_hash": ""
   },
   "src/entrypoints/popup/ApplicantHistoryChart.tsx": {
-    "mtime": 1788482468.17901,
-    "seen": 1788482598.732308,
-    "ast_hash": "eb1f53d288515896cd40211b06161566",
+    "mtime": 1788478089.421639,
+    "seen": 1788479004.1130798,
+    "ast_hash": "8e7b3e9a26572a5e86138f949f8f157e",
     "semantic_hash": ""
   },
   "src/entrypoints/popup/AvailableSections.tsx": {
-    "mtime": 1788482408.288983,
-    "seen": 1788482598.7323105,
-    "ast_hash": "c40fc118d5f3e7267ccbd82644c3c5d2",
+    "mtime": 1788478258.9423294,
+    "seen": 1788479004.1130824,
+    "ast_hash": "e6c827a47ce92e0b3a1fc39c1bbabe90",
     "semantic_hash": ""
   },
   "src/entrypoints/popup/AvailableState.tsx": {
-    "mtime": 1788482408.5870132,
-    "seen": 1788482598.7323132,
-    "ast_hash": "9057c75cfd66fe288c3b3e46a0044c98",
+    "mtime": 1788479038.8312058,
+    "seen": 1788479090.445018,
+    "ast_hash": "e5abde18a570616968b5928ba4e2c5ca",
     "semantic_hash": ""
   },
   "src/entrypoints/popup/PopupComponents.tsx": {
-    "mtime": 1788482408.644019,
-    "seen": 1788482598.7323177,
-    "ast_hash": "77b2c215d41cbd77157a077815d1a828",
+    "mtime": 1788478930.839314,
+    "seen": 1788479004.1130898,
+    "ast_hash": "522de7533dc84c48cd9a2ddd1ab0aaa6",
     "semantic_hash": ""
   },
   "src/entrypoints/popup/PopupIcons.tsx": {
@@ -1440,9 +1446,9 @@
     "semantic_hash": ""
   },
   "src/entrypoints/popup/PopupStates.tsx": {
-    "mtime": 1788482408.5000045,
-    "seen": 1788482598.7323234,
-    "ast_hash": "b4d78d4ee572786692a9a45b593a0a1c",
+    "mtime": 1788478297.7104926,
+    "seen": 1788479004.113094,
+    "ast_hash": "6c8d1f49e754554b3fe41dcdd04cc60b",
     "semantic_hash": ""
   },
   "src/lib/database-core.ts": {
@@ -1458,15 +1464,15 @@
     "semantic_hash": ""
   },
   "tests/entrypoints/background.test-support.ts": {
-    "mtime": 1788482409.6102092,
-    "seen": 1788482598.7324047,
-    "ast_hash": "7ca1071d11b07338607862c129d46f0e",
+    "mtime": 1788478954.398669,
+    "seen": 1788479004.1131623,
+    "ast_hash": "44784799dc6ba435f27a5fd620ec0d50",
     "semantic_hash": ""
   },
   "tests/lib/database.test-support.ts": {
-    "mtime": 1788482410.0041559,
-    "seen": 1788482598.7324302,
-    "ast_hash": "f0fad5057b93c8cd7834d2ad5f22af81",
+    "mtime": 1788478870.87232,
+    "seen": 1788479004.1131878,
+    "ast_hash": "af5681f2c71cf4ff35e541ff31995c29",
     "semantic_hash": ""
   },
   "images/upwork-tools-carousel.pdf": {
@@ -1503,12 +1509,6 @@
     "mtime": 1788451825.3267283,
     "seen": 1788479004.1133804,
     "ast_hash": "eaa0064da627c6cd0265b8b0c5a23a04",
-    "semantic_hash": ""
-  },
-  "src/lib/background-history.ts": {
-    "mtime": 1788482557.3129797,
-    "seen": 1788482598.732332,
-    "ast_hash": "a33dea8c5645d85c8fe21114ee172b61",
     "semantic_hash": ""
   }
 }

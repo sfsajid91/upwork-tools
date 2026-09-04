@@ -1,253 +1,25 @@
-import { afterAll, afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import type { JobInsights } from '../../src/lib/insights';
+import { describe, expect, test } from 'bun:test';
 import { GET_JOB_HISTORY, GET_JOB_INSIGHTS, STORE_JOB_INSIGHTS } from '../../src/lib/protocol';
-type RuntimeListener = (
-  message: unknown,
-  sender: { tab?: { id?: number; url?: string } },
-  sendResponse: (response?: unknown) => void,
-) => unknown;
-type TabUpdatedListener = (tabId: number, changeInfo: { status?: string; url?: string }) => void;
-type TabRemovedListener = (tabId: number) => void;
+import {
+  badgeBackgroundCalls,
+  badgeTextCalls,
+  deferred,
+  insights,
+  listener,
+  pendingStorageOperations,
+  removedListener,
+  setNextGetGate,
+  setNextRemoveGate,
+  setNextSetGate,
+  setReplayResponder,
+  setResolveBadgeTextApplied,
+  store,
+  tabUrls,
+  updatedListener,
+  values,
+  visitorInsights,
+} from './background.test-support';
 
-type Deferred = {
-  promise: Promise<void>;
-  resolve: () => void;
-  started: Promise<void>;
-  start: () => void;
-};
-
-function deferred(): Deferred {
-  let resolve!: () => void;
-  let start!: () => void;
-  const promise = new Promise<void>((complete) => {
-    resolve = complete;
-  });
-  const started = new Promise<void>((complete) => {
-    start = complete;
-  });
-  return { promise, resolve, started, start };
-}
-
-const values = new Map<string, unknown>();
-const badgeTextCalls: Array<{ tabId: number; text: string }> = [];
-const badgeBackgroundCalls: Array<{ tabId: number; color: string }> = [];
-let resolveBadgeTextApplied: (() => void) | undefined;
-let removedListener: TabRemovedListener | undefined;
-const tabUrls = new Map<number, string>();
-let listener: RuntimeListener | undefined;
-let updatedListener: TabUpdatedListener | undefined;
-type ReplayResponder = (tabId: number, message: unknown) => Promise<unknown>;
-let nextSetGate: Deferred | undefined;
-let replayResponder: ReplayResponder | undefined;
-let nextRemoveGate: Deferred | undefined;
-let nextGetGate: Deferred | undefined;
-const pendingStorageOperations = new Set<Promise<unknown>>();
-
-function trackStorageOperation<T>(operation: Promise<T>): Promise<T> {
-  pendingStorageOperations.add(operation);
-  void operation.then(
-    () => pendingStorageOperations.delete(operation),
-    () => pendingStorageOperations.delete(operation),
-  );
-  return operation;
-}
-
-const fakeBrowser = {
-  runtime: {
-    onMessage: {
-      addListener(callback: RuntimeListener) {
-        listener = callback;
-      },
-    },
-  },
-  storage: {
-    session: {
-      set(items: Record<string, unknown>) {
-        return trackStorageOperation(
-          (async () => {
-            if (nextSetGate) {
-              const gate = nextSetGate;
-              nextSetGate = undefined;
-              gate.start();
-              await gate.promise;
-            }
-            for (const [key, value] of Object.entries(items)) values.set(key, value);
-          })(),
-        );
-      },
-      async get(keys: string | string[]) {
-        const requested = Array.isArray(keys) ? keys : [keys];
-        return Object.fromEntries(requested.map((key) => [key, values.get(key)]));
-      },
-      remove(keys: string | string[]) {
-        return trackStorageOperation(
-          (async () => {
-            if (nextRemoveGate) {
-              const gate = nextRemoveGate;
-              nextRemoveGate = undefined;
-              gate.start();
-              await gate.promise;
-            }
-            for (const key of Array.isArray(keys) ? keys : [keys]) values.delete(key);
-          })(),
-        );
-      },
-    },
-  },
-  action: {
-    async setBadgeText(details: { tabId: number; text: string }) {
-      badgeTextCalls.push(details);
-      resolveBadgeTextApplied?.();
-      resolveBadgeTextApplied = undefined;
-    },
-    async setBadgeBackgroundColor(details: { tabId: number; color: string }) {
-      badgeBackgroundCalls.push(details);
-    },
-  },
-  tabs: {
-    onUpdated: {
-      addListener(callback: TabUpdatedListener) {
-        updatedListener = callback;
-      },
-    },
-    onRemoved: {
-      addListener(callback: TabRemovedListener) {
-        removedListener = callback;
-      },
-    },
-    async get(tabId: number) {
-      if (nextGetGate) {
-        const gate = nextGetGate;
-        nextGetGate = undefined;
-        gate.start();
-        await gate.promise;
-      }
-      return { id: tabId, url: tabUrls.get(tabId) ?? 'https://www.upwork.com/ab/details/job-7' };
-    },
-    async sendMessage(tabId: number, message: unknown) {
-      return replayResponder?.(tabId, message) ?? false;
-    },
-  },
-};
-
-const testGlobals = globalThis as unknown as {
-  browser?: typeof fakeBrowser;
-  defineBackground?: (callback: () => void) => unknown;
-};
-const hadBrowser = 'browser' in globalThis;
-const previousBrowser = testGlobals.browser;
-const hadDefineBackground = 'defineBackground' in globalThis;
-const previousDefineBackground = testGlobals.defineBackground;
-afterAll(() => {
-  if (hadBrowser) testGlobals.browser = previousBrowser;
-  else delete testGlobals.browser;
-  if (hadDefineBackground) testGlobals.defineBackground = previousDefineBackground;
-  else delete testGlobals.defineBackground;
-});
-testGlobals.browser = fakeBrowser;
-testGlobals.defineBackground = (callback) => {
-  callback();
-};
-
-// Static import cannot work here because the background entrypoint reads these test globals at load time.
-await import(`../../src/entrypoints/background.ts?test=${crypto.randomUUID()}`);
-
-const insights: JobInsights = {
-  viewerMode: 'authenticated',
-  job: {
-    id: 'job-7',
-    title: null,
-    description: null,
-    status: null,
-    type: null,
-    postedOn: null,
-    publishTime: null,
-    workload: null,
-    contractorTier: null,
-    budgetAmount: null,
-    budgetCurrency: null,
-    hourlyBudgetMin: null,
-    hourlyBudgetMax: null,
-    duration: null,
-    category: null,
-    skills: [],
-    restrictions: [],
-  },
-  activity: {
-    exactProposals: 4,
-    interviewed: null,
-    interviewRate: null,
-    totalHired: null,
-    positionsToHire: null,
-    lastBuyerActivity: null,
-  },
-  client: {
-    topClient: null,
-    paymentVerified: null,
-    country: null,
-    city: null,
-    totalAssignments: null,
-    activeAssignments: null,
-    hours: null,
-    feedbackCount: null,
-    rating: null,
-    totalJobsWithHires: null,
-    jobsPosted: null,
-    hireRate: null,
-    totalCharges: null,
-    averageHourlyRate: null,
-    memberSince: null,
-  },
-  fit: {
-    qualificationsMatched: null,
-    qualificationsTotal: null,
-    qualificationDetails: null,
-    freelancerHourlyRate: null,
-    rateContext: null,
-    applicationState: null,
-  },
-  history: { recentJobs: [], relatedJobs: [] },
-  similarJobs: [],
-  warnings: [],
-};
-const visitorInsights: JobInsights = {
-  ...insights,
-  viewerMode: 'visitor',
-  fit: {
-    ...insights.fit,
-    freelancerHourlyRate: null,
-    rateContext: null,
-    applicationState: null,
-  },
-};
-beforeEach(() => {
-  values.clear();
-  tabUrls.clear();
-  badgeTextCalls.length = 0;
-  badgeBackgroundCalls.length = 0;
-  nextSetGate = undefined;
-  replayResponder = undefined;
-  nextRemoveGate = undefined;
-  nextGetGate = undefined;
-});
-afterEach(async () => {
-  while (pendingStorageOperations.size > 0) {
-    await Promise.all([...pendingStorageOperations]);
-  }
-});
-function store(tabId: number, url: string, payload = insights): Promise<void> {
-  tabUrls.set(tabId, url);
-  return new Promise((resolve) => {
-    const returned = listener?.(
-      { type: STORE_JOB_INSIGHTS, payload },
-      { tab: { id: tabId, url } },
-      () => {
-        expect(returned).toBe(true);
-        resolve();
-      },
-    );
-  });
-}
 describe('background runtime messaging', () => {
   test('GET responds asynchronously with the stored snapshot', async () => {
     values.set('job-insights:7', insights);
@@ -302,7 +74,7 @@ describe('background runtime messaging', () => {
   test('stale STORE work is discarded after navigation starts', async () => {
     const gate = deferred();
     const payload = { ...insights, job: { ...insights.job, id: 'job-101' } };
-    nextSetGate = gate;
+    setNextSetGate(gate);
     const completed = store(101, 'https://www.upwork.com/ab/details/job-101', payload);
 
     await gate.started;
@@ -368,7 +140,7 @@ describe('background runtime messaging', () => {
   test('URL-only SPA navigation invalidates an in-flight STORE', async () => {
     const tabId = 110;
     const gate = deferred();
-    nextSetGate = gate;
+    setNextSetGate(gate);
     const completed = store(tabId, 'https://www.upwork.com/ab/details/job-7');
     await gate.started;
 
@@ -399,7 +171,7 @@ describe('background runtime messaging', () => {
     await Promise.all([...pendingStorageOperations]);
 
     const gate = deferred();
-    nextSetGate = gate;
+    setNextSetGate(gate);
     const payload = { ...insights, job: { ...insights.job, id: 'job-8' } };
     const completed = store(tabId, url, payload);
     await gate.started;
@@ -415,7 +187,7 @@ describe('background runtime messaging', () => {
     const tabId = 104;
     const url = 'https://www.upwork.com/ab/details/job-7';
     const badgeApplied = Promise.withResolvers<void>();
-    resolveBadgeTextApplied = badgeApplied.resolve;
+    setResolveBadgeTextApplied(badgeApplied.resolve);
     values.set(`job-insights:${tabId}`, insights);
     values.set(`job-insights:${tabId}:metadata`, { jobId: 'job-7', capturedAt: Date.now() });
     tabUrls.set(tabId, url);
@@ -472,15 +244,15 @@ describe('background runtime messaging', () => {
 
   test('serializes GET behind an in-flight STORE without replay', async () => {
     const gate = deferred();
-    nextSetGate = gate;
+    setNextSetGate(gate);
     const storeCompleted = store(106, 'https://www.upwork.com/ab/details/job-7');
     await gate.started;
 
     let replayed = false;
-    replayResponder = async () => {
+    setReplayResponder(async () => {
       replayed = true;
       return false;
-    };
+    });
     let response: unknown;
     const getCompleted = Promise.withResolvers<void>();
     listener?.({ type: GET_JOB_INSIGHTS, tabId: 106 }, {}, (value) => {
@@ -502,7 +274,7 @@ describe('background runtime messaging', () => {
       status: 'loading',
       url: 'https://www.upwork.com/ab/details/job-7',
     });
-    nextSetGate = gate;
+    setNextSetGate(gate);
     const completed = store(tabId, 'https://www.upwork.com/ab/details/job-7');
     await gate.started;
 
@@ -578,7 +350,7 @@ describe('background runtime messaging', () => {
     values.set('job-insights:20', insights);
     tabUrls.set(20, 'https://www.upwork.com/ab/details/job-7');
     values.delete('job-insights:20:metadata');
-    replayResponder = async (tabId) => {
+    setReplayResponder(async (tabId) => {
       const { promise, resolve } = Promise.withResolvers<boolean>();
       listener?.(
         {
@@ -590,7 +362,7 @@ describe('background runtime messaging', () => {
         () => resolve(true),
       );
       return promise;
-    };
+    });
 
     let response: unknown;
     const completed = Promise.withResolvers<void>();
@@ -633,7 +405,7 @@ describe('background runtime messaging', () => {
   test('stale STORE cannot retain a latest session capture after navigation', async () => {
     const tabId = 23;
     const gate = deferred();
-    nextSetGate = gate;
+    setNextSetGate(gate);
     const completed = store(tabId, 'https://www.upwork.com/ab/details/job-7');
     await gate.started;
 
@@ -653,7 +425,7 @@ describe('background runtime messaging', () => {
     const replacement = { ...insights, job: { ...insights.job, id: 'job-24' } };
     values.set(`job-insights:${tabId}`, insights);
     values.set(`job-insights:${tabId}:metadata`, { jobId: 'job-7', capturedAt: Date.now() });
-    nextRemoveGate = gate;
+    setNextRemoveGate(gate);
     removedListener?.(tabId);
     await gate.started;
 
@@ -668,7 +440,7 @@ describe('background runtime messaging', () => {
     const tabId = 25;
     const gate = deferred();
     tabUrls.set(tabId, 'https://www.upwork.com/ab/details/job-7');
-    nextGetGate = gate;
+    setNextGetGate(gate);
     let response: unknown;
     const completed = Promise.withResolvers<void>();
     const returned = listener?.({ type: GET_JOB_HISTORY, tabId, jobId: 'job-7' }, {}, (value) => {

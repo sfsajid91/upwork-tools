@@ -14,6 +14,20 @@ export function formatMoney(amount: number | null, currency: string | null): str
     maximumFractionDigits: 2,
   }).format(amount);
 }
+export function formatTrackingSpan(startAt: number, endAt: number): string {
+  if (!Number.isInteger(startAt) || !Number.isInteger(endAt) || startAt <= 0 || endAt < startAt) {
+    return 'Tracking time unavailable';
+  }
+  const elapsedHours = (endAt - startAt) / 3_600_000;
+  if (elapsedHours < 1 / 60) return 'Less than a minute';
+  if (elapsedHours < 1) {
+    const minutes = Math.round(elapsedHours * 60);
+    return `${minutes} min`;
+  }
+  if (elapsedHours < 24) return `${elapsedHours.toFixed(1)} hrs`;
+  const days = elapsedHours / 24;
+  return `${days.toFixed(1)} days`;
+}
 
 export function formatPercent(value: number | null): string {
   return value === null || !Number.isFinite(value) ? 'Not available' : `${value.toFixed(1)}%`;
@@ -60,4 +74,14 @@ export function formatRelativeTime(value: string | null): string {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.round(hours / 24);
   return `${days}d ago`;
+}
+
+export function formatRelativeCaptureTime(value: number, now = Date.now()): string {
+  if (!Number.isFinite(value) || value <= 0 || !Number.isFinite(now)) return 'Not available';
+  const elapsedMinutes = Math.max(0, now - value) / 60_000;
+  if (elapsedMinutes < 1) return 'Just now';
+  if (elapsedMinutes < 60) return `${Math.round(elapsedMinutes)}m ago`;
+  const elapsedHours = elapsedMinutes / 60;
+  if (elapsedHours < 24) return `${Math.round(elapsedHours)}h ago`;
+  return `${Math.round(elapsedHours / 24)}d ago`;
 }

@@ -75,6 +75,7 @@ const insights: JobInsights = {
 test('requires valid conversion stats in job history responses', () => {
   const response = {
     jobId: 'job-1',
+    captures: [],
     summary: null,
     velocity: null,
     payProfile: {
@@ -96,6 +97,43 @@ test('requires valid conversion stats in job history responses', () => {
   };
 
   expect(isJobHistoryResponse(response)).toBe(true);
+  const withCaptures = {
+    ...response,
+    captures: [
+      { capturedAt: 100, applicants: 2 },
+      { capturedAt: 200, applicants: 3 },
+    ],
+    summary: {
+      snapshotCount: 2,
+      latestApplicants: 3,
+      firstSeenApplicants: 2,
+      firstSeenDelta: 1,
+      recentDelta: 1,
+    },
+  };
+  expect(isJobHistoryResponse(withCaptures)).toBe(true);
+  expect(
+    isJobHistoryResponse({
+      ...withCaptures,
+      captures: [{ capturedAt: 100, applicants: -1 }],
+      summary: { ...withCaptures.summary, snapshotCount: 1 },
+    }),
+  ).toBe(false);
+  for (const capturedAt of [0, -1, 1.5, Number.NaN]) {
+    expect(
+      isJobHistoryResponse({
+        ...withCaptures,
+        captures: [{ capturedAt, applicants: 2 }],
+        summary: { ...withCaptures.summary, snapshotCount: 1 },
+      }),
+    ).toBe(false);
+  }
+  expect(
+    isJobHistoryResponse({
+      ...withCaptures,
+      summary: { ...withCaptures.summary, snapshotCount: 1 },
+    }),
+  ).toBe(false);
   expect(
     isJobHistoryResponse({
       ...response,

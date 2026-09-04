@@ -118,18 +118,22 @@ See [`docs/architecture.md`](docs/architecture.md) for full technical specificat
 
 ## Installation & Quick Start
 
-### For Freelancers & Users (Load Unpacked)
+### 🚀 For Freelancers & Users (No Coding Required)
 
-1. **Build or Download the Extension:**
-   - Clone the repository and run `bun install && bun run build` (or download the build artifact).
+[![Download Extension](https://img.shields.io/badge/📦_Download_Latest_Release-v0.3.0_ZIP-10b981?style=for-the-badge&labelColor=18181b)](https://github.com/sfsajid91/upwork-tools/releases/latest)
+
+1. **Download & Extract:**
+   - Download the latest **`upwork-tools-*.zip`** from [GitHub Releases](https://github.com/sfsajid91/upwork-tools/releases/latest).
+   - Extract the ZIP file into a folder on your computer.
 2. **Open Extensions Page:**
-   - In Chrome, Brave, Edge, or Arc, navigate to `chrome://extensions`.
+   - In Chrome, Brave, Edge, or Arc, type `chrome://extensions` in your address bar and press Enter.
 3. **Enable Developer Mode:**
-   - Toggle the **Developer mode** switch in the top-right corner.
+   - Toggle the **Developer mode** switch ON in the top-right corner of the page.
 4. **Load the Extension:**
-   - Click **Load unpacked** (top-left) and select the `.output/chrome-mv3` directory.
-5. **Pin & Use:**
-   - Pin **Upwork Tools** to your browser toolbar. Open any authenticated Upwork job details page and click the icon!
+   - Click the **Load unpacked** button in the top-left corner.
+   - Select the extracted folder (the directory containing `manifest.json`).
+5. **Pin & Browse:**
+   - Click the puzzle piece icon (`🧩`) in your browser toolbar, pin **Upwork Tools**, and open any Upwork job listing!
 
 ---
 

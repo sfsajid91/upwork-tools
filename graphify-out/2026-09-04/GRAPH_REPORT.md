@@ -1,16 +1,16 @@
 # Graph Report - upwork-tools  (2026-09-04)
 
 ## Corpus Check
-- 236 files · ~615,234 words
+- 236 files · ~445,514 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 4413 nodes · 10374 edges · 179 communities (172 shown, 7 thin omitted)
+- 4413 nodes · 10374 edges · 182 communities (175 shown, 7 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 123 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `920211e3`
+- Built from commit: `02ad8b24`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -53,7 +53,7 @@
 - live-wrap.mjs
 - InsightsView.tsx
 - runHook
-- new-work.md
+- SKILL.md
 - background.ts
 - impeccable-paths.mjs
 - parseRgb
@@ -66,7 +66,7 @@
 - resolveLengthPx
 - insert-ui.mjs
 - live-manual-edit-evidence.mjs
-- adapt.md
+- Responsive Design
 - handleManualEditActivity
 - nuxt.mjs
 - manual-edit-routes.mjs
@@ -129,7 +129,7 @@
 - pin.mjs
 - bolder.md
 - resolveProject
-- Responsive Design
+- checkHtmlPatterns
 - rules
 - critique.md
 - Simplify the Design
@@ -158,11 +158,11 @@
 - hiring-warnings.ts
 - formatter
 - Repository Guidelines
-- Operate mode depth (and Read notes)
+- inline-ignores.mjs
 - Android platform
 - filterFindings
 - Persona-Based Design Testing
-- SKILL.md
+- Operate mode depth (and Read notes)
 - live-setup.md
 - svelte-component.mjs
 - live-complete.mjs
@@ -193,6 +193,9 @@
 - selectAvailablePendingEvent
 - provider.mjs
 - FakeIndex
+- Extract Flow
+- Generate Report
+- Adaptation Strategies
 - FakeDatabase
 
 ## God Nodes (most connected - your core abstractions)
@@ -210,19 +213,19 @@
 ## Surprising Connections (you probably didn't know these)
 - `Upwork Tools` --conceptually_related_to--> `Upwork Tools Product Definition`  [INFERRED]
   README.md → PRODUCT.md
-- `aggregateConversionStats()` --calls--> `stats()`  [EXTRACTED]
-  src/lib/conversion.ts → tests/lib/tracker-conversion.test.ts
 - `Upwork Tools` --references--> `Repository Guidelines`  [EXTRACTED]
   README.md → AGENTS.md
-- `enableInlineEdit()` --indirect_call--> `own()`  [INFERRED]
-  .agents/skills/impeccable/scripts/live-browser.js → .agents/skills/impeccable/scripts/live-browser-dom.js
+- `aggregateConversionStats()` --calls--> `stats()`  [EXTRACTED]
+  src/lib/conversion.ts → tests/lib/tracker-conversion.test.ts
 - `appendJobSnapshotIfChanged()` --calls--> `expectSafeDatabaseResults()`  [EXTRACTED]
   src/lib/database.ts → tests/lib/storage-degradation.test.ts
+- `clearAllLocalData()` --calls--> `clearLocalData()`  [EXTRACTED]
+  src/lib/database.ts → src/entrypoints/options/App.tsx
 
 ## Import Cycles
 - 2-file cycle: `src/lib/insights-validation.ts -> src/lib/insights.ts -> src/lib/insights-validation.ts`
 
-## Communities (179 total, 7 thin omitted)
+## Communities (182 total, 7 thin omitted)
 
 ### Community 0 - "live-browser.js"
 Cohesion: 0.03
@@ -230,7 +233,7 @@ Nodes (133): acceptedDomAlreadyClean(), applyGlobalBarLabelState(), applyPlaceho
 
 ### Community 1 - "checks.mjs"
 Cohesion: 0.03
-Nodes (137): ANIMATION_VALUE_KEYWORDS, borderColorsFromStyle(), borderWidthsFromStyle(), buildHtmlPatternCorpora(), checkClippedOverflow(), checkEdgeFlushCardsDOM(), checkElementBlinkingCursorDOM(), checkElementClippedOverflow() (+129 more)
+Nodes (115): ANIMATION_VALUE_KEYWORDS, borderColorsFromStyle(), borderWidthsFromStyle(), checkBorders(), checkClippedOverflow(), checkEdgeFlushCardsDOM(), checkElementBlinkingCursorDOM(), checkElementBorders() (+107 more)
 
 ### Community 2 - "context.mjs"
 Cohesion: 0.06
@@ -289,8 +292,8 @@ Cohesion: 0.07
 Nodes (56): actionLabel(), applyConfigureBarChrome(), bindConfigureCountPillTooltip(), bindConfigureInlineControlHover(), bindConfigureModifierPillHover(), buildConfigureActionControl(), buildConfigureCountControl(), buildConfigureRow() (+48 more)
 
 ### Community 16 - "css-cascade.mjs"
-Cohesion: 0.07
-Nodes (35): applyStaticDeclaration(), buildBorderOverrideMap(), parseShorthand(), resolveVar(), buildStaticStyleMap(), buildStaticWindow(), collectStaticCssRules(), compareStaticPriority() (+27 more)
+Cohesion: 0.10
+Nodes (33): applyStaticDeclaration(), buildBorderOverrideMap(), parseShorthand(), resolveVar(), buildStaticStyleMap(), collectStaticCssRules(), compareStaticPriority(), cssPropToCamel() (+25 more)
 
 ### Community 17 - "manual-apply.mjs"
 Cohesion: 0.09
@@ -306,15 +309,15 @@ Nodes (49): allEntryIds(), argVal(), buildRepairBatch(), candidatesForEntry(), c
 
 ### Community 20 - "detect-text.mjs"
 Cohesion: 0.07
-Nodes (43): blankCssComments(), BLOCK_BRACE_PREFIX_KEYWORDS, CSS_IN_JS_EXTENSIONS, detectText(), extFromFilePath(), extractCSSinJS(), extractStyleBlocks(), findCSSinJSTemplates() (+35 more)
+Nodes (41): blankCssComments(), BLOCK_BRACE_PREFIX_KEYWORDS, CSS_IN_JS_EXTENSIONS, detectText(), extFromFilePath(), extractCSSinJS(), extractStyleBlocks(), findCSSinJSTemplates() (+33 more)
 
 ### Community 21 - "impeccable-config.mjs"
 Cohesion: 0.10
 Nodes (45): applyDetectionConfigSource(), clampByte(), cleanIgnoreValueDisplay(), cloneDetectionConfig(), cloneRawDetectionConfig(), COLOR_CHANNEL_FORMATS, colorIgnoreKey(), DEFAULT_DETECTION_CONFIG (+37 more)
 
 ### Community 22 - "detect-antipatterns.mjs"
-Cohesion: 0.11
-Nodes (37): confirm(), detectCli(), detectLocalFile(), dim(), fileUrlToLocalPath(), formatAdvisorySection(), formatFindings(), formatFindingsBody() (+29 more)
+Cohesion: 0.09
+Nodes (43): confirm(), detectCli(), detectLocalFile(), dim(), fileUrlToLocalPath(), formatAdvisorySection(), formatFindings(), formatFindingsBody() (+35 more)
 
 ### Community 23 - "scripts"
 Cohesion: 0.05
@@ -376,9 +379,9 @@ Nodes (8): EMPTY_POPUP_PERSONALIZATION, externalPortfolioUrl(), PopupPersonaliza
 Cohesion: 0.16
 Nodes (30): extractPlatform(), loadContext(), main(), appendDesignSystemNote(), appendDesignSystemNoteOnce(), bumpEditCount(), commitFooterShown(), consumeSessionNoticeFlag() (+22 more)
 
-### Community 38 - "new-work.md"
+### Community 38 - "SKILL.md"
 Cohesion: 0.07
-Nodes (28): Audit Health Score, Detailed Findings by Severity, Executive Summary, Generate Report, Patterns & Systemic Issues, Platform Conformance Verdict, Positive Findings, Recommended Actions (+20 more)
+Nodes (28): Assess Adaptation Challenge, Implement & Verify, Recommended Actions, Craft (deprecated alias), Monorepo notes, Opting out of the boot check, Step 1: Run the pass, Step 2: Act by severity (+20 more)
 
 ### Community 39 - "background.ts"
 Cohesion: 0.08
@@ -401,8 +404,8 @@ Cohesion: 0.10
 Nodes (21): BackgroundHistoryDependencies, JobInsights, averageRecentFixedPayment(), ClientPayProfileInput, deriveClientPayProfile(), fixedPayments(), HistoricalHourlyRateRecord, medianRecentFixedPayment() (+13 more)
 
 ### Community 44 - "parseAnyColor"
-Cohesion: 0.08
-Nodes (55): checkBorders(), checkColors(), checkElementAIPaletteDOM(), checkElementBorders(), checkElementBordersDOM(), checkElementColors(), checkElementColorsDOM(), checkElementGlowDOM() (+47 more)
+Cohesion: 0.10
+Nodes (46): checkColors(), checkElementAIPaletteDOM(), checkElementColors(), checkElementColorsDOM(), checkElementGlowDOM(), checkElementHoverContrast(), checkElementIconTile(), checkElementIconTileDOM() (+38 more)
 
 ### Community 45 - "event-validation.mjs"
 Cohesion: 0.12
@@ -428,9 +431,9 @@ Nodes (13): canCreateInsert(), clampPlaceholderSize(), computeInsertPosition(), 
 Cohesion: 0.13
 Nodes (30): hasGeneratedHeader(), HEADER_MARKERS, isGeneratedFile(), isGitIgnored(), analyzeSourceHint(), buildCandidatesForOp(), buildContextHintsByRef(), buildManualEditEvidence() (+22 more)
 
-### Community 51 - "adapt.md"
+### Community 51 - "Responsive Design"
 Cohesion: 0.08
-Nodes (22): Assess Adaptation Challenge, Content Adaptation, Desktop Adaptation (Mobile → Desktop), Email Adaptation (Web → Email), Implement Adaptations, Layout Adaptation Techniques, Mobile Adaptation (Desktop → Mobile), Adaptation Strategies (+14 more)
+Nodes (25): Assess Adaptation Challenge, Breakpoints: Content-Driven, Content Adaptation, Desktop Adaptation (Mobile → Desktop), Detect Input Method, Not Just Screen Size, Email Adaptation (Web → Email), Implement Adaptations, Layout Adaptation Patterns (+17 more)
 
 ### Community 52 - "handleManualEditActivity"
 Cohesion: 0.18
@@ -469,8 +472,8 @@ Cohesion: 0.11
 Nodes (25): checkCreamPalette(), checkTextOcclusionDOM(), clamp01(), colorFunctionToRgb(), creamFromClassList(), decodeSrgbChannel(), elementDirectText(), encodeSrgbChannel() (+17 more)
 
 ### Community 61 - "detect-url.mjs"
-Cohesion: 0.23
-Nodes (18): detectUrl(), launchBrowser(), measureContentHiddenAfterReveal(), runVisualContrastFallback(), serializeDesignSystemForBrowser(), captureVisualContrastCandidate(), compareScreenshotContrast(), sanitizeScreenshotClip() (+10 more)
+Cohesion: 0.20
+Nodes (20): createBrowserDetector(), detectUrl(), launchBrowser(), measureContentHiddenAfterReveal(), runVisualContrastFallback(), serializeDesignSystemForBrowser(), captureVisualContrastCandidate(), compareScreenshotContrast() (+12 more)
 
 ### Community 62 - "portfolio-match.ts"
 Cohesion: 0.15
@@ -672,9 +675,9 @@ Nodes (5): Before you finish, Scope is sovereign, The amplification, The skeleto
 Cohesion: 0.19
 Nodes (14): contextSourcePath(), contextSourceStatus(), firstExisting(), isCandidateProjectRoot(), isPathInside(), isPathInsideOrEqual(), nearestTargetContextRoot(), resolveCandidateContextSummary() (+6 more)
 
-### Community 114 - "Responsive Design"
-Cohesion: 0.20
-Nodes (10): Breakpoints: Content-Driven, Detect Input Method, Not Just Screen Size, Layout Adaptation Patterns, Mobile-First: Write It Right, Picture Element for Art Direction, Responsive Design, Responsive Images: Get It Right, Safe Areas: Handle the Notch (+2 more)
+### Community 114 - "checkHtmlPatterns"
+Cohesion: 0.10
+Nodes (35): buildHtmlPatternCorpora(), checkElementRadialSpotlight(), checkElementRadialSpotlightDOM(), checkGlow(), checkHtmlPatterns(), checkRadialSpotlight(), collectCssCustomProps(), collectMarqueeKeyframes() (+27 more)
 
 ### Community 115 - "rules"
 Cohesion: 0.15
@@ -788,9 +791,9 @@ Nodes (9): formatter, attributePosition, bracketSpacing, enabled, formatWithErro
 Cohesion: 0.09
 Nodes (22): 10. Testing & Verification Rigor, 1. File & Module Size Limits (Strict Rule), 2. SOLID Design Principles, 3. Core Software Principles: KISS, YAGNI, and DRY, 4. Naming Conventions & Expressiveness, 5. Functions & Control Flow, 6. Strict TypeScript & Type Safety, 7. Error Handling & Defensive Boundaries (+14 more)
 
-### Community 143 - "Operate mode depth (and Read notes)"
-Cohesion: 0.22
-Nodes (9): Color, Components, Layout, Motion, Operate mode depth (and Read notes), Product constraints, Product permissions, The product slop test (+1 more)
+### Community 143 - "inline-ignores.mjs"
+Cohesion: 0.40
+Nodes (9): addRules(), applyInlineIgnores(), getSet(), hasDirectives(), isInlineIgnored(), normalizeRule(), parseInlineIgnores(), parseRuleList() (+1 more)
 
 ### Community 144 - "Android platform"
 Cohesion: 0.25
@@ -804,9 +807,9 @@ Nodes (14): cleanIgnoreValueDisplay(), extractFindingIgnoreValue(), extractFindi
 Cohesion: 0.25
 Nodes (8): 1. Impatient Power User: "Alex", 2. Confused First-Timer: "Jordan", 3. Accessibility-Dependent User: "Sam", 4. Deliberate Stress Tester: "Riley", 5. Distracted Mobile User: "Casey", Persona-Based Design Testing, Project-Specific Personas, Selecting Personas
 
-### Community 147 - "SKILL.md"
-Cohesion: 0.08
-Nodes (21): Craft floor, Refuse, Verify, Extract Flow, Step 1: Discover the Design System, Step 2: Identify Patterns, Step 3: Plan Extraction, Step 4: Extract & Enrich (+13 more)
+### Community 147 - "Operate mode depth (and Read notes)"
+Cohesion: 0.10
+Nodes (18): Craft floor, Refuse, Verify, Constraints, Failure modes, Flow, $impeccable hooks, Routing (+10 more)
 
 ### Community 148 - "live-setup.md"
 Cohesion: 0.25
@@ -837,8 +840,8 @@ Cohesion: 0.22
 Nodes (7): Architecture, Extension contexts, Failure and security boundaries, Options flow, Popup read flow, Runtime topology, Verification map
 
 ### Community 155 - "checkHeadingRhythmDOM"
-Cohesion: 0.36
-Nodes (10): checkHeadingRhythmDOM(), clusterTop(), edgeAbove(), edgeBelow(), hasOwnTopBoundary(), insideSmallCard(), isVisibleFlow(), overlapsX() (+2 more)
+Cohesion: 0.62
+Nodes (7): checkHeadingRhythmDOM(), clusterTop(), edgeAbove(), edgeBelow(), hasOwnTopBoundary(), isVisibleFlow(), overlapsX()
 
 ### Community 157 - "Diagnostic Scan"
 Cohesion: 0.33
@@ -878,7 +881,7 @@ Nodes (7): allow(), deny(), done(), isStopEvent(), writeAuditLog(), main(), read
 
 ### Community 166 - "For Developers & Contributors"
 Cohesion: 0.33
-Nodes (6): For Developers & Contributors, For Freelancers & Users (Load Unpacked), Installation & Quick Start, Prerequisites, Production Builds, Setup & Development
+Nodes (6): For Developers & Contributors, 🚀 For Freelancers & Users (No Coding Required), Installation & Quick Start, Prerequisites, Production Builds, Setup & Development
 
 ### Community 167 - "source"
 Cohesion: 0.50
@@ -906,31 +909,43 @@ Nodes (4): IndexedDB, Local settings, Session storage, Storage model
 
 ### Community 174 - "detect-html.mjs"
 Cohesion: 0.09
-Nodes (31): collectStaticCssText(), checkStaticPageTypography(), detectHtml(), STATIC_ELEMENT_RULES, checkCreamPalette(), checkElementGlow(), checkPageLayout(), checkPageQualityDOM() (+23 more)
+Nodes (17): runTextContentAnalyzers(), buildStaticWindow(), collectStaticCssText(), StaticDocument, checkStaticPageTypography(), detectHtml(), STATIC_ELEMENT_RULES, checkCreamPalette() (+9 more)
 
 ### Community 176 - "provider.mjs"
 Cohesion: 0.50
 Nodes (3): IMPECCABLE_COMMAND, IMPECCABLE_COMMAND_PREFIX, IMPECCABLE_PROVIDER_ID
 
+### Community 178 - "Extract Flow"
+Cohesion: 0.25
+Nodes (7): Extract Flow, Step 1: Discover the Design System, Step 2: Identify Patterns, Step 3: Plan Extraction, Step 4: Extract & Enrich, Step 5: Migrate, Step 6: Document
+
+### Community 179 - "Generate Report"
+Cohesion: 0.29
+Nodes (7): Audit Health Score, Detailed Findings by Severity, Executive Summary, Generate Report, Patterns & Systemic Issues, Platform Conformance Verdict, Positive Findings
+
+### Community 180 - "Adaptation Strategies"
+Cohesion: 0.40
+Nodes (5): Adaptation Strategies, Orientation & foldables, Phone → Tablet (iPad / large screens), Platform → platform (iOS ↔ Android), Web → native (porting a website or web app)
+
 ## Knowledge Gaps
-- **938 isolated node(s):** `Features`, `Highlights`, `Features`, `Architecture`, `name` (+933 more)
+- **938 isolated node(s):** `The Problem vs. The Solution`, `1. 🎯 Competition Intelligence`, `2. 🔍 Client Quality & Payment Reality`, `3. ⚖️ Your Fit & Qualification Audit`, `4. ⚡ Local Power-User Workflow` (+933 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **7 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
+- **Why does `isGeneratedFile()` connect `live-manual-edit-evidence.mjs` to `live-wrap.mjs`, `live-commit-manual-edits.mjs`, `live-accept.mjs`?**
+  _High betweenness centrality (0.006) - this node is a cross-community bridge._
 - **Why does `loadContext()` connect `runHook` to `context.mjs`, `live-server.mjs`, `hook-lib.mjs`, `resolveProject`, `context-signals.mjs`, `doctor.mjs`, `surface-briefs.mjs`?**
-  _High betweenness centrality (0.008) - this node is a cross-community bridge._
+  _High betweenness centrality (0.005) - this node is a cross-community bridge._
 - **Why does `enterLiveRoot()` connect `roots.mjs` to `live-wrap.mjs`, `live-status.mjs`, `live-server.mjs`, `live-inject.mjs`, `live-complete.mjs`, `live-accept.mjs`, `live-poll.mjs`?**
   _High betweenness centrality (0.004) - this node is a cross-community bridge._
-- **Why does `Upwork Tools` connect `Upwork Tools` to `Repository Guidelines`, `Architecture`, `Key Features`, `For Developers & Contributors`?**
-  _High betweenness centrality (0.003) - this node is a cross-community bridge._
-- **What connects `Features`, `Highlights`, `Features` to the rest of the system?**
+- **What connects `The Problem vs. The Solution`, `1. 🎯 Competition Intelligence`, `2. 🔍 Client Quality & Payment Reality` to the rest of the system?**
   _938 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `live-browser.js` be split into smaller, more focused modules?**
   _Cohesion score 0.029187396351575457 - nodes in this community are weakly interconnected._
 - **Should `checks.mjs` be split into smaller, more focused modules?**
-  _Cohesion score 0.030626927029804726 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.03288425322323627 - nodes in this community are weakly interconnected._
 - **Should `context.mjs` be split into smaller, more focused modules?**
   _Cohesion score 0.06412583182093164 - nodes in this community are weakly interconnected._

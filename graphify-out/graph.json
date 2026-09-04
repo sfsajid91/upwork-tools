@@ -41040,7 +41040,7 @@
       "node_kind": "heading",
       "norm_label": "contributing",
       "source_file": "README.md",
-      "source_location": "L252"
+      "source_location": "L253"
     },
     {
       "id": "readme_development_testing",
@@ -41052,7 +41052,7 @@
       "node_kind": "heading",
       "norm_label": "development & testing",
       "source_file": "README.md",
-      "source_location": "L170"
+      "source_location": "L171"
     },
     {
       "id": "readme_how_it_works",
@@ -41064,7 +41064,7 @@
       "node_kind": "heading",
       "norm_label": "how it works",
       "source_file": "README.md",
-      "source_location": "L94"
+      "source_location": "L95"
     },
     {
       "id": "readme_license",
@@ -41076,7 +41076,7 @@
       "node_kind": "heading",
       "norm_label": "license",
       "source_file": "README.md",
-      "source_location": "L282"
+      "source_location": "L283"
     },
     {
       "id": "readme_privacy_security_first",
@@ -41088,7 +41088,7 @@
       "node_kind": "heading",
       "norm_label": "privacy & security first",
       "source_file": "README.md",
-      "source_location": "L80"
+      "source_location": "L81"
     },
     {
       "id": "readme_project_directory_structure",
@@ -41100,7 +41100,7 @@
       "node_kind": "heading",
       "norm_label": "project directory structure",
       "source_file": "README.md",
-      "source_location": "L191"
+      "source_location": "L192"
     },
     {
       "id": "readme_roadmap",
@@ -41112,7 +41112,7 @@
       "node_kind": "heading",
       "norm_label": "roadmap",
       "source_file": "README.md",
-      "source_location": "L272"
+      "source_location": "L273"
     },
     {
       "id": "readme_technical_specifications_details",
@@ -41124,7 +41124,7 @@
       "node_kind": "heading",
       "norm_label": "technical specifications & details",
       "source_file": "README.md",
-      "source_location": "L224"
+      "source_location": "L225"
     },
     {
       "id": "readme_the_problem_vs_the_solution",
@@ -41136,7 +41136,7 @@
       "node_kind": "heading",
       "norm_label": "the problem vs. the solution",
       "source_file": "README.md",
-      "source_location": "L38"
+      "source_location": "L39"
     },
     {
       "id": "readme_upwork_tools",
@@ -44516,7 +44516,7 @@
       "node_kind": "heading",
       "norm_label": "for developers & contributors",
       "source_file": "README.md",
-      "source_location": "L140"
+      "source_location": "L141"
     },
     {
       "id": "readme_for_freelancers_users_no_coding_required",
@@ -44528,7 +44528,7 @@
       "node_kind": "heading",
       "norm_label": "\ud83d\ude80 for freelancers & users (no coding required)",
       "source_file": "README.md",
-      "source_location": "L121"
+      "source_location": "L122"
     },
     {
       "id": "readme_installation_quick_start",
@@ -44540,7 +44540,7 @@
       "node_kind": "heading",
       "norm_label": "installation & quick start",
       "source_file": "README.md",
-      "source_location": "L119"
+      "source_location": "L120"
     },
     {
       "id": "readme_prerequisites",
@@ -44552,7 +44552,7 @@
       "node_kind": "heading",
       "norm_label": "prerequisites",
       "source_file": "README.md",
-      "source_location": "L142"
+      "source_location": "L143"
     },
     {
       "id": "readme_production_builds",
@@ -44564,7 +44564,7 @@
       "node_kind": "heading",
       "norm_label": "production builds",
       "source_file": "README.md",
-      "source_location": "L159"
+      "source_location": "L160"
     },
     {
       "id": "readme_setup_development",
@@ -44576,7 +44576,7 @@
       "node_kind": "heading",
       "norm_label": "setup & development",
       "source_file": "README.md",
-      "source_location": "L146"
+      "source_location": "L147"
     },
     {
       "id": "biome_actions_source",
@@ -44747,7 +44747,7 @@
       "node_kind": "heading",
       "norm_label": "1. \ud83c\udfaf competition intelligence",
       "source_file": "README.md",
-      "source_location": "L54"
+      "source_location": "L55"
     },
     {
       "id": "readme_2_client_quality_payment_reality",
@@ -44759,7 +44759,7 @@
       "node_kind": "heading",
       "norm_label": "2. \ud83d\udd0d client quality & payment reality",
       "source_file": "README.md",
-      "source_location": "L60"
+      "source_location": "L61"
     },
     {
       "id": "readme_3_your_fit_qualification_audit",
@@ -44771,7 +44771,7 @@
       "node_kind": "heading",
       "norm_label": "3. \u2696\ufe0f your fit & qualification audit",
       "source_file": "README.md",
-      "source_location": "L66"
+      "source_location": "L67"
     },
     {
       "id": "readme_4_local_power_user_workflow",
@@ -44783,7 +44783,7 @@
       "node_kind": "heading",
       "norm_label": "4. \u26a1 local power-user workflow",
       "source_file": "README.md",
-      "source_location": "L72"
+      "source_location": "L73"
     },
     {
       "id": "readme_key_features",
@@ -44795,7 +44795,7 @@
       "node_kind": "heading",
       "norm_label": "key features",
       "source_file": "README.md",
-      "source_location": "L52"
+      "source_location": "L53"
     },
     {
       "id": "agents_skills_impeccable_reference_degraded_documenter",
@@ -162404,7 +162404,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_location": "L191",
+      "source_location": "L192",
       "weight": 1.0
     },
     {
@@ -162415,7 +162415,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_location": "L142",
+      "source_location": "L143",
       "weight": 1.0
     },
     {
@@ -162426,7 +162426,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_location": "L146",
+      "source_location": "L147",
       "weight": 1.0
     },
     {
@@ -162437,7 +162437,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_location": "L159",
+      "source_location": "L160",
       "weight": 1.0
     },
     {
@@ -162448,7 +162448,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_location": "L121",
+      "source_location": "L122",
       "weight": 1.0
     },
     {
@@ -162459,7 +162459,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_location": "L140",
+      "source_location": "L141",
       "weight": 1.0
     },
     {
@@ -162470,7 +162470,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_location": "L54",
+      "source_location": "L55",
       "weight": 1.0
     },
     {
@@ -162481,7 +162481,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_location": "L60",
+      "source_location": "L61",
       "weight": 1.0
     },
     {
@@ -162492,7 +162492,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_location": "L66",
+      "source_location": "L67",
       "weight": 1.0
     },
     {
@@ -162503,7 +162503,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_location": "L72",
+      "source_location": "L73",
       "weight": 1.0
     },
     {
@@ -162514,7 +162514,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_location": "L119",
+      "source_location": "L120",
       "weight": 1.0
     },
     {
@@ -162525,7 +162525,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_location": "L170",
+      "source_location": "L171",
       "weight": 1.0
     },
     {
@@ -162536,7 +162536,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_location": "L224",
+      "source_location": "L225",
       "weight": 1.0
     },
     {
@@ -162547,7 +162547,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_location": "L252",
+      "source_location": "L253",
       "weight": 1.0
     },
     {
@@ -162558,7 +162558,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_location": "L272",
+      "source_location": "L273",
       "weight": 1.0
     },
     {
@@ -162569,7 +162569,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_location": "L282",
+      "source_location": "L283",
       "weight": 1.0
     },
     {
@@ -162580,7 +162580,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_location": "L38",
+      "source_location": "L39",
       "weight": 1.0
     },
     {
@@ -162591,7 +162591,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_location": "L52",
+      "source_location": "L53",
       "weight": 1.0
     },
     {
@@ -162602,7 +162602,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_location": "L80",
+      "source_location": "L81",
       "weight": 1.0
     },
     {
@@ -162613,7 +162613,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_location": "L94",
+      "source_location": "L95",
       "weight": 1.0
     },
     {
@@ -171196,7 +171196,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_location": "L115",
+      "source_location": "L116",
       "weight": 1.0
     },
     {
@@ -172698,5 +172698,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "02ad8b24b7e5d78e00c27554366079cb24109514"
+  "built_at_commit": "83ef8e4893153a641b068d494000ae0786d3f84c"
 }

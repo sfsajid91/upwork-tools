@@ -684,9 +684,9 @@
     "semantic_hash": "277fcfd789e8d8ea438e4697af88fa8d"
   },
   "README.md": {
-    "mtime": 1788439478.7671485,
-    "seen": 1788439507.264308,
-    "ast_hash": "12ccb906c52a1138f73018ec81499a75",
+    "mtime": 1788484581.3647385,
+    "seen": 1788484629.443413,
+    "ast_hash": "6164b9f1c8e1922070e7af0fd4ff7f3d",
     "semantic_hash": ""
   },
   "PRODUCT.md": {
@@ -1397,78 +1397,6 @@
     "ast_hash": "06cce26bc395749cd2676ec58ec5c913",
     "semantic_hash": ""
   },
-  "images/preview.webp": {
-    "mtime": 1788438156.7169611,
-    "seen": 1788438253.8162265,
-    "ast_hash": "a65c548d49986c497bf615cdde995067",
-    "semantic_hash": ""
-  },
-  "carousel.html": {
-    "mtime": 1788481044.041818,
-    "seen": 1788482954.2434406,
-    "ast_hash": "2a58b67e33f7a22b8a11c3174c931472",
-    "semantic_hash": ""
-  },
-  "images/upwork-tools-carousel.pdf": {
-    "mtime": 1788440485.660562,
-    "seen": 1788478479.5371296,
-    "ast_hash": "e76e5bf6e27c41e41131e724f2373379",
-    "semantic_hash": ""
-  },
-  "images/carousel/slide-1.png": {
-    "mtime": 1788440482.6632895,
-    "seen": 1788478479.5371356,
-    "ast_hash": "3e08d3dc7e97afd76be65b6328b02dff",
-    "semantic_hash": ""
-  },
-  "images/carousel/slide-2.png": {
-    "mtime": 1788440483.3913558,
-    "seen": 1788478479.5371413,
-    "ast_hash": "ab51fe402e660927595fe5ae7fb4ca10",
-    "semantic_hash": ""
-  },
-  "images/carousel/slide-3.png": {
-    "mtime": 1788440484.3374417,
-    "seen": 1788478479.5371473,
-    "ast_hash": "821bf77c471fecca41183041f37c5e47",
-    "semantic_hash": ""
-  },
-  "images/carousel/slide-4.png": {
-    "mtime": 1788440484.856489,
-    "seen": 1788478479.5371525,
-    "ast_hash": "6d9e1a6fe50fe213b682460d2ac69698",
-    "semantic_hash": ""
-  },
-  "images/carousel/slide-5.png": {
-    "mtime": 1788440485.5025475,
-    "seen": 1788478479.5371575,
-    "ast_hash": "eaa0064da627c6cd0265b8b0c5a23a04",
-    "semantic_hash": ""
-  },
-  "images/slides/slide-1-hero.webp": {
-    "mtime": 1788452526.6979208,
-    "seen": 1788478479.5371742,
-    "ast_hash": "5845f6b26f3fc90763d2376ae038bc92",
-    "semantic_hash": ""
-  },
-  "images/slides/slide-2-competition.webp": {
-    "mtime": 1788452526.7549257,
-    "seen": 1788478479.5371814,
-    "ast_hash": "93cb45b0b07d195c41e14b46b92fd7be",
-    "semantic_hash": ""
-  },
-  "images/slides/slide-3-client.webp": {
-    "mtime": 1788452526.8109303,
-    "seen": 1788478479.5371869,
-    "ast_hash": "ce6008de5459de862d34a648ae7ac868",
-    "semantic_hash": ""
-  },
-  "images/slides/slide-4-dualmode.webp": {
-    "mtime": 1788452526.9149392,
-    "seen": 1788478479.5371914,
-    "ast_hash": "bed5f088e8cffa545d84b3b4b421cbc5",
-    "semantic_hash": ""
-  },
   "src/entrypoints/options/OptionsContent.tsx": {
     "mtime": 1788482886.6231186,
     "seen": 1788482954.2431014,
@@ -1539,30 +1467,6 @@
     "mtime": 1788482886.6381202,
     "seen": 1788482954.2432363,
     "ast_hash": "f0fad5057b93c8cd7834d2ad5f22af81",
-    "semantic_hash": ""
-  },
-  "images/pic-1.png": {
-    "mtime": 1788479862.691801,
-    "seen": 1788482954.2434688,
-    "ast_hash": "d83ef8852a3699aa9bf429c4b4cc4250",
-    "semantic_hash": ""
-  },
-  "images/pic-2-proposals.png": {
-    "mtime": 1788480140.2144535,
-    "seen": 1788482954.2434714,
-    "ast_hash": "156ac6cd061d3c580a3c7ed305e7343c",
-    "semantic_hash": ""
-  },
-  "images/pic-2-velocity.png": {
-    "mtime": 1788480140.4414747,
-    "seen": 1788482954.243474,
-    "ast_hash": "8143f5c624385a48732e5a570b6ffda1",
-    "semantic_hash": ""
-  },
-  "images/pic-2.png": {
-    "mtime": 1788479573.7186377,
-    "seen": 1788482954.2434776,
-    "ast_hash": "366e45f58cdca0ebe50694e2e49a334f",
     "semantic_hash": ""
   }
 }

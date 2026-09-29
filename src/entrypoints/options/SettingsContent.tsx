@@ -4,7 +4,7 @@ import type { PortfolioEntry, WatchlistRecord } from '../../lib/storage';
 type Status = { tone: 'success' | 'error'; message: string } | null;
 type PortfolioDraft = { title: string; skills: string; tags: string; url: string };
 
-export interface OptionsContentProps {
+export interface SettingsContentProps {
   skills: string;
   setSkills: (value: string) => void;
   fallbackRate: string;
@@ -32,7 +32,7 @@ export interface OptionsContentProps {
   clearStatus: Status;
 }
 
-export function OptionsContent({
+export function SettingsContent({
   skills,
   setSkills,
   fallbackRate,
@@ -58,18 +58,52 @@ export function OptionsContent({
   clearLocalData,
   clearPending,
   clearStatus,
-}: OptionsContentProps) {
+}: SettingsContentProps) {
   return (
-    <main className="min-h-screen bg-slate-100 px-4 py-6 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100">
-      <div className="mx-auto max-w-3xl space-y-5">
-        <header>
-          <h1 className="text-xl font-bold tracking-tight">Upwork Tools settings</h1>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            Keep your profile and portfolio on this device. Nothing is sent to Upwork or a backend.
+    <main className="min-h-screen bg-slate-100 px-5 py-8 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100 sm:px-8 sm:py-10">
+      <div className="mx-auto max-w-4xl space-y-7">
+        <header className="flex flex-wrap items-end justify-between gap-5 border-b border-slate-200 pb-6 dark:border-slate-800">
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight">Settings</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-400">
+              Personalize how Upwork Tools evaluates jobs. Your profile and saved work stay on this
+              device.
+            </p>
+          </div>
+          <p className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
+            <span className="size-2 rounded-full bg-emerald-600" aria-hidden="true" />
+            Stored locally
           </p>
         </header>
+        <nav aria-label="Settings sections" className="flex flex-wrap gap-2">
+          <a
+            className="rounded-full border border-slate-300 px-3 py-1.5 text-sm font-medium hover:border-emerald-600 hover:text-emerald-800 focus-visible:outline-2 focus-visible:outline-emerald-600 dark:border-slate-700 dark:hover:text-emerald-300"
+            href="#profile"
+          >
+            Profile
+          </a>
+          <a
+            className="rounded-full border border-slate-300 px-3 py-1.5 text-sm font-medium hover:border-emerald-600 hover:text-emerald-800 focus-visible:outline-2 focus-visible:outline-emerald-600 dark:border-slate-700 dark:hover:text-emerald-300"
+            href="#portfolio"
+          >
+            Portfolio
+          </a>
+          <a
+            className="rounded-full border border-slate-300 px-3 py-1.5 text-sm font-medium hover:border-emerald-600 hover:text-emerald-800 focus-visible:outline-2 focus-visible:outline-emerald-600 dark:border-slate-700 dark:hover:text-emerald-300"
+            href="#watchlist"
+          >
+            Watchlist
+          </a>
+          <a
+            className="rounded-full border border-slate-300 px-3 py-1.5 text-sm font-medium hover:border-emerald-600 hover:text-emerald-800 focus-visible:outline-2 focus-visible:outline-emerald-600 dark:border-slate-700 dark:hover:text-emerald-300"
+            href="#data"
+          >
+            Data
+          </a>
+        </nav>
 
         <section
+          id="profile"
           className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
           aria-labelledby="profile-heading"
         >
@@ -86,14 +120,14 @@ export function OptionsContent({
               </label>
               <textarea
                 id="profile-skills"
-                className="mt-1 block min-h-20 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950"
+                className="mt-1 block min-h-20 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-400"
                 value={skills}
                 onChange={(event) => setSkills(event.target.value)}
                 placeholder="TypeScript, React, APIs"
                 aria-describedby="skills-help"
                 disabled={profileDisabled}
               />
-              <p id="skills-help" className="mt-1 text-xs text-slate-500">
+              <p id="skills-help" className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 Separate skills with commas or new lines.
               </p>
             </div>
@@ -103,7 +137,7 @@ export function OptionsContent({
               </label>
               <input
                 id="fallback-rate"
-                className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950"
+                className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-400"
                 type="number"
                 min="0"
                 step="0.01"
@@ -114,7 +148,7 @@ export function OptionsContent({
                 aria-describedby="rate-help"
                 disabled={profileDisabled}
               />
-              <p id="rate-help" className="mt-1 text-xs text-slate-500">
+              <p id="rate-help" className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 Leave blank to clear the fallback.
               </p>
             </div>
@@ -141,6 +175,7 @@ export function OptionsContent({
         </section>
 
         <section
+          id="portfolio"
           className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
           aria-labelledby="portfolio-heading"
         >
@@ -172,11 +207,13 @@ export function OptionsContent({
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{entry.title}</p>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                       {[...entry.skills, ...entry.tags].join(' · ') || 'No skills or tags listed'}
                     </p>
                     {entry.url && (
-                      <p className="mt-1 truncate text-xs text-slate-500">{entry.url}</p>
+                      <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">
+                        {entry.url}
+                      </p>
                     )}
                   </div>
                   <div className="flex shrink-0 gap-2">
@@ -215,7 +252,7 @@ export function OptionsContent({
               </label>
               <input
                 id="portfolio-title"
-                className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950"
+                className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-400"
                 value={portfolioDraft.title}
                 onChange={(event) =>
                   setPortfolioDraft({ ...portfolioDraft, title: event.target.value })
@@ -231,7 +268,7 @@ export function OptionsContent({
                 </label>
                 <input
                   id="portfolio-skills"
-                  className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950"
+                  className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-400"
                   value={portfolioDraft.skills}
                   onChange={(event) =>
                     setPortfolioDraft({ ...portfolioDraft, skills: event.target.value })
@@ -246,7 +283,7 @@ export function OptionsContent({
                 </label>
                 <input
                   id="portfolio-tags"
-                  className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950"
+                  className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-400"
                   value={portfolioDraft.tags}
                   onChange={(event) =>
                     setPortfolioDraft({ ...portfolioDraft, tags: event.target.value })
@@ -258,11 +295,12 @@ export function OptionsContent({
             </div>
             <div>
               <label className="text-sm font-medium" htmlFor="portfolio-url">
-                URL <span className="font-normal text-slate-500">(optional)</span>
+                URL{' '}
+                <span className="font-normal text-slate-500 dark:text-slate-400">(optional)</span>
               </label>
               <input
                 id="portfolio-url"
-                className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950"
+                className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-400"
                 type="url"
                 inputMode="url"
                 value={portfolioDraft.url}
@@ -273,7 +311,10 @@ export function OptionsContent({
                 aria-describedby="portfolio-url-help"
                 disabled={portfolioDisabled}
               />
-              <p id="portfolio-url-help" className="mt-1 text-xs text-slate-500">
+              <p
+                id="portfolio-url-help"
+                className="mt-1 text-xs text-slate-500 dark:text-slate-400"
+              >
                 Only http(s) URLs are accepted.
               </p>
             </div>
@@ -312,6 +353,7 @@ export function OptionsContent({
         </section>
 
         <section
+          id="watchlist"
           className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
           aria-labelledby="watchlist-heading"
         >
@@ -368,6 +410,7 @@ export function OptionsContent({
         </section>
 
         <section
+          id="data"
           className="rounded-xl border border-red-200 bg-white p-4 shadow-sm dark:border-red-950 dark:bg-slate-900"
           aria-labelledby="clear-data-heading"
         >

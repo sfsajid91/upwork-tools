@@ -28,7 +28,7 @@ flowchart LR
   S[browser.storage.session<br/>latest per-tab snapshot]
   D[IndexedDB<br/>normalized local data]
   Q[Popup]
-  O[Options page]
+  O[Settings page]
   L[browser.storage.local<br/>profile, portfolio, settings]
 
   U --> R --> M --> P --> C --> B
@@ -48,7 +48,7 @@ flowchart LR
 | Isolated content | `src/entrypoints/content.ts` | Validate same-origin page events, forward captures, and answer replay requests. |
 | Service worker | `src/entrypoints/background.ts` | Validate messages, serialize tab mutations, persist captures, serve popup reads, and update the action badge. |
 | Popup | `src/entrypoints/popup/` | Read the active tab and render insights, history, conversion, watchlist, warnings, and fit views. |
-| Options | `src/entrypoints/options/` | Edit the local profile and portfolio, browse/remove the watchlist, and clear IndexedDB job data. |
+| Settings | `src/entrypoints/options/` | Edit the local profile and portfolio, browse/remove the watchlist, and clear IndexedDB job data in its standalone extension page. |
 
 `wxt.config.ts` defines the React module, Manifest V3 metadata, `storage`
 permission, Upwork host permissions, and the Chromium 111 minimum version. WXT
@@ -176,7 +176,7 @@ History retention is enforced during snapshot writes and retention runs:
   not appended;
 - only normalized data needed by the product is stored.
 
-The Options page's **Clear local data** action clears the extension's IndexedDB
+The Settings page's **Clear local data** action clears the extension's IndexedDB
 job, history, application, watchlist, and latest-capture stores. It preserves the
 profile, portfolio, and UI settings held in `browser.storage.local`.
 
@@ -216,6 +216,9 @@ Upwork hourly rate remains primary; the configured fallback is used only when th
 capture has no freelancer rate. Settings failures leave the core snapshot
 available without personalization.
 
+The popup's **Settings** button opens the standalone Settings page using the
+extension's registered options-page entrypoint.
+
 `src/entrypoints/popup/InsightsView.tsx` renders the product hierarchy:
 
 1. job title, status, theme control, watchlist, and observed application state;
@@ -232,7 +235,7 @@ available without personalization.
 The formatter layer (`src/lib/format.ts`) turns nullable values into stable display
 strings such as `Not available`; it does not fill missing data.
 
-## Options flow
+## Settings flow
 
 `src/entrypoints/options/App.tsx` reads and validates local profile and portfolio
 values and loads the locally saved watchlist collection. It exposes:
@@ -243,7 +246,7 @@ values and loads the locally saved watchlist collection. It exposes:
 - clear local IndexedDB job data with confirmation;
 - explicit success and error states when browser storage is unavailable.
 
-The options page does not send profile or portfolio data to Upwork or a server.
+The Settings page does not send profile or portfolio data to Upwork or a server.
 The popup consumes these local values only for deterministic display; it never
 sends profile, portfolio, or matching data to Upwork or a server.
 
@@ -278,7 +281,7 @@ contracts include:
 - `tests/lib/insights.test.ts`, `tests/lib/insights-contract.test.ts`, and feature tests for
   normalization, warnings, history, matching, and derived metrics;
 - `tests/entrypoints/popup/InsightsView.test.tsx` and
-  `tests/entrypoints/options/App.test.tsx` for user-facing state behavior.
+  `tests/entrypoints/options/App.test.tsx` for user-facing settings behavior.
 
 Run the project checks with:
 

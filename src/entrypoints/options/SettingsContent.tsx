@@ -1,7 +1,17 @@
 import type { FormEvent } from 'react';
 import type { PortfolioEntry, WatchlistRecord } from '../../lib/storage';
+import type { ThemeMode } from '../../lib/theme';
+import {
+  PortfolioDraftForm,
+  PortfolioItemCard,
+  SettingsCard,
+  SettingsHeader,
+  SettingsNav,
+  SettingsStatusAlert,
+  type Status,
+} from './SettingsComponents';
+import { BookmarkIcon, BriefcaseIcon, DatabaseIcon, TrashIcon, UserIcon } from './SettingsIcons';
 
-type Status = { tone: 'success' | 'error'; message: string } | null;
 type PortfolioDraft = { title: string; skills: string; tags: string; url: string };
 
 export interface SettingsContentProps {
@@ -30,6 +40,8 @@ export interface SettingsContentProps {
   clearLocalData: () => void | Promise<void>;
   clearPending: boolean;
   clearStatus: Status;
+  themeMode?: ThemeMode;
+  onToggleTheme?: () => void;
 }
 
 export function SettingsContent({
@@ -58,392 +70,243 @@ export function SettingsContent({
   clearLocalData,
   clearPending,
   clearStatus,
+  themeMode,
+  onToggleTheme,
 }: SettingsContentProps) {
   return (
-    <main className="min-h-screen bg-slate-100 px-5 py-8 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100 sm:px-8 sm:py-10">
-      <div className="mx-auto max-w-4xl space-y-7">
-        <header className="flex flex-wrap items-end justify-between gap-5 border-b border-slate-200 pb-6 dark:border-slate-800">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight">Settings</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-400">
-              Personalize how Upwork Tools evaluates jobs. Your profile and saved work stay on this
-              device.
-            </p>
-          </div>
-          <p className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
-            <span className="size-2 rounded-full bg-emerald-600" aria-hidden="true" />
-            Stored locally
-          </p>
-        </header>
-        <nav aria-label="Settings sections" className="flex flex-wrap gap-2">
-          <a
-            className="rounded-full border border-slate-300 px-3 py-1.5 text-sm font-medium hover:border-emerald-600 hover:text-emerald-800 focus-visible:outline-2 focus-visible:outline-emerald-600 dark:border-slate-700 dark:hover:text-emerald-300"
-            href="#profile"
-          >
-            Profile
-          </a>
-          <a
-            className="rounded-full border border-slate-300 px-3 py-1.5 text-sm font-medium hover:border-emerald-600 hover:text-emerald-800 focus-visible:outline-2 focus-visible:outline-emerald-600 dark:border-slate-700 dark:hover:text-emerald-300"
-            href="#portfolio"
-          >
-            Portfolio
-          </a>
-          <a
-            className="rounded-full border border-slate-300 px-3 py-1.5 text-sm font-medium hover:border-emerald-600 hover:text-emerald-800 focus-visible:outline-2 focus-visible:outline-emerald-600 dark:border-slate-700 dark:hover:text-emerald-300"
-            href="#watchlist"
-          >
-            Watchlist
-          </a>
-          <a
-            className="rounded-full border border-slate-300 px-3 py-1.5 text-sm font-medium hover:border-emerald-600 hover:text-emerald-800 focus-visible:outline-2 focus-visible:outline-emerald-600 dark:border-slate-700 dark:hover:text-emerald-300"
-            href="#data"
-          >
-            Data
-          </a>
-        </nav>
+    <main className="min-h-screen bg-slate-50/70 px-4 py-8 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100 sm:px-8 sm:py-12">
+      <div className="mx-auto max-w-4xl space-y-8">
+        <SettingsHeader themeMode={themeMode} onToggleTheme={onToggleTheme} />
+        <SettingsNav />
 
-        <section
+        {/* Profile Section */}
+        <SettingsCard
           id="profile"
-          className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
-          aria-labelledby="profile-heading"
+          headingId="profile-heading"
+          title="Your profile"
+          description="Captured job rates remain primary; this rate is only a local fallback when none is posted."
+          icon={UserIcon}
         >
-          <h2 id="profile-heading" className="text-base font-semibold">
-            Your profile
-          </h2>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Captured job rates remain primary; this rate is only a local fallback.
-          </p>
-          <form className="mt-4 space-y-3" onSubmit={saveProfile}>
+          <form className="space-y-4" onSubmit={saveProfile}>
             <div>
-              <label className="text-sm font-medium" htmlFor="profile-skills">
+              <label
+                className="block text-xs font-semibold tracking-wide text-slate-700 uppercase dark:text-slate-300"
+                htmlFor="profile-skills"
+              >
                 Skills
               </label>
               <textarea
                 id="profile-skills"
-                className="mt-1 block min-h-20 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-400"
+                className="mt-1.5 block min-h-24 w-full rounded-xl border border-slate-300/80 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none dark:border-slate-700/80 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-emerald-400"
                 value={skills}
                 onChange={(event) => setSkills(event.target.value)}
-                placeholder="TypeScript, React, APIs"
+                placeholder="TypeScript, React, Node.js, GraphQL, APIs"
                 aria-describedby="skills-help"
                 disabled={profileDisabled}
               />
-              <p id="skills-help" className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              <p id="skills-help" className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
                 Separate skills with commas or new lines.
               </p>
             </div>
+
             <div>
-              <label className="text-sm font-medium" htmlFor="fallback-rate">
+              <label
+                className="block text-xs font-semibold tracking-wide text-slate-700 uppercase dark:text-slate-300"
+                htmlFor="fallback-rate"
+              >
                 Fallback hourly rate (USD)
               </label>
-              <input
-                id="fallback-rate"
-                className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-400"
-                type="number"
-                min="0"
-                step="0.01"
-                inputMode="decimal"
-                value={fallbackRate}
-                onChange={(event) => setFallbackRate(event.target.value)}
-                placeholder="Leave blank for no fallback"
-                aria-describedby="rate-help"
-                disabled={profileDisabled}
-              />
-              <p id="rate-help" className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Leave blank to clear the fallback.
+              <div className="relative mt-1.5 flex rounded-xl shadow-2xs">
+                <span className="inline-flex items-center rounded-l-xl border border-r-0 border-slate-300/80 bg-slate-100/80 px-3.5 text-sm font-semibold text-slate-600 dark:border-slate-700/80 dark:bg-slate-800/80 dark:text-slate-400">
+                  $
+                </span>
+                <input
+                  id="fallback-rate"
+                  className="block w-full rounded-r-xl border border-slate-300/80 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none dark:border-slate-700/80 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-emerald-400"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  inputMode="decimal"
+                  value={fallbackRate}
+                  onChange={(event) => setFallbackRate(event.target.value)}
+                  placeholder="e.g. 75.00 (leave blank for no fallback)"
+                  aria-describedby="rate-help"
+                  disabled={profileDisabled}
+                />
+              </div>
+              <p id="rate-help" className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                Leave blank to clear the fallback rate.
               </p>
             </div>
-            <button
-              className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
-              type="submit"
-              disabled={profileDisabled}
-            >
-              Save profile
-            </button>
-            {profileStatus && (
-              <p
-                className={
-                  profileStatus.tone === 'error'
-                    ? 'text-sm text-red-700 dark:text-red-300'
-                    : 'text-sm text-emerald-700 dark:text-emerald-300'
-                }
-                role={profileStatus.tone === 'error' ? 'alert' : 'status'}
-              >
-                {profileStatus.message}
-              </p>
-            )}
-          </form>
-        </section>
 
-        <section
-          id="portfolio"
-          className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
-          aria-labelledby="portfolio-heading"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 id="portfolio-heading" className="text-base font-semibold">
-                Portfolio
-              </h2>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Entries stay local. URLs are stored as text and never opened or fetched here.
-              </p>
+            <div className="pt-2">
+              <button
+                className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition-all hover:bg-emerald-500 active:translate-y-px focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:focus-visible:ring-offset-slate-900"
+                type="submit"
+                disabled={profileDisabled}
+              >
+                Save profile
+              </button>
             </div>
+            <SettingsStatusAlert status={profileStatus} />
+          </form>
+        </SettingsCard>
+
+        {/* Portfolio Section */}
+        <SettingsCard
+          id="portfolio"
+          headingId="portfolio-heading"
+          title="Portfolio"
+          description="Entries stay local. URLs are stored as text and never opened or fetched in the background."
+          icon={BriefcaseIcon}
+          badge={
+            portfolio.length > 0 ? (
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                {portfolio.length}
+              </span>
+            ) : null
+          }
+          actions={
             <button
-              className="shrink-0 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-slate-300/80 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs transition-all hover:bg-slate-50 hover:text-slate-900 active:translate-y-px focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700/80 dark:bg-slate-800/80 dark:text-slate-200 dark:hover:bg-slate-700 sm:text-sm"
               type="button"
               onClick={startNewPortfolioEntry}
               disabled={portfolioDisabled}
             >
               Add entry
             </button>
-          </div>
-
-          {portfolio.length > 0 && (
-            <ul className="mt-4 space-y-2" aria-label="Saved portfolio entries">
+          }
+        >
+          {portfolio.length > 0 ? (
+            <ul className="space-y-2.5" aria-label="Saved portfolio entries">
               {portfolio.map((entry, index) => (
-                <li
-                  className="flex items-start justify-between gap-3 rounded-md border border-slate-200 p-3 dark:border-slate-800"
+                <PortfolioItemCard
                   key={`${entry.title}:${entry.url ?? ''}:${entry.skills.join(',')}:${entry.tags.join(',')}`}
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">{entry.title}</p>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      {[...entry.skills, ...entry.tags].join(' · ') || 'No skills or tags listed'}
-                    </p>
-                    {entry.url && (
-                      <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">
-                        {entry.url}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex shrink-0 gap-2">
-                    <button
-                      className="rounded border border-slate-300 px-2 py-1 text-xs font-medium hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
-                      type="button"
-                      onClick={() => editPortfolioEntry(index)}
-                      disabled={portfolioDisabled}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="rounded border border-red-300 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950 disabled:cursor-not-allowed disabled:opacity-50"
-                      type="button"
-                      onClick={() => void deletePortfolioEntry(index)}
-                      disabled={portfolioDisabled}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </li>
+                  entry={entry}
+                  index={index}
+                  isEditing={editingIndex === index}
+                  disabled={portfolioDisabled}
+                  onEdit={editPortfolioEntry}
+                  onDelete={deletePortfolioEntry}
+                />
               ))}
             </ul>
+          ) : (
+            <div className="rounded-xl border border-dashed border-slate-300/80 p-6 text-center dark:border-slate-800">
+              <BriefcaseIcon className="mx-auto size-7 text-slate-400 dark:text-slate-600" />
+              <p className="mt-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                No portfolio entries yet
+              </p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Add your projects below to enable smart portfolio match suggestions in job details.
+              </p>
+            </div>
           )}
 
-          <form
-            className="mt-4 space-y-3 border-t border-slate-200 pt-4 dark:border-slate-800"
+          {/* Portfolio Entry Form */}
+          <PortfolioDraftForm
+            draft={portfolioDraft}
+            onChangeDraft={setPortfolioDraft}
+            editingIndex={editingIndex}
+            disabled={portfolioDisabled}
             onSubmit={savePortfolioEntry}
-          >
-            <h3 className="text-sm font-semibold">
-              {editingIndex === null ? 'Add portfolio entry' : 'Edit portfolio entry'}
-            </h3>
-            <div>
-              <label className="text-sm font-medium" htmlFor="portfolio-title">
-                Title
-              </label>
-              <input
-                id="portfolio-title"
-                className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-400"
-                value={portfolioDraft.title}
-                onChange={(event) =>
-                  setPortfolioDraft({ ...portfolioDraft, title: event.target.value })
-                }
-                required
-                disabled={portfolioDisabled}
-              />
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className="text-sm font-medium" htmlFor="portfolio-skills">
-                  Skills
-                </label>
-                <input
-                  id="portfolio-skills"
-                  className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-400"
-                  value={portfolioDraft.skills}
-                  onChange={(event) =>
-                    setPortfolioDraft({ ...portfolioDraft, skills: event.target.value })
-                  }
-                  placeholder="React, TypeScript"
-                  disabled={portfolioDisabled}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium" htmlFor="portfolio-tags">
-                  Tags
-                </label>
-                <input
-                  id="portfolio-tags"
-                  className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-400"
-                  value={portfolioDraft.tags}
-                  onChange={(event) =>
-                    setPortfolioDraft({ ...portfolioDraft, tags: event.target.value })
-                  }
-                  placeholder="Dashboard, API"
-                  disabled={portfolioDisabled}
-                />
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium" htmlFor="portfolio-url">
-                URL{' '}
-                <span className="font-normal text-slate-500 dark:text-slate-400">(optional)</span>
-              </label>
-              <input
-                id="portfolio-url"
-                className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-400"
-                type="url"
-                inputMode="url"
-                value={portfolioDraft.url}
-                onChange={(event) =>
-                  setPortfolioDraft({ ...portfolioDraft, url: event.target.value })
-                }
-                placeholder="https://example.com/project"
-                aria-describedby="portfolio-url-help"
-                disabled={portfolioDisabled}
-              />
-              <p
-                id="portfolio-url-help"
-                className="mt-1 text-xs text-slate-500 dark:text-slate-400"
-              >
-                Only http(s) URLs are accepted.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
-                type="submit"
-                disabled={portfolioDisabled}
-              >
-                {editingIndex === null ? 'Add portfolio entry' : 'Save changes'}
-              </button>
-              {editingIndex !== null && (
-                <button
-                  className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
-                  type="button"
-                  onClick={startNewPortfolioEntry}
-                  disabled={portfolioDisabled}
-                >
-                  Cancel
-                </button>
-              )}
-            </div>
-            {portfolioStatus && (
-              <p
-                className={
-                  portfolioStatus.tone === 'error'
-                    ? 'text-sm text-red-700 dark:text-red-300'
-                    : 'text-sm text-emerald-700 dark:text-emerald-300'
-                }
-                role={portfolioStatus.tone === 'error' ? 'alert' : 'status'}
-              >
-                {portfolioStatus.message}
-              </p>
-            )}
-          </form>
-        </section>
+            onCancel={startNewPortfolioEntry}
+            status={portfolioStatus}
+          />
+        </SettingsCard>
 
-        <section
+        {/* Watchlist Section */}
+        <SettingsCard
           id="watchlist"
-          className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
-          aria-labelledby="watchlist-heading"
+          headingId="watchlist-heading"
+          title="Watchlist"
+          description="Saved jobs stay on this device. Open a job page to review its latest insights."
+          icon={BookmarkIcon}
+          badge={
+            watchlist.length > 0 ? (
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                {watchlist.length}
+              </span>
+            ) : null
+          }
         >
-          <h2 id="watchlist-heading" className="text-base font-semibold">
-            Watchlist
-          </h2>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Saved jobs stay on this device. Open a job page to review its latest insights.
-          </p>
           {watchlist.length === 0 ? (
-            <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">No saved jobs yet.</p>
+            <div className="rounded-xl border border-dashed border-slate-300/80 p-6 text-center dark:border-slate-800">
+              <BookmarkIcon className="mx-auto size-7 text-slate-400 dark:text-slate-600" />
+              <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
+                No saved jobs yet.
+              </p>
+              <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                Bookmark interesting opportunities from the extension popup to track them here.
+              </p>
+            </div>
           ) : (
-            <ul className="mt-4 space-y-2" aria-label="Saved jobs">
+            <ul className="space-y-2.5" aria-label="Saved jobs">
               {watchlist.map((entry) => (
                 <li
                   key={entry.jobId}
-                  className="flex items-start justify-between gap-3 rounded-md border border-slate-200 p-3 dark:border-slate-800"
+                  className="flex flex-col justify-between gap-3 rounded-xl border border-slate-200/80 bg-slate-50/50 p-4 transition-all hover:border-slate-300 sm:flex-row sm:items-center dark:border-slate-800/80 dark:bg-slate-900/40 dark:hover:border-slate-700"
                 >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">
+                  <div className="min-w-0 space-y-1">
+                    <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                       {entry.job.title ?? 'Untitled job'}
                     </p>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      {entry.jobId} · Saved{' '}
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <span className="font-mono text-[11px] text-slate-600 dark:text-slate-400">
+                        {entry.jobId}
+                      </span>{' '}
+                      · Saved{' '}
                       {Number.isFinite(entry.savedAt)
                         ? new Date(entry.savedAt).toLocaleDateString()
                         : 'date unavailable'}
                     </p>
                   </div>
                   <button
-                    className="shrink-0 rounded border border-red-300 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-lg border border-rose-200 bg-rose-50/60 px-3 py-1.5 text-xs font-medium text-rose-700 transition-colors hover:bg-rose-100 hover:text-rose-800 focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:self-auto dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/60"
                     type="button"
                     onClick={() => void removeWatchlistJob(entry.jobId)}
                     disabled={watchlistDisabled}
                   >
-                    Remove
+                    <TrashIcon className="size-3" />
+                    <span>Remove</span>
                   </button>
                 </li>
               ))}
             </ul>
           )}
-          {watchlistStatus && (
-            <p
-              className={
-                watchlistStatus.tone === 'error'
-                  ? 'mt-3 text-sm text-red-700 dark:text-red-300'
-                  : 'mt-3 text-sm text-emerald-700 dark:text-emerald-300'
-              }
-              role={watchlistStatus.tone === 'error' ? 'alert' : 'status'}
-            >
-              {watchlistStatus.message}
-            </p>
-          )}
-        </section>
+          <SettingsStatusAlert status={watchlistStatus} />
+        </SettingsCard>
 
-        <section
+        {/* Clear Local Data Section */}
+        <SettingsCard
           id="data"
-          className="rounded-xl border border-red-200 bg-white p-4 shadow-sm dark:border-red-950 dark:bg-slate-900"
-          aria-labelledby="clear-data-heading"
+          headingId="clear-data-heading"
+          title="Clear local data"
+          description="Remove local history, jobs, applications, and watchlist data. Your profile, portfolio, and settings are preserved."
+          icon={DatabaseIcon}
+          variant="danger"
         >
-          <h2 id="clear-data-heading" className="text-base font-semibold">
-            Clear local data
-          </h2>
-          <p id="clear-data-help" className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Remove local history, jobs, applications, and watchlist data. Your profile, portfolio,
-            and settings are preserved.
-          </p>
-          <button
-            className="mt-3 rounded-md border border-red-300 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950 disabled:cursor-not-allowed disabled:opacity-50"
-            type="button"
-            onClick={() => void clearLocalData()}
-            disabled={clearDataDisabled}
-            aria-describedby="clear-data-help"
-            aria-busy={clearPending}
-          >
-            {clearPending ? 'Clearing local data…' : 'Clear local data'}
-          </button>
-          {clearStatus && (
-            <p
-              className={
-                clearStatus.tone === 'error'
-                  ? 'mt-3 text-sm text-red-700 dark:text-red-300'
-                  : 'mt-3 text-sm text-emerald-700 dark:text-emerald-300'
-              }
-              role={clearStatus.tone === 'error' ? 'alert' : 'status'}
-            >
-              {clearStatus.message}
+          <div className="rounded-xl border border-rose-200/70 bg-rose-50/40 p-4 text-xs leading-relaxed text-rose-900 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-200">
+            <p id="clear-data-help">
+              This action clears locally stored job snapshots, historical application records, and
+              watchlist entries. Your user profile, fallback rate, and portfolio remain untouched.
             </p>
-          )}
-        </section>
+          </div>
+          <div className="mt-4">
+            <button
+              className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-rose-300 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 shadow-2xs transition-all hover:bg-rose-100 active:translate-y-px focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-950/80 dark:focus-visible:ring-offset-slate-900"
+              type="button"
+              onClick={() => void clearLocalData()}
+              disabled={clearDataDisabled}
+              aria-describedby="clear-data-help"
+              aria-busy={clearPending}
+            >
+              <TrashIcon className="size-4" />
+              <span>{clearPending ? 'Clearing local data…' : 'Clear local data'}</span>
+            </button>
+          </div>
+          <SettingsStatusAlert status={clearStatus} />
+        </SettingsCard>
       </div>
     </main>
   );

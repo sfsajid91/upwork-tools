@@ -109,7 +109,7 @@ function draftFromEntry(entry: PortfolioEntry): PortfolioDraft {
 }
 
 function SettingsApp() {
-  useTheme();
+  const { mode, cycleTheme } = useTheme();
   const [skills, setSkills] = useState('');
   const [fallbackRate, setFallbackRate] = useState('');
   const [profile, setProfile] = useState<UserProfile>({
@@ -344,6 +344,8 @@ function SettingsApp() {
       clearLocalData={clearLocalData}
       clearPending={clearPending}
       clearStatus={clearStatus}
+      themeMode={mode}
+      onToggleTheme={cycleTheme}
     />
   );
 }

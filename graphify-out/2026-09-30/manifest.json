@@ -102,9 +102,9 @@
     "semantic_hash": ""
   },
   "src/entrypoints/popup/App.tsx": {
-    "mtime": 1790742064.865464,
-    "seen": 1790742450.8232393,
-    "ast_hash": "81e8889502b450739412d5387235e771",
+    "mtime": 1790750725.5045698,
+    "seen": 1790751091.3627048,
+    "ast_hash": "42181cff165f2c63db26104aeb66d209",
     "semantic_hash": ""
   },
   "src/entrypoints/popup/InsightsView.tsx": {
@@ -504,33 +504,33 @@
     "semantic_hash": ""
   },
   "src/entrypoints/popup/AvailableSections.tsx": {
-    "mtime": 1790695088.1131587,
-    "seen": 1790700929.6760182,
-    "ast_hash": "c40fc118d5f3e7267ccbd82644c3c5d2",
+    "mtime": 1790751010.3646133,
+    "seen": 1790751091.362713,
+    "ast_hash": "efa1a20baebe6e8219dd5d746cb7b0c1",
     "semantic_hash": ""
   },
   "src/entrypoints/popup/AvailableState.tsx": {
-    "mtime": 1790741963.0874388,
-    "seen": 1790742450.823258,
-    "ast_hash": "9ec2422c85a8950f9da60f29441b9456",
+    "mtime": 1790751010.4386194,
+    "seen": 1790751091.3627155,
+    "ast_hash": "5dad7b72f063b215332a8fe849a231c9",
     "semantic_hash": ""
   },
   "src/entrypoints/popup/PopupComponents.tsx": {
-    "mtime": 1790741942.5614126,
-    "seen": 1790742450.8232682,
-    "ast_hash": "ea34df9acbd6b0baee6b7a0f089eacf0",
+    "mtime": 1790751010.4076169,
+    "seen": 1790751091.362727,
+    "ast_hash": "c344cc3faa4ba7e82d1125e7db047e25",
     "semantic_hash": ""
   },
   "src/entrypoints/popup/PopupIcons.tsx": {
-    "mtime": 1790695088.1131587,
-    "seen": 1790700929.6760395,
-    "ast_hash": "2487746ebed8109f042b4d0ec7e46071",
+    "mtime": 1790750513.2713706,
+    "seen": 1790751091.3627293,
+    "ast_hash": "1c17d10d487040868624b4442b96a481",
     "semantic_hash": ""
   },
   "src/entrypoints/popup/PopupStates.tsx": {
-    "mtime": 1790742064.9314706,
-    "seen": 1790742450.8232777,
-    "ast_hash": "688c393800b3060a2ed935d237cc5b46",
+    "mtime": 1790751010.3936157,
+    "seen": 1790751091.3627317,
+    "ast_hash": "8c4ba4ee343fff305f898813e701f9b0",
     "semantic_hash": ""
   },
   "src/lib/background-history.ts": {
@@ -687,6 +687,36 @@
     "mtime": 1790749728.9070504,
     "seen": 1790749834.7871416,
     "ast_hash": "96434326570444cb0223c1722804f44c",
+    "semantic_hash": ""
+  },
+  "src/components/ui/skeleton.tsx": {
+    "mtime": 1790750348.9410532,
+    "seen": 1790751091.3626618,
+    "ast_hash": "bd02ac6de3af21935fb23b143d2bcdbb",
+    "semantic_hash": ""
+  },
+  "src/entrypoints/popup/ClientTrackRecordCard.tsx": {
+    "mtime": 1790751010.3756142,
+    "seen": 1790751091.3627176,
+    "ast_hash": "3e6577f31ff71533e952f951522b445c",
+    "semantic_hash": ""
+  },
+  "src/entrypoints/popup/ExactProposalsCard.tsx": {
+    "mtime": 1790750533.9780488,
+    "seen": 1790751091.36272,
+    "ast_hash": "5932a842fb3ea51c7cfd5d33898d2bf7",
+    "semantic_hash": ""
+  },
+  "src/entrypoints/popup/HistoryComponents.tsx": {
+    "mtime": 1790751010.386615,
+    "seen": 1790751091.3627222,
+    "ast_hash": "0ea6adba6b4350ee6e3cc0de14400196",
+    "semantic_hash": ""
+  },
+  "src/entrypoints/popup/TopNav.tsx": {
+    "mtime": 1790751010.3956158,
+    "seen": 1790751091.362734,
+    "ast_hash": "674eabf48b158eed7b25c4d81126fd57",
     "semantic_hash": ""
   }
 }

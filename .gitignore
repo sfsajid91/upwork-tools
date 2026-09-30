@@ -33,3 +33,4 @@ graphify-out/.graphify_python
 graphify-out/.graphify_detect.json
 graphify-out/.graphify_analysis.json
 graphify-out/cache/
+graphify-out/.rebuild.lock

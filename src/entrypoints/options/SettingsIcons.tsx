@@ -2,15 +2,21 @@ import {
   AlertCircle as LucideAlertCircle,
   Bookmark as LucideBookmark,
   Briefcase as LucideBriefcase,
+  Check as LucideCheck,
   CheckCircle2 as LucideCheckCircle2,
+  Copy as LucideCopy,
   Database as LucideDatabase,
   ExternalLink as LucideExternalLink,
+  Info as LucideInfo,
   Pencil as LucidePencil,
   Plus as LucidePlus,
+  Save as LucideSave,
   Settings as LucideSettings,
   ShieldCheck as LucideShieldCheck,
+  Sparkles as LucideSparkles,
   Trash2 as LucideTrash2,
   User as LucideUser,
+  X as LucideX,
 } from 'lucide-react';
 
 export function SettingsIcon({ className = 'size-5' }: { className?: string }) {
@@ -59,4 +65,28 @@ export function AlertCircleIcon({ className = 'size-4' }: { className?: string }
 
 export function ShieldLockIcon({ className = 'size-3.5' }: { className?: string }) {
   return <LucideShieldCheck className={className} aria-hidden="true" />;
+}
+
+export function CheckIcon({ className = 'size-3.5' }: { className?: string }) {
+  return <LucideCheck className={className} aria-hidden="true" />;
+}
+
+export function CopyIcon({ className = 'size-3.5' }: { className?: string }) {
+  return <LucideCopy className={className} aria-hidden="true" />;
+}
+
+export function SaveIcon({ className = 'size-3.5' }: { className?: string }) {
+  return <LucideSave className={className} aria-hidden="true" />;
+}
+
+export function SparklesIcon({ className = 'size-3.5' }: { className?: string }) {
+  return <LucideSparkles className={className} aria-hidden="true" />;
+}
+
+export function InfoIcon({ className = 'size-3.5' }: { className?: string }) {
+  return <LucideInfo className={className} aria-hidden="true" />;
+}
+
+export function XIcon({ className = 'size-3.5' }: { className?: string }) {
+  return <LucideX className={className} aria-hidden="true" />;
 }

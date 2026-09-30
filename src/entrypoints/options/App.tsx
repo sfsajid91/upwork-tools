@@ -286,16 +286,18 @@ function SettingsApp() {
       setWatchlistRemoving(false);
     }
   }
-  async function clearLocalData() {
+  async function clearLocalData(skipConfirm = false) {
     if (clearPending || loading || loadFailed) return;
     if (
+      !skipConfirm &&
+      typeof window !== 'undefined' &&
+      typeof window.confirm === 'function' &&
       !window.confirm(
         'Clear local history, jobs, applications, and watchlist? Your profile, portfolio, and settings will be preserved.',
       )
     ) {
       return;
     }
-
     setClearPending(true);
     setClearStatus(null);
     try {

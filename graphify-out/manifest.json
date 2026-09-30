@@ -90,9 +90,9 @@
     "semantic_hash": ""
   },
   "src/entrypoints/options/App.tsx": {
-    "mtime": 1790701305.3540847,
-    "seen": 1790701508.5885856,
-    "ast_hash": "e4e6e9a3b8f89cd63e5ae38df5c49960",
+    "mtime": 1790748469.0290313,
+    "seen": 1790748992.6158924,
+    "ast_hash": "6f09dbc13096a3e1d39c21c6a8fba1b6",
     "semantic_hash": ""
   },
   "src/entrypoints/options/main.tsx": {
@@ -564,9 +564,9 @@
     "semantic_hash": ""
   },
   "src/entrypoints/options/SettingsContent.tsx": {
-    "mtime": 1790743247.043243,
-    "seen": 1790744797.0074065,
-    "ast_hash": "6e082d3e97a102b3a1afda1b05158660",
+    "mtime": 1790749334.244103,
+    "seen": 1790749834.7871315,
+    "ast_hash": "512441e23270a8141a4fca704ca6c801",
     "semantic_hash": ""
   },
   "images/preview.webp": {
@@ -576,15 +576,15 @@
     "semantic_hash": ""
   },
   "src/entrypoints/options/SettingsComponents.tsx": {
-    "mtime": 1790743247.064245,
-    "seen": 1790744797.0074012,
-    "ast_hash": "4bd56a4b7c9af6b81e9bf6f897096c12",
+    "mtime": 1790749741.2420583,
+    "seen": 1790749834.787127,
+    "ast_hash": "ac2edb6f8b438fc08866602b36b9b1aa",
     "semantic_hash": ""
   },
   "src/entrypoints/options/SettingsIcons.tsx": {
-    "mtime": 1790742970.8480008,
-    "seen": 1790744797.0074115,
-    "ast_hash": "cbdbedf4650c2b76bade765fad0c01de",
+    "mtime": 1790748378.2229233,
+    "seen": 1790748992.6159272,
+    "ast_hash": "29faa6a9087f676de5f102dc334c3f6c",
     "semantic_hash": ""
   },
   ".oxlintrc.json": {
@@ -645,6 +645,48 @@
     "mtime": 1790743246.750214,
     "seen": 1790744797.007345,
     "ast_hash": "44f4a75362f380a25326409511199728",
+    "semantic_hash": ""
+  },
+  "src/components/ui/alert-dialog.tsx": {
+    "mtime": 1790748309.9367936,
+    "seen": 1790748992.6157913,
+    "ast_hash": "de83548efb664c9c5740d9bb6f7390c8",
+    "semantic_hash": ""
+  },
+  "src/components/ui/label.tsx": {
+    "mtime": 1790748180.61705,
+    "seen": 1790748992.6158288,
+    "ast_hash": "391b32b548d8ec27acb55aaa45bb2e42",
+    "semantic_hash": ""
+  },
+  "src/components/ui/tooltip.tsx": {
+    "mtime": 1790748309.940794,
+    "seen": 1790748992.615845,
+    "ast_hash": "a8f4f7921b3a1aa00156cf8a0cc5b1bc",
+    "semantic_hash": ""
+  },
+  "src/entrypoints/options/DataSection.tsx": {
+    "mtime": 1790749064.64193,
+    "seen": 1790749834.7871096,
+    "ast_hash": "d446748053e872be32b05081e46990a7",
+    "semantic_hash": ""
+  },
+  "src/entrypoints/options/PortfolioComponents.tsx": {
+    "mtime": 1790749732.8153698,
+    "seen": 1790749834.7871163,
+    "ast_hash": "5ab0101abf2b8df4a543c494c6a23991",
+    "semantic_hash": ""
+  },
+  "src/entrypoints/options/ProfileSection.tsx": {
+    "mtime": 1790749737.0967195,
+    "seen": 1790749834.7871225,
+    "ast_hash": "0a59ce34bef2664a596fc42f101d0e56",
+    "semantic_hash": ""
+  },
+  "src/entrypoints/options/WatchlistSection.tsx": {
+    "mtime": 1790749728.9070504,
+    "seen": 1790749834.7871416,
+    "ast_hash": "96434326570444cb0223c1722804f44c",
     "semantic_hash": ""
   }
 }

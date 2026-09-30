@@ -1,3 +1,4 @@
+import { browser } from 'wxt/browser';
 import { Button } from '@/components/ui/button';
 import type { ThemeMode } from '../../lib/theme';
 import { ThemeToggle } from './PopupComponents';

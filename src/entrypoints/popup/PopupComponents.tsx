@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Button } from '@/components/ui/button';
 import type { ConversionStats } from '../../lib/conversion';
 import { formatMoney, formatNumber, formatPercent, formatRating } from '../../lib/format';
 import type { ClientHistoryEntry, JobInsights, JobWarning, SimilarJob } from '../../lib/insights';
@@ -48,10 +49,12 @@ export function ThemeToggle({ mode, onToggle }: { mode: ThemeMode; onToggle: () 
         : 'Theme: System (switch to Dark)';
 
   return (
-    <button
+    <Button
       type="button"
+      variant="outline"
+      size="xs"
       onClick={onToggle}
-      className="flex cursor-pointer items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10.5px] font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-700/80 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+      className="rounded-full"
       aria-label={label}
       title={label}
     >
@@ -59,7 +62,7 @@ export function ThemeToggle({ mode, onToggle }: { mode: ThemeMode; onToggle: () 
       {mode === 'light' && <SunIcon className="size-3 text-amber-500" />}
       {mode === 'system' && <MonitorIcon className="size-3 text-slate-400" />}
       <span className="capitalize">{mode}</span>
-    </button>
+    </Button>
   );
 }
 

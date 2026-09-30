@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import type { ThemeMode } from '../../lib/theme';
 import { ThemeToggle } from './PopupComponents';
 import { AlertTriangleIcon, RadarIcon, ShieldCheckIcon } from './PopupIcons';
@@ -52,13 +53,9 @@ export function EmptyState({
       </p>
 
       {onRetry && (
-        <button
-          type="button"
-          className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white dark:focus-visible:outline-slate-100"
-          onClick={onRetry}
-        >
+        <Button type="button" size="sm" onClick={onRetry}>
           Retry
-        </button>
+        </Button>
       )}
 
       {tone === 'default' && (

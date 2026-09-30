@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import {
   formatApplicationState,
   formatDate,
@@ -199,9 +200,10 @@ export function AvailableState({
                     : 'Not saved'}
               </span>
             </div>
-            <button
+            <Button
               type="button"
-              className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-[10.5px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+              variant="outline"
+              size="xs"
               aria-label={watchlistLabel}
               title={watchlistLabel}
               disabled={!canToggleWatchlist || watchlistBusy}
@@ -215,7 +217,7 @@ export function AvailableState({
                     ? 'Saved'
                     : 'Save'}
               </span>
-            </button>
+            </Button>
           </div>
           {insights.viewerMode === 'authenticated' && (
             <div

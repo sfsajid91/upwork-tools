@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { browser } from 'wxt/browser';
+import { Button } from '@/components/ui/button';
 import type { JobInsights } from '../../lib/insights';
 import { isJobInsights } from '../../lib/insights';
 import { normalizeJobId } from '../../lib/job-page';
@@ -228,11 +229,7 @@ function App() {
   return (
     <main className="min-h-[520px] w-full bg-slate-100/90 p-3.5 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <div className="mb-3 flex justify-end">
-        <button
-          className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold hover:border-emerald-600 hover:text-emerald-800 focus-visible:outline-2 focus-visible:outline-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:hover:text-emerald-300"
-          type="button"
-          onClick={() => void browser.runtime.openOptionsPage()}
-        >
+        <Button variant="outline" size="sm" onClick={() => void browser.runtime.openOptionsPage()}>
           <svg
             aria-hidden="true"
             className="size-4"
@@ -242,10 +239,10 @@ function App() {
             strokeWidth="1.8"
           >
             <circle cx="12" cy="12" r="3" />
-            <path d="m19.4 15 .1.1a1.8 1.8 0 1 1-2.5 2.5l-.1-.1a1.8 1.8 0 0 0-3 .9v.2a1.8 1.8 0 1 1-3.6 0v-.2a1.8 1.8 0 0 0-3-.9l-.1.1a1.8 0 1 1-2.5-2.5l.1-.1a1.8 1.8 0 0 0-.9-3h-.2a1.8 1.8 0 1 1 0-3.6h.2a1.8 1.8 0 0 0 .9-3l-.1-.1a1.8 1.8 0 1 1 2.5-2.5l.1.1a1.8 1.8 0 0 0 3-.9v-.2a1.8 1.8 0 1 1 3.6 0v.2a1.8 1.8 0 0 0 3 .9l.1-.1a1.8 1.8 0 1 1 2.5 2.5l-.1.1a1.8 1.8 0 0 0 .9 3h.2a1.8 1.8 0 1 1 0 3.6h-.2a1.8 1.8 0 0 0-.9 3Z" />
+            <path d="m19.4 15 .1.1a1.8 1.8 0 1 1-2.5 2.5l-.1-.1a1.8 1.8 0 0 0-3 .9v.2a1.8 1.8 0 1 1-3.6 0v-.2a1.8 1.8 0 0 0-3-.9l-.1.1a1.8 1.8 0 1 1-2.5-2.5l.1-.1a1.8 1.8 0 0 0-.9-3h-.2a1.8 1.8 0 1 1 0-3.6h.2a1.8 1.8 0 0 0 .9-3l-.1-.1a1.8 1.8 0 1 1 2.5-2.5l.1.1a1.8 1.8 0 0 0 3-.9v-.2a1.8 1.8 0 1 1 3.6 0v.2a1.8 1.8 0 0 0 3 .9l.1-.1a1.8 1.8 0 1 1 2.5 2.5l-.1.1a1.8 1.8 0 0 0 .9 3h.2a1.8 1.8 0 1 1 0 3.6h-.2a1.8 1.8 0 0 0-.9 3Z" />
           </svg>
           Settings
-        </button>
+        </Button>
       </div>
       {state.kind === 'loading' && <LoadingState themeMode={mode} onToggleTheme={cycleTheme} />}
       {state.kind === 'empty' && (

@@ -1,4 +1,5 @@
 import type { FormEvent, ReactNode } from 'react';
+import { Button } from '@/components/ui/button';
 import type { PortfolioEntry } from '../../lib/storage';
 import type { ThemeMode } from '../../lib/theme';
 import { ThemeToggle } from '../popup/PopupComponents';
@@ -233,24 +234,26 @@ export function PortfolioItemCard({
         )}
       </div>
       <div className="flex shrink-0 items-center gap-2 self-end sm:self-start">
-        <button
-          className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-slate-300/80 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 shadow-2xs transition-colors hover:bg-slate-50 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700/80 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+        <Button
           type="button"
+          variant="outline"
+          size="xs"
           onClick={() => onEdit(index)}
           disabled={disabled}
         >
           <PencilIcon className="size-3 text-slate-500 dark:text-slate-400" />
           <span>Edit</span>
-        </button>
-        <button
-          className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-rose-200 bg-rose-50/60 px-2.5 py-1 text-xs font-medium text-rose-700 transition-colors hover:bg-rose-100 hover:text-rose-800 focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/60"
+        </Button>
+        <Button
           type="button"
+          variant="destructive"
+          size="xs"
           onClick={() => void onDelete(index)}
           disabled={disabled}
         >
           <TrashIcon className="size-3" />
           <span>Remove</span>
-        </button>
+        </Button>
       </div>
     </li>
   );
@@ -367,22 +370,19 @@ export function PortfolioDraftForm({
       </div>
 
       <div className="flex flex-wrap items-center gap-2.5 pt-2">
-        <button
-          className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition-all hover:bg-emerald-500 active:translate-y-px focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:focus-visible:ring-offset-slate-900"
-          type="submit"
-          disabled={disabled}
-        >
+        <Button type="submit" size="default" disabled={disabled}>
           {editingIndex === null ? 'Add portfolio entry' : 'Save changes'}
-        </button>
+        </Button>
         {editingIndex !== null && (
-          <button
-            className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-slate-300/80 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-2xs transition-all hover:bg-slate-50 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700/80 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+          <Button
             type="button"
+            variant="outline"
+            size="default"
             onClick={onCancel}
             disabled={disabled}
           >
             Cancel
-          </button>
+          </Button>
         )}
       </div>
       <SettingsStatusAlert status={status} />

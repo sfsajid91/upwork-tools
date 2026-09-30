@@ -1,0 +1,33 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "jsPlugins": ["@shadcn/lint"],
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "**/.output/**",
+    "**/.wxt/**",
+    "**/dist/**",
+    "**/coverage/**",
+    "**/.agents/**",
+    "**/graphify-out/**"
+  ],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "shadcn/no-restyle": ["warn", { "allow": ["layout"] }],
+    "shadcn/no-raw-colors": "warn",
+    "shadcn/no-arbitrary-values": ["warn", { "allow": ["layout"] }],
+    "shadcn/no-inline-styles": "warn",
+    "shadcn/require-static-classes": "warn"
+  },
+  "overrides": [
+    {
+      "files": ["src/components/ui/**"],
+      "rules": {
+        "shadcn/no-restyle": "off",
+        "shadcn/no-arbitrary-values": "off",
+        "shadcn/require-static-classes": "off"
+      }
+    }
+  ]
+}

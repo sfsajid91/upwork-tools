@@ -1,4 +1,5 @@
 import type { FormEvent } from 'react';
+import { Button } from '@/components/ui/button';
 import type { PortfolioEntry, WatchlistRecord } from '../../lib/storage';
 import type { ThemeMode } from '../../lib/theme';
 import {
@@ -140,13 +141,9 @@ export function SettingsContent({
             </div>
 
             <div className="pt-2">
-              <button
-                className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition-all hover:bg-emerald-500 active:translate-y-px focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:focus-visible:ring-offset-slate-900"
-                type="submit"
-                disabled={profileDisabled}
-              >
+              <Button type="submit" size="default" disabled={profileDisabled}>
                 Save profile
-              </button>
+              </Button>
             </div>
             <SettingsStatusAlert status={profileStatus} />
           </form>
@@ -167,14 +164,15 @@ export function SettingsContent({
             ) : null
           }
           actions={
-            <button
-              className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-slate-300/80 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs transition-all hover:bg-slate-50 hover:text-slate-900 active:translate-y-px focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700/80 dark:bg-slate-800/80 dark:text-slate-200 dark:hover:bg-slate-700 sm:text-sm"
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={startNewPortfolioEntry}
               disabled={portfolioDisabled}
             >
               Add entry
-            </button>
+            </Button>
           }
         >
           {portfolio.length > 0 ? (
@@ -261,15 +259,16 @@ export function SettingsContent({
                         : 'date unavailable'}
                     </p>
                   </div>
-                  <button
-                    className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-lg border border-rose-200 bg-rose-50/60 px-3 py-1.5 text-xs font-medium text-rose-700 transition-colors hover:bg-rose-100 hover:text-rose-800 focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:self-auto dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/60"
+                  <Button
                     type="button"
+                    variant="destructive"
+                    size="xs"
                     onClick={() => void removeWatchlistJob(entry.jobId)}
                     disabled={watchlistDisabled}
                   >
                     <TrashIcon className="size-3" />
                     <span>Remove</span>
-                  </button>
+                  </Button>
                 </li>
               ))}
             </ul>
@@ -293,9 +292,10 @@ export function SettingsContent({
             </p>
           </div>
           <div className="mt-4">
-            <button
-              className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-rose-300 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 shadow-2xs transition-all hover:bg-rose-100 active:translate-y-px focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-950/80 dark:focus-visible:ring-offset-slate-900"
+            <Button
               type="button"
+              variant="destructive"
+              size="default"
               onClick={() => void clearLocalData()}
               disabled={clearDataDisabled}
               aria-describedby="clear-data-help"
@@ -303,7 +303,7 @@ export function SettingsContent({
             >
               <TrashIcon className="size-4" />
               <span>{clearPending ? 'Clearing local data…' : 'Clear local data'}</span>
-            </button>
+            </Button>
           </div>
           <SettingsStatusAlert status={clearStatus} />
         </SettingsCard>

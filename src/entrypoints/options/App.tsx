@@ -6,14 +6,14 @@ import { isPortfolioEntry, isUserProfile, setUserProfile } from '../../lib/setti
 import type { PortfolioEntry, UserProfile, WatchlistRecord } from '../../lib/storage';
 import { useTheme } from '../../lib/theme';
 import { listWatchlistedJobs, removeWatchlistedJob } from '../../lib/watchlist';
-import { OptionsContent } from './OptionsContent';
+import { SettingsContent } from './SettingsContent';
 
 type Status = { tone: 'success' | 'error'; message: string } | null;
 type PortfolioDraft = { title: string; skills: string; tags: string; url: string };
 
 const EMPTY_DRAFT: PortfolioDraft = { title: '', skills: '', tags: '', url: '' };
 
-export function isOptionsProfile(value: unknown): value is UserProfile {
+export function isSettingsProfile(value: unknown): value is UserProfile {
   return isUserProfile(value) && (value.hourlyRate === null || value.hourlyRate >= 0);
 }
 
@@ -29,7 +29,7 @@ export function isHttpPortfolioUrl(url: string | null): boolean {
   }
 }
 
-export function isOptionsPortfolioEntry(value: unknown): value is PortfolioEntry {
+export function isSettingsPortfolioEntry(value: unknown): value is PortfolioEntry {
   return (
     isPortfolioEntry(value) &&
     value.title.trim().length > 0 &&
@@ -40,7 +40,7 @@ export function isOptionsPortfolioEntry(value: unknown): value is PortfolioEntry
 }
 type LocalStorageArea = { get(keys: string | string[]): Promise<Record<string, unknown>> };
 
-async function readOptionsData(): Promise<{
+async function readSettingsData(): Promise<{
   profile: UserProfile | null;
   portfolio: PortfolioEntry[];
 }> {
@@ -49,9 +49,9 @@ async function readOptionsData(): Promise<{
   const values = await area.get(['userProfile', 'portfolio']);
   const storedPortfolio = values.portfolio;
   return {
-    profile: isOptionsProfile(values.userProfile) ? values.userProfile : null,
+    profile: isSettingsProfile(values.userProfile) ? values.userProfile : null,
     portfolio:
-      Array.isArray(storedPortfolio) && storedPortfolio.every(isOptionsPortfolioEntry)
+      Array.isArray(storedPortfolio) && storedPortfolio.every(isSettingsPortfolioEntry)
         ? storedPortfolio.map((entry) => ({
             ...entry,
             skills: [...entry.skills],
@@ -108,8 +108,8 @@ function draftFromEntry(entry: PortfolioEntry): PortfolioDraft {
   };
 }
 
-function OptionsApp() {
-  useTheme();
+function SettingsApp() {
+  const { mode, cycleTheme } = useTheme();
   const [skills, setSkills] = useState('');
   const [fallbackRate, setFallbackRate] = useState('');
   const [profile, setProfile] = useState<UserProfile>({
@@ -136,7 +136,7 @@ function OptionsApp() {
     let cancelled = false;
     async function load() {
       try {
-        const { profile: storedProfile, portfolio: storedPortfolio } = await readOptionsData();
+        const { profile: storedProfile, portfolio: storedPortfolio } = await readSettingsData();
         if (cancelled) return;
         if (storedProfile) {
           setProfile(storedProfile);
@@ -286,16 +286,18 @@ function OptionsApp() {
       setWatchlistRemoving(false);
     }
   }
-  async function clearLocalData() {
+  async function clearLocalData(skipConfirm = false) {
     if (clearPending || loading || loadFailed) return;
     if (
+      !skipConfirm &&
+      typeof window !== 'undefined' &&
+      typeof window.confirm === 'function' &&
       !window.confirm(
         'Clear local history, jobs, applications, and watchlist? Your profile, portfolio, and settings will be preserved.',
       )
     ) {
       return;
     }
-
     setClearPending(true);
     setClearStatus(null);
     try {
@@ -318,7 +320,7 @@ function OptionsApp() {
   const portfolioDisabled = loading || loadFailed || portfolioSaving;
   const watchlistDisabled = loading || loadFailed || watchlistRemoving;
   return (
-    <OptionsContent
+    <SettingsContent
       skills={skills}
       setSkills={setSkills}
       fallbackRate={fallbackRate}
@@ -344,9 +346,11 @@ function OptionsApp() {
       clearLocalData={clearLocalData}
       clearPending={clearPending}
       clearStatus={clearStatus}
+      themeMode={mode}
+      onToggleTheme={cycleTheme}
     />
   );
 }
 
-export { OptionsApp };
-export default OptionsApp;
+export { SettingsApp };
+export default SettingsApp;

@@ -22,6 +22,7 @@ import {
   type PopupPersonalization,
   type WatchlistStatus,
 } from './InsightsView';
+import { TopNav } from './TopNav';
 
 export type ViewState =
   | { kind: 'loading' }
@@ -226,14 +227,13 @@ function App() {
   }, [readInsights]);
 
   return (
-    <main className="min-h-[520px] w-full bg-slate-100/90 p-3.5 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      {state.kind === 'loading' && <LoadingState themeMode={mode} onToggleTheme={cycleTheme} />}
+    <main className="min-h-[520px] w-full bg-background p-3 text-foreground">
+      <TopNav themeMode={mode} onToggleTheme={cycleTheme} />
+      {state.kind === 'loading' && <LoadingState />}
       {state.kind === 'empty' && (
         <EmptyState
           title="No job insight yet"
           copy="Open an Upwork job and let its details load normally, then reopen this popup."
-          themeMode={mode}
-          onToggleTheme={cycleTheme}
           onRetry={readInsights}
         />
       )}
@@ -242,8 +242,6 @@ function App() {
           title="Insights unavailable"
           copy={state.message}
           tone="error"
-          themeMode={mode}
-          onToggleTheme={cycleTheme}
           onRetry={readInsights}
         />
       )}
@@ -256,8 +254,6 @@ function App() {
           watchlistStatus={state.watchlistStatus}
           watchlistBusy={state.watchlistBusy}
           onToggleWatchlist={toggleWatchlist}
-          themeMode={mode}
-          onToggleTheme={cycleTheme}
         />
       )}
     </main>

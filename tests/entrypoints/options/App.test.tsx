@@ -1,25 +1,30 @@
 import { describe, expect, test } from 'bun:test';
 import { renderToString } from 'react-dom/server';
-import OptionsApp, {
+import SettingsApp, {
   adjustEditingIndex,
   isHttpPortfolioUrl,
-  isOptionsPortfolioEntry,
-  isOptionsProfile,
+  isSettingsPortfolioEntry,
+  isSettingsProfile,
   parseHourlyRate,
   splitList,
   validatePortfolioDraft,
 } from '../../../src/entrypoints/options/App';
 
-describe('options surface', () => {
-  test('renders accessible profile and portfolio forms', () => {
-    const html = renderToString(<OptionsApp />);
+describe('settings surface', () => {
+  test('renders accessible settings sections and profile forms', () => {
+    const html = renderToString(<SettingsApp />);
     const addEntryButton = html.match(/<button[^>]*>\s*Add entry\s*<\/button>/)?.[0] ?? '';
     expect(addEntryButton.includes('disabled')).toBe(true);
     const profileSaveButton = html.match(/<button[^>]*>\s*Save profile\s*<\/button>/)?.[0] ?? '';
     expect(profileSaveButton.includes('disabled')).toBe(true);
     const portfolioTitleInput = html.match(/<input[^>]*id="portfolio-title"[^>]*>/)?.[0] ?? '';
     expect(portfolioTitleInput.includes('disabled')).toBe(true);
-    expect(html.includes('Your profile')).toBe(true);
+    expect(html.includes('Settings')).toBe(true);
+    expect(html.includes('aria-label="Settings sections"')).toBe(true);
+    expect(html.includes('href="#profile"')).toBe(true);
+    expect(html.includes('href="#portfolio"')).toBe(true);
+    expect(html.includes('href="#watchlist"')).toBe(true);
+    expect(html.includes('href="#data"')).toBe(true);
     expect(html.includes('for="profile-skills"')).toBe(true);
     expect(html.includes('Fallback hourly rate')).toBe(true);
     expect(html.includes('Portfolio')).toBe(true);
@@ -56,25 +61,25 @@ describe('options surface', () => {
     expect(adjustEditingIndex(2, 1)).toBe(1);
     expect(adjustEditingIndex(1, 2)).toBe(1);
     expect(adjustEditingIndex(2, 2)).toBeNull();
-    expect(isOptionsProfile({ hourlyRate: null, skills: [], preferences: {} })).toBe(true);
-    expect(isOptionsProfile({ hourlyRate: 0, skills: [], preferences: {} })).toBe(true);
-    expect(isOptionsProfile({ hourlyRate: -1, skills: [], preferences: {} })).toBe(false);
+    expect(isSettingsProfile({ hourlyRate: null, skills: [], preferences: {} })).toBe(true);
+    expect(isSettingsProfile({ hourlyRate: 0, skills: [], preferences: {} })).toBe(true);
+    expect(isSettingsProfile({ hourlyRate: -1, skills: [], preferences: {} })).toBe(false);
     expect(isHttpPortfolioUrl(null)).toBe(true);
     expect(isHttpPortfolioUrl('javascript:alert(1)')).toBe(false);
     expect(
-      isOptionsPortfolioEntry({
+      isSettingsPortfolioEntry({
         title: 'Project',
         skills: [],
         tags: [],
         url: 'ftp://example.test',
       }),
     ).toBe(false);
-    expect(isOptionsPortfolioEntry({ title: ' ', skills: [], tags: [], url: null })).toBe(false);
-    expect(isOptionsPortfolioEntry({ title: 'Project', skills: [''], tags: [], url: null })).toBe(
+    expect(isSettingsPortfolioEntry({ title: ' ', skills: [], tags: [], url: null })).toBe(false);
+    expect(isSettingsPortfolioEntry({ title: 'Project', skills: [''], tags: [], url: null })).toBe(
       false,
     );
     expect(
-      isOptionsPortfolioEntry({
+      isSettingsPortfolioEntry({
         title: 'Project',
         skills: [],
         tags: [],

@@ -170,7 +170,7 @@ bun run zip
 
 ## Development & Testing
 
-Upwork Tools enforces high code quality, strict TypeScript typing, and Biome linting across the entire codebase.
+Upwork Tools enforces high code quality, strict TypeScript typing, and Biome plus shadcn/Oxlint linting across the entire codebase.
 
 ```sh
 # Run the complete test suite (176 tests)
@@ -179,8 +179,11 @@ bun run test
 # Run TypeScript typecheck (no-emit)
 bun run compile
 
-# Run Biome linter
+# Run the Biome linter
 bun run lint
+
+# Run shadcn component lint rules
+bun run lint:shadcn
 
 # Check Biome formatting
 bun run format:check
@@ -198,7 +201,7 @@ upwork-tools/
 │   │   ├── background.ts            # Service Worker: tab state & IndexedDB coordinator
 │   │   ├── content.ts               # Isolated context: event validation & forwarding
 │   │   ├── interceptor.content.ts   # MAIN-world context: document_start network observer
-│   │   ├── options/                 # Options Page: Profile, Portfolio & Data management
+│   │   ├── options/                 # Settings Page: Profile, Portfolio & Data management
 │   │   └── popup/                   # Popup Interface: React 19 UI & Tailwind styles
 │   └── lib/                         # Deterministic Business Logic & Core Libraries
 │       ├── insights.ts              # Nullable JobInsights parser & GraphQL schema mapping

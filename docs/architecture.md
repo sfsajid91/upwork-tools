@@ -188,7 +188,7 @@ profile, portfolio, and UI settings held in `browser.storage.local`.
 - `portfolio`: title, skills, tags, and optional HTTP(S) URL;
 - `uiSettings`: theme mode and feature flags.
 
-Portfolio URLs are validated as HTTP(S) values at the options boundary and
+Portfolio URLs are validated as HTTP(S) values at the Settings boundary and
 render as normal `target="_blank"` links from matched popup entries. The
 extension does not fetch them or mutate the Upwork page.
 Theme initialization includes a compatibility path for the legacy local theme

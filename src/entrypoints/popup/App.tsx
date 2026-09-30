@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { browser } from 'wxt/browser';
-import { Button } from '@/components/ui/button';
 import type { JobInsights } from '../../lib/insights';
 import { isJobInsights } from '../../lib/insights';
 import { normalizeJobId } from '../../lib/job-page';
@@ -23,6 +22,7 @@ import {
   type PopupPersonalization,
   type WatchlistStatus,
 } from './InsightsView';
+import { TopNav } from './TopNav';
 
 export type ViewState =
   | { kind: 'loading' }
@@ -227,30 +227,13 @@ function App() {
   }, [readInsights]);
 
   return (
-    <main className="min-h-[520px] w-full bg-slate-100/90 p-3.5 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <div className="mb-3 flex justify-end">
-        <Button variant="outline" size="sm" onClick={() => void browser.runtime.openOptionsPage()}>
-          <svg
-            aria-hidden="true"
-            className="size-4"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-          >
-            <circle cx="12" cy="12" r="3" />
-            <path d="m19.4 15 .1.1a1.8 1.8 0 1 1-2.5 2.5l-.1-.1a1.8 1.8 0 0 0-3 .9v.2a1.8 1.8 0 1 1-3.6 0v-.2a1.8 1.8 0 0 0-3-.9l-.1.1a1.8 1.8 0 1 1-2.5-2.5l.1-.1a1.8 1.8 0 0 0-.9-3h-.2a1.8 1.8 0 1 1 0-3.6h.2a1.8 1.8 0 0 0 .9-3l-.1-.1a1.8 1.8 0 1 1 2.5-2.5l.1.1a1.8 1.8 0 0 0 3-.9v-.2a1.8 1.8 0 1 1 3.6 0v.2a1.8 1.8 0 0 0 3 .9l.1-.1a1.8 1.8 0 1 1 2.5 2.5l-.1.1a1.8 1.8 0 0 0 .9 3h.2a1.8 1.8 0 1 1 0 3.6h-.2a1.8 1.8 0 0 0-.9 3Z" />
-          </svg>
-          Settings
-        </Button>
-      </div>
-      {state.kind === 'loading' && <LoadingState themeMode={mode} onToggleTheme={cycleTheme} />}
+    <main className="min-h-[520px] w-full bg-background p-3 text-foreground">
+      <TopNav themeMode={mode} onToggleTheme={cycleTheme} />
+      {state.kind === 'loading' && <LoadingState />}
       {state.kind === 'empty' && (
         <EmptyState
           title="No job insight yet"
           copy="Open an Upwork job and let its details load normally, then reopen this popup."
-          themeMode={mode}
-          onToggleTheme={cycleTheme}
           onRetry={readInsights}
         />
       )}
@@ -259,8 +242,6 @@ function App() {
           title="Insights unavailable"
           copy={state.message}
           tone="error"
-          themeMode={mode}
-          onToggleTheme={cycleTheme}
           onRetry={readInsights}
         />
       )}
@@ -273,8 +254,6 @@ function App() {
           watchlistStatus={state.watchlistStatus}
           watchlistBusy={state.watchlistBusy}
           onToggleWatchlist={toggleWatchlist}
-          themeMode={mode}
-          onToggleTheme={cycleTheme}
         />
       )}
     </main>
